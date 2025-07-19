@@ -2,6 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 interface Option {
   id: string;
   optionText: string;
@@ -90,8 +93,6 @@ async function submitQuiz(
 }
 
 export default function QuizStartPage() {
-  console.log('QuizStartPage component is rendering');
-
   const params = useParams();
   const quizId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -137,16 +138,11 @@ export default function QuizStartPage() {
           return;
         }
 
-        console.log('Fetching quiz with ID:', quizId);
-        console.log('Using base URL:', baseUrl);
-
         const res = await fetch(`${baseUrl}/users/quiz-by-id?id=${quizId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        console.log('Quiz fetch response status:', res.status);
 
         if (!res.ok) {
           const errorText = await res.text();
@@ -157,7 +153,6 @@ export default function QuizStartPage() {
         }
 
         const data = await res.json();
-        console.log('Quiz data received:', data);
 
         if (!data.success) {
           setError(data.message || 'Failed to fetch quiz.');
@@ -225,17 +220,6 @@ export default function QuizStartPage() {
   return (
     <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]'>
       <div className='max-w-3xl mx-auto'>
-        {/* Debug info - remove this after testing */}
-        <div className='text-white text-xs mb-4 p-2 bg-gray-800 rounded'>
-          Debug: Page loaded, Quiz ID: {quizId}, Base URL:{' '}
-          {process.env.NEXT_PUBLIC_BASE_URL || 'NOT SET'}
-        </div>
-
-        {/* Simple test message - remove after debugging */}
-        <div className='text-white text-center py-4 bg-blue-600 rounded mb-4'>
-          Component is rendering! Quiz ID: {quizId}
-        </div>
-
         {loading ? (
           <div className='text-white text-center py-20 text-lg'>
             Loading quiz...
