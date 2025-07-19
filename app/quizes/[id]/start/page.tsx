@@ -111,17 +111,26 @@ export default function QuizStartPage() {
           setLoading(false);
           return;
         }
-        console.log('Fetching quiz with ID:', quizId);
-        console.log('Using base URL:', process.env.NEXT_PUBLIC_BASE_URL);
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz-by-id?id=${quizId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        // Check if environment variable is set
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        if (!baseUrl) {
+          console.error('NEXT_PUBLIC_BASE_URL is not set');
+          setError(
+            'Configuration error: API URL not set. Please contact support.'
+          );
+          setLoading(false);
+          return;
+        }
+
+        console.log('Fetching quiz with ID:', quizId);
+        console.log('Using base URL:', baseUrl);
+
+        const res = await fetch(`${baseUrl}/users/quiz-by-id?id=${quizId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         console.log('Quiz fetch response status:', res.status);
 
@@ -179,6 +188,12 @@ export default function QuizStartPage() {
   return (
     <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]'>
       <div className='max-w-3xl mx-auto'>
+        {/* Debug info - remove this after testing */}
+        <div className='text-white text-xs mb-4 p-2 bg-gray-800 rounded'>
+          Debug: Page loaded, Quiz ID: {quizId}, Base URL:{' '}
+          {process.env.NEXT_PUBLIC_BASE_URL || 'NOT SET'}
+        </div>
+
         {loading ? (
           <div className='text-white text-center py-20 text-lg'>
             Loading quiz...
