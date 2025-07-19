@@ -20,6 +20,12 @@ interface Question {
   options: Option[];
 }
 
+
+
+
+
+
+
 interface QuizGenerationResult {
   quiz: {
     id: string;

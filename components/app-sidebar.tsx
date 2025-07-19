@@ -270,8 +270,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
           <SidebarContent
             className={`bg-[black] h-screen fixed left-0 top-0 z-[9999] transition-transform duration-300 flex flex-col justify-between w-64 overflow-hidden
             ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden
-            ${nunitoSans.className}
-          `}
+            ${nunitoSans.className} overflow-y-auto scrollbar-hide`
+          }
             style={{ width: "16rem", minWidth: "16rem", maxWidth: "16rem" }}
           >
             <div>
@@ -552,7 +552,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
         <SidebarContent
           className={`bg-[black] h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col justify-between overflow-hidden ${
             collapsed ? "w-16" : "w-64"
-          } ${nunitoSans.className} hidden lg:flex`}
+          } ${nunitoSans.className} hidden lg:flex overflow-y-auto scrollbar-hide`}
         >
           <div>
             <div
