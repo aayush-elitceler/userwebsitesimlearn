@@ -3,10 +3,10 @@ name: Build and Deploy to Docker Hub
 on:
   pull_request:
     branches:
-      - ai-canvas
+      - main
   push:
     branches:
-      - ai-canvas
+      - main
 
 jobs:
   build-and-push:
