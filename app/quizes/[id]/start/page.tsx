@@ -90,6 +90,8 @@ async function submitQuiz(
 }
 
 export default function QuizStartPage() {
+  console.log('QuizStartPage component is rendering');
+
   const params = useParams();
   const quizId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -99,6 +101,18 @@ export default function QuizStartPage() {
     {}
   );
   const [quizStartedAt, setQuizStartedAt] = useState(new Date().toISOString());
+  const [hasError, setHasError] = useState(false);
+
+  // Add error boundary
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Quiz page error:', event.error);
+      setHasError(true);
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
   useEffect(() => {
     async function fetchQuiz() {
@@ -185,6 +199,29 @@ export default function QuizStartPage() {
   const answered = Object.keys(selected).length;
   const progress = total ? Math.min(answered / total, 1) : 0;
 
+  // If there's a critical error, show a simple fallback
+  if (hasError) {
+    return (
+      <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]'>
+        <div className='max-w-3xl mx-auto'>
+          <div className='text-white text-center py-20'>
+            <h1 className='text-2xl font-bold mb-4'>Quiz Page Error</h1>
+            <p className='text-gray-300'>
+              There was an error loading this quiz. Please try refreshing the
+              page.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className='mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700'
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]'>
       <div className='max-w-3xl mx-auto'>
@@ -192,6 +229,11 @@ export default function QuizStartPage() {
         <div className='text-white text-xs mb-4 p-2 bg-gray-800 rounded'>
           Debug: Page loaded, Quiz ID: {quizId}, Base URL:{' '}
           {process.env.NEXT_PUBLIC_BASE_URL || 'NOT SET'}
+        </div>
+
+        {/* Simple test message - remove after debugging */}
+        <div className='text-white text-center py-4 bg-blue-600 rounded mb-4'>
+          Component is rendering! Quiz ID: {quizId}
         </div>
 
         {loading ? (
