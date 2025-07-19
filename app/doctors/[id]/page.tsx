@@ -47,6 +47,9 @@ export default function DoctorDetails() {
   const { toast } = useToast(); // Initialize Shadcn's toast
 
 
+  
+
+
   useEffect(() => {
     const fetchDoctor = async () => {
       setLoading(true);
