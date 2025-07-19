@@ -88,6 +88,10 @@ export default function QuizStartPage() {
   const [selected, setSelected] = useState<{ [questionId: string]: string }>({});
   const [quizStartedAt, setQuizStartedAt] = useState(new Date().toISOString());
 
+
+
+  
+
   useEffect(() => {
     async function fetchQuiz() {
       setLoading(true);
@@ -146,7 +150,7 @@ export default function QuizStartPage() {
 
 
 
-  
+
 
   return (
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]">
