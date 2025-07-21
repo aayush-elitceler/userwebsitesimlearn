@@ -44,4 +44,5 @@ jobs:
             sudo docker stop simplylearnweb || true
             sudo docker rm simplylearnweb || true
             sudo docker run -d --name simplylearnweb --restart always -p 3000:3000 \
+              -e NEXT_PUBLIC_BASE_URL=https://apisimplylearn.selflearnai.in/api/v1 \
               aayushsharma100/simplylearnweb:latest
