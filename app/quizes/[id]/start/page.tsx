@@ -138,22 +138,14 @@ export default function QuizStartPage() {
           return;
         }
 
-        // Check if environment variable is set
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-        if (!baseUrl) {
-          console.error('NEXT_PUBLIC_BASE_URL is not set');
-          setError(
-            'Configuration error: API URL not set. Please contact support.'
-          );
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch(`${baseUrl}/users/quiz-by-id?id=${quizId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(
+          `https://apisimplylearn.selflearnai.in/api/v1/users/quiz-by-id?id=${quizId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!res.ok) {
           const errorText = await res.text();
