@@ -33,14 +33,20 @@ interface Quiz {
 }
 
 function getTokenFromCookie() {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
+  // Ensure we're on the client side
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return null;
+  }
+
   try {
+    const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
+    if (!match) return null;
+
     const decoded = decodeURIComponent(match[1]);
     const parsed = JSON.parse(decoded);
     return parsed.token;
-  } catch {
+  } catch (error) {
+    console.error('Error parsing auth cookie:', error);
     return null;
   }
 }
@@ -103,6 +109,7 @@ export default function QuizStartPage() {
   );
   const [quizStartedAt, setQuizStartedAt] = useState(new Date().toISOString());
   const [hasError, setHasError] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Add error boundary
   useEffect(() => {
@@ -212,6 +219,16 @@ export default function QuizStartPage() {
               Refresh Page
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!mounted) {
+    return (
+      <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]'>
+        <div className='max-w-3xl mx-auto'>
+          <div className='text-white text-center py-20 text-lg'>Loading...</div>
         </div>
       </div>
     );
