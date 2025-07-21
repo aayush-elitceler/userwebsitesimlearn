@@ -28,6 +28,8 @@ jobs:
           file: ./Dockerfile # Ensure the path to Dockerfile is correct
           push: true
           tags: aayushsharma100/simplylearnweb:latest
+          build-args: |
+            NEXT_PUBLIC_BASE_URL=https://apisimplylearn.selflearnai.in/api/v1
 
       - name: Verify Pushed Image
         run: docker pull aayushsharma100/simplylearnweb:latest
