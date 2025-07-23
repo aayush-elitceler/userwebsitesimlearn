@@ -20,6 +20,17 @@ interface Quiz {
   teacher?: string;
   subject?: string;
 }
+type Submission = {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  timeTaken: number;
+  submittedAt: string;
+  quiz: Quiz;
+};
 
 const subjectColors: Record<string, string> = {
   Maths: "#4A90E2",
@@ -33,9 +44,15 @@ const subjectColors: Record<string, string> = {
 function QuizCard({
   quiz,
   previous,
+  score,
+  date,
+  submissionId,
 }: {
   quiz: Quiz;
   previous?: boolean;
+  score?: number;
+  date?: string;
+  submissionId?: string;
 }) {
   const router = useRouter();
   const boxShadow =
@@ -64,11 +81,11 @@ function QuizCard({
           {previous ? (
             <>
               <span className="flex items-center gap-1">
-                <span className="text-green-400">✔️</span>Score: {quiz.score || "-"}
+                <span className="text-green-400">✔️</span>Score: {score || "-"}
               </span>
               <span className="flex items-center gap-1">
                 <span>📅</span>
-                Taken on {quiz.date ? quiz.date : new Date(quiz.createdAt).toLocaleDateString()}
+                Taken on {date ? new Date(date).toLocaleDateString() : new Date(quiz.createdAt).toLocaleDateString()}
               </span>
             </>
           ) : (
@@ -88,7 +105,7 @@ function QuizCard({
         {previous ? (
           <button
             className="bg-black text-white rounded-full px-6 py-2 font-semibold mt-2 shadow hover:bg-[#333] transition"
-            onClick={() => router.push(`/quizes/${quiz.id}/answers`)}
+            onClick={() => router.push(`/quizes/${quiz.id}/answers?submissionId=${submissionId}`)}
           >
             View answers
           </button>
@@ -131,6 +148,8 @@ function getTokenFromCookie() {
 export default function QuizesPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchQuizzes() {
@@ -160,6 +179,36 @@ export default function QuizesPage() {
       }
     }
     fetchQuizzes();
+  }, []);
+
+  useEffect(() => {
+    async function fetchSubmissions() {
+      setSubmissionsLoading(true);
+      try {
+        const token = getTokenFromCookie();
+        if (!token) {
+          setSubmissionsLoading(false);
+          return;
+        }
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/submissions`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await res.json();
+        if (data.success && data.data && data.data.submissions) {
+          setSubmissions(data.data.submissions);
+        }
+      } catch (e) {
+        // handle error
+      } finally {
+        setSubmissionsLoading(false);
+      }
+    }
+    fetchSubmissions();
   }, []);
 
   const upcoming = quizzes.filter((q) => !q.completed);
@@ -206,13 +255,20 @@ export default function QuizesPage() {
         </div>
         <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
           <div className="flex flex-row flex-nowrap gap-8 w-max ">
-            {loading ? (
-              <div className="text-white">Loading...</div>
-            ) : previous.length === 0 ? (
+            {submissionsLoading ? (
+              <div className="text-white">Loading previous quizzes...</div>
+            ) : submissions.length === 0 ? (
               <div className="text-white">No previous quizzes.</div>
             ) : (
-              previous.map((quiz) => (
-                <QuizCard quiz={quiz} previous key={quiz.id} />
+              submissions.map((submission) => (
+                <QuizCard
+                  key={submission.id}
+                  quiz={submission.quiz}
+                  previous
+                  score={submission.score}
+                  date={submission.submittedAt}
+                  submissionId={submission.id}
+                />
               ))
             )}
           </div>

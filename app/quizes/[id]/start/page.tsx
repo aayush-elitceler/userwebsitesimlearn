@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -54,7 +55,8 @@ function getTokenFromCookie() {
 async function submitQuiz(
   quiz: Quiz,
   selected: { [questionId: string]: string },
-  quizStartedAt: string
+  quizStartedAt: string,
+  router: ReturnType<typeof useRouter>
 ) {
   const token = getTokenFromCookie();
   if (!token) {
@@ -92,13 +94,20 @@ async function submitQuiz(
   );
 
   if (res.ok) {
-    alert('Quiz submitted!');
+    const data = await res.json();
+    const submissionId = data.data?.submission?.id; // Adjust based on your API response
+    if (submissionId) {
+      router.push(`/quizes/reports/${submissionId}`);
+    } else {
+      alert('Quiz submitted, but no submissionId returned.');
+    }
   } else {
     alert('Failed to submit quiz.');
   }
 }
 
 export default function QuizStartPage() {
+  
   const params = useParams();
   const quizId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -110,6 +119,7 @@ export default function QuizStartPage() {
   const [quizStartedAt, setQuizStartedAt] = useState(new Date().toISOString());
   const [hasError, setHasError] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -332,7 +342,7 @@ export default function QuizStartPage() {
             ))}
             <button
               className='bg-green-700/80 text-white p-4'
-              onClick={() => submitQuiz(quiz, selected, quizStartedAt)}
+              onClick={() => submitQuiz(quiz, selected, quizStartedAt, router)}
             >
               Submit Quiz
             </button>
