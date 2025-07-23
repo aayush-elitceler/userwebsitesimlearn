@@ -136,7 +136,7 @@ export default function GenerateQuizPage() {
                   className="bg-[#1ec773] text-black rounded-full px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition"
                   onClick={() => {
                     setShowModal(false);
-                    if (createdQuizId) router.push(`/quizes/${createdQuizId}`);
+                    if (createdQuizId) router.push(`/quizes/${createdQuizId}/start`);
                   }}
                   disabled={!createdQuizId}
                 >
