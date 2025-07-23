@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: var(--font-nunito-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Global styles */
+body {
+  font-family: var(--font-nunito-sans), sans-serif;
+}
+
+.input-shadow {
+  box-shadow: 0px 0px 11.28px 0px #00000029 inset;
+}
+.point-ask-gradient {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%), #007437;
+}
+
+.sidebar-indicator {
+  background: linear-gradient(90deg, #06783C 0%, #137F46 100%);
+  position: fixed;
+  left: 0;
+  z-index: 50;
+  width: 4px;
+  height: 48px;
+  border-radius: 0 4px 4px 0;
+}
+
+.sidebar-indicator-dashboard {
+  top: calc(140px + 18px);
+}
+
+.sidebar-indicator-ai-tutor {
+  top: calc(140px + 76px);
+}
+
+.sidebar-indicator-point-ask {
+  top: calc(140px + 130px);
+}
+
+.sidebar-indicator-quiz {
+  top: calc(140px + 180px);
+}
+
+.sidebar-indicator-projects {
+  top: calc(140px + 232px);
+}
+
+.sidebar-indicator-progress {
+  top: calc(140px + 285px);
+}
+
+.sidebar-indicator-exams {
+  top: calc(140px + 336px);
+}
+
+.sidebar-indicator-mock {
+  top: calc(140px + 420px);
+}
+
+.sidebar-indicator-onboard {
+  top: calc(140px + 468px);
+}
+
+.sidebar-item-active {
+  background: rgba(255, 255, 255, 0.5); /* #FFFFFF80 */
+}
+
+.sidebar-item-inactive {
+  background: rgba(255, 255, 255, 0.17); /* #FFFFFF2B */
+}
+
+/* Custom scrollbar styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbars */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Ensure body doesn't have unnecessary scrollbars */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Prevent horizontal scrolling globally */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom input bar positioning for sidebar layout */
+.input-bar-responsive {
+  left: 1rem;
+  right: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .input-bar-responsive {
+    left: 17rem; /* 256px + 16px margin */
+    right: 1rem;
+  }
+  
+  .input-bar-responsive.sidebar-collapsed {
+    left: 5rem; /* 64px + 16px margin */
+    right: 1rem;
+  }
+}
+
