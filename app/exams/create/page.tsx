@@ -115,7 +115,7 @@ export default function CreateExamPage() {
     <div className="min-h-screen flex items-center justify-center bg-[#181c24]">
       <form
         onSubmit={handleSubmit}
-        className="bg-[#232c24] rounded-3xl p-10 w-full max-w-3xl shadow-lg"
+        className="bg-transparent bg-white/20 rounded-3xl p-10 w-full max-w-3xl shadow-lg"
       >
         <h2 className="text-3xl font-bold text-white mb-6">Create Exam</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

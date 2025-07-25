@@ -64,44 +64,56 @@ export default function Login() {
             {/* <div className="text-gray-500 text-sm font-normal">Enter your E - mail Id and Password to get started</div> */}
           </CardHeader>
           <CardContent className="space-y-4 mt-2">
-            {/* Email Input with Icon */}
-            <div className="flex items-center bg-white/80 rounded-md border border-[#EDF1F3] p-0 input-shadow mb-2">
-              <span className="pl-4 pr-2 text-gray-500">
-                <Mail size={24} />
-              </span>
-              <Input
-                type="email"
-                placeholder="Enter your E - mail Id"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 bg-transparent border-0 p-6 focus:ring-0 focus:outline-none"
-              />
-            </div>
-            {/* Password Input with Icon */}
-            <div className="flex items-center bg-white/80 rounded-md border border-[#EDF1F3] p-0 mb-2">
-              <span className="pl-4 pr-2 text-gray-500">
-                <Lock size={24} />
-              </span>
-              <Input
-                type="password"
-                placeholder="Enter your Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="flex-1 bg-transparent border-0 p-6 focus:ring-0 focus:outline-none"
-              />
-            </div>
-            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-            <Button
-              onClick={handleLogin}
-              className="w-full py-2 text-lg font-normal rounded-md cursor-pointer p-6 mt-2"
-              style={{
-                background: "#007437",
-                color: "white",
-                border: "none",
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleLogin();
               }}
             >
-              Sign in
-            </Button>
+              {/* Email Input with Icon */}
+              <div className="flex items-center bg-white/80 rounded-md border border-[#EDF1F3] p-0 input-shadow mb-2">
+                <span className="pl-4 pr-2 text-gray-500">
+                  <Mail size={24} />
+                </span>
+                <Input
+                  type="email"
+                  placeholder="Enter your E - mail Id"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 bg-transparent border-0 p-6 focus:outline-none"
+                />
+              </div>
+              {/* Password Input with Icon */}
+              <div className="flex items-center bg-white/80 rounded-md border border-[#EDF1F3] p-0 mb-2">
+                <span className="pl-4 pr-2 text-gray-500">
+                  <Lock size={24} />
+                </span>
+                <Input
+                  type="password"
+                  placeholder="Enter your Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="flex-1 bg-transparent border-0 p-6 focus:outline-none"
+                  onKeyDown={e => {
+                    if (e.key === "Enter") {
+                      handleLogin();
+                    }
+                  }}
+                />
+              </div>
+              {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+              <Button
+                type="submit"
+                className="w-full py-2 text-lg font-normal rounded-md cursor-pointer p-6 mt-2"
+                style={{
+                  background: "#007437",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                Sign in
+              </Button>
+            </form>
             <div className="flex items-center gap-2 my-2">
               <div className="flex-1 h-px bg-gray-200" />
               <span className="text-gray-400 text-xs">Or continue with</span>
