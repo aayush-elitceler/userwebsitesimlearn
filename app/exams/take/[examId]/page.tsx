@@ -1,0 +1,259 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+
+interface Question {
+  id: string;
+  questionText: string;
+  marks?: number;
+}
+
+interface Exam {
+  id: string;
+  title: string;
+  difficulty: string;
+  timeLimitMinutes: number;
+  questions: Question[];
+}
+
+export default function TakeExamPage() {
+  const { examId } = useParams();
+  const router = useRouter();
+  const [exam, setExam] = useState<Exam | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [startedAt, setStartedAt] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+  const [violations, setViolations] = useState<{ timestamp: string; violation: string }[]>([]);
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningCount, setWarningCount] = useState(0);
+  const [showFinalViolationModal, setShowFinalViolationModal] = useState(false);
+  const [autoSubmitted, setAutoSubmitted] = useState(false);
+  const [lastViolationTime, setLastViolationTime] = useState<number>(0);
+  const [violationArmed, setViolationArmed] = useState(true);
+  console.log(warningCount , 'warningCount');
+  
+
+  useEffect(() => {
+    async function fetchExam() {
+      setLoading(true);
+      try {
+        const token = getTokenFromCookie();
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/get-by-id?examId=${examId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await res.json();
+        if (data.success && data.data && data.data.exam) {
+          setExam(data.data.exam);
+          setAnswers(Array(data.data.exam.questions.length).fill(""));
+          setStartedAt(new Date().toISOString());
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (examId) fetchExam();
+  }, [examId]);
+
+  useEffect(() => {
+    function handleViolation(reason: string) {
+      if (!violationArmed) return;
+      setViolationArmed(false);
+      const now = Date.now();
+      if (now - lastViolationTime < 1000) return; // Ignore if last violation was <1s ago
+      setLastViolationTime(now);
+      setViolations((prev) => [
+        ...prev,
+        { timestamp: new Date().toISOString(), violation: reason },
+      ]);
+      setWarningCount((prev) => {
+        setShowWarning(true);
+        return prev + 1;
+      });
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === "hidden") {
+        handleViolation("User switched to another application or tab.");
+      }
+    }
+    function onBlur() {
+      handleViolation("User left the exam window.");
+    }
+
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    function onFocusOrVisible() {
+      setViolationArmed(true);
+    }
+    window.addEventListener("focus", onFocusOrVisible);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") setViolationArmed(true);
+    });
+    return () => {
+      window.removeEventListener("focus", onFocusOrVisible);
+      document.removeEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") setViolationArmed(true);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    if (warningCount > 5 && !autoSubmitted) {
+      // Auto-submit exam, but do not route yet
+      handleSubmit(true, true); // pass a flag to indicate auto-submit
+      setAutoSubmitted(true);
+      setShowFinalViolationModal(true);
+    }
+    // eslint-disable-next-line
+  }, [warningCount]);
+
+  const handleAnswerChange = (idx: number, value: string) => {
+    setAnswers((prev) => {
+      const copy = [...prev];
+      copy[idx] = value;
+      return copy;
+    });
+  };
+
+  const handleSubmit = async (autoSubmit = false, isFinalViolation = false) => {
+    setSubmitting(true);
+    const completedAt = new Date().toISOString();
+    const body = {
+      examId,
+      startedAt,
+      completedAt,
+      violations,
+      answers: exam?.questions.map((q, i) => ({
+        question: q.questionText,
+        answer: answers[i],
+      })),
+    };
+    try {
+      const token = getTokenFromCookie();
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!isFinalViolation) {
+        router.push("/exams");
+      }
+      // else: wait for user to click Back to dashboard
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading || !exam) {
+    return <div className="min-h-screen flex items-center justify-center text-white">Loading exam...</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#181c24] py-8 px-2 md:px-0 flex flex-col items-center">
+      {/* Warning Modal */}
+      {showWarning && warningCount > 0 && warningCount < 5 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-[#181c24] rounded-2xl p-8 max-w-md w-full flex flex-col items-center shadow-lg border border-[#333]">
+            <div className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+              <span role="img" aria-label="alert">🛑</span>
+              You’ve Left the Exam Screen
+            </div>
+            <div className="text-gray-200 mb-4 text-center">
+              To maintain exam integrity, please stay on this page.
+            </div>
+            <div className="text-lg font-semibold text-yellow-600 mb-2">
+              This is Warning {warningCount/2} of 3.
+            </div>
+            <div className="text-gray-300 mb-6 text-center">
+              If you switch again, the exam may be auto-submitted.
+            </div>
+            <button
+              className="bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg"
+              onClick={() => setShowWarning(false)}
+            >
+              Back to exam
+            </button>
+          </div>
+        </div>
+      )}
+      {showFinalViolationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-[#181c24] rounded-2xl p-8 max-w-md w-full flex flex-col items-center shadow-lg border border-[#333]">
+            <div className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+              <span role="img" aria-label="alert">🛑</span>
+              You’ve exceeded the allowed number of screen violations.
+            </div>
+            <div className="text-gray-200 mb-6 text-center">
+              Your exam has been submitted automatically<br />
+              due to repeated tab switches or screen exits.
+            </div>
+            <button
+              className="bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg"
+              onClick={() => router.push("/exams")}
+            >
+              Back to dashboard
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="w-full max-w-3xl">
+        <div className="mb-4">
+          <div className="text-green-400 font-semibold">Difficulty: {exam.difficulty?.charAt(0).toUpperCase() + exam.difficulty?.slice(1)}</div>
+          <div className="text-2xl font-bold text-white mb-2">{exam.title}</div>
+        </div>
+        <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden mb-4">
+          {/* Progress bar can be added here */}
+        </div>
+        {exam.questions.map((q, idx) => (
+          <div key={q.id} className="mb-8 bg-[#23282f] rounded-2xl p-6">
+            <div className="font-semibold text-white mb-4 text-lg">
+              Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ""}
+            </div>
+            <textarea
+              className="w-full p-4 rounded bg-[#393e3a] text-white min-h-[60px]"
+              placeholder="Type your short answer here"
+              value={answers[idx]}
+              onChange={(e) => handleAnswerChange(idx, e.target.value)}
+            />
+          </div>
+        ))}
+        <button
+          className="bg-green-700/80 text-white p-4 rounded-lg w-full max-w-xs mx-auto block"
+          onClick={() => handleSubmit(false)}
+          disabled={submitting}
+        >
+          {submitting ? "Submitting..." : "End exam"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Utility to get token from 'auth' cookie
+function getTokenFromCookie() {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
+  if (!match) return null;
+  try {
+    const decoded = decodeURIComponent(match[1]);
+    const parsed = JSON.parse(decoded);
+    return parsed.token;
+  } catch {
+    return null;
+  }
+} 
