@@ -11,7 +11,6 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 # Install ALL dependencies (including devDependencies)
 RUN npm install
-RUN npm install chart.js@^4.0.0
 
 # Rebuild the source code only when needed
 FROM base AS builder
