@@ -124,6 +124,20 @@ const quizSubRoutes = [
     bg: 'point-ask-gradient border-t border-white/30',
   },
 ];
+const examSubRoutes = [
+  {
+    label: 'Exam Preparation',
+    href: '/exams',
+    icon: examsWhite,
+    bg: 'bg-[#5B5E6D] border-t border-white/30',
+  },
+  {
+    label: 'Take Exam',
+    href: '/exams/generate',
+    icon: examsWhite,
+    bg: 'point-ask-gradient border-t border-white/30',
+  },
+];
 
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
@@ -186,11 +200,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
         url: '/progress',
         icon: progressWhite,
       },
-      {
-        title: 'Exams',
-        url: '/exams',
-        icon: examsWhite,
-      },
+      
     ],
     navMain2: [
       {
@@ -205,12 +215,14 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const [aiOpen, setAiOpen] = useState(false);
   const [pointOpen, setPointOpen] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
+  const [examOpen, setExamOpen] = useState(false);
 
   // Close dropdowns when route changes
   useEffect(() => {
     setAiOpen(false);
     setPointOpen(false);
     setQuizOpen(false);
+    setExamOpen(false);
   }, [pathname]);
 
   // Close dropdowns when sidebar collapses
@@ -219,6 +231,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       setAiOpen(false);
       setPointOpen(false);
       setQuizOpen(false);
+      setExamOpen(false);
     }
   }, [collapsed]);
 
@@ -228,6 +241,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       setAiOpen(false);
       setPointOpen(false);
       setQuizOpen(false);
+      setExamOpen(false);
     }
   }, [collapsed]);
 
@@ -235,6 +249,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const isAiTutorActive = aiTutorSubRoutes.some((r) => pathname === r.href);
   const isPointAskActive = pointAskSubRoutes.some((r) => pathname === r.href);
   const isQuizActive = quizSubRoutes.some((r) => pathname === r.href);
+  const isExamActive = examSubRoutes.some((r) => pathname === r.href);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   console.log(mobileOpen);
@@ -464,6 +479,89 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       })}
                     </div>
                   )}
+                  {(quizOpen || isQuizActive) && (
+                    <div className='ml-6 mt-3 flex flex-col gap-2'>
+                      {quizSubRoutes.map((sub) => {
+                        const isSubActive = pathname === sub.href;
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
+                              isSubActive
+                                ? 'bg-[#FFFFFF80] text-white shadow-sm'
+                                : 'sidebar-item-inactive text-white hover:bg-white/20'
+                            }`}
+                          >
+                            <Image
+                              src={sub.icon}
+                              alt={sub.label}
+                              width={20}
+                              height={20}
+                              className='h-5 w-5 flex-shrink-0'
+                            />
+                            <span>{sub.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                {/* Exam Dropdown */}
+                <div className='mb-2'>
+                  <div className='relative'>
+                    {isExamActive && (
+                      <div className='sidebar-indicator sidebar-indicator-quiz'></div>
+                    )}
+                    <button
+                      onClick={() => setExamOpen(!examOpen)}
+                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
+                        isExamActive
+                          ? 'point-ask-gradient text-white shadow-sm'
+                          : 'text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <span className='flex items-center gap-3'>
+                        <Image
+                          src={examsWhite}
+                          alt='Exams'
+                          width={20}
+                          height={20}
+                          className='h-5 w-5 flex-shrink-0'
+                        />
+                        <span className='text-sm'>Exams</span>
+                      </span>
+                      <ChevronUpDownIcon open={examOpen || isExamActive} />
+                    </button>
+                  </div>
+                  {(examOpen || isExamActive) && (
+                    <div className='ml-6 mt-3 flex flex-col gap-2'>
+                      {examSubRoutes.map((sub) => {
+                        const isSubActive = pathname === sub.href;
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
+                              isSubActive
+                                ? 'bg-[#FFFFFF80] text-white shadow-sm'
+                                : 'sidebar-item-inactive text-white hover:bg-white/20'
+                            }`}
+                          >
+                            <Image
+                              src={sub.icon}
+                              alt={sub.label}
+                              width={20}
+                              height={20}
+                              className='h-5 w-5 flex-shrink-0'
+                            />
+                            <span>{sub.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                 
                 </div>
                 {/* Other menu items */}
                 {data.items
@@ -471,6 +569,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     (item) =>
                       item.title !== 'Take a Quiz' &&
                       item.title !== 'Generate Quiz'
+                    
                   )
                   .slice(2)
                   .map((item, index) => {
@@ -792,6 +891,70 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           key={sub.href}
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
+                            isSubActive
+                              ? 'bg-[#FFFFFF80] text-white shadow-sm'
+                              : 'sidebar-item-inactive text-white hover:bg-white/20'
+                          }`}
+                        >
+                          <Image
+                            src={sub.icon}
+                            alt={sub.label}
+                            width={20}
+                            height={20}
+                            className='h-5 w-5 flex-shrink-0'
+                          />
+                          <span>{sub.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              {/* Exam Dropdown */}
+              <div className='mb-2'>
+                <div className='relative'>
+                  {isExamActive && (
+                    <div className='sidebar-indicator sidebar-indicator-quiz'></div>
+                  )}
+                  <button
+                    onClick={() => !collapsed && setExamOpen(!examOpen)}
+                    className={`w-full flex items-center ${
+                      collapsed ? 'justify-center px-2' : 'justify-between px-4'
+                    } py-3 rounded-md font-medium transition-all duration-200 ${
+                      isExamActive
+                        ? 'point-ask-gradient text-white shadow-sm'
+                        : 'text-white hover:bg-white/10'
+                    } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
+                    disabled={collapsed}
+                  >
+                    <span
+                      className={`flex items-center ${
+                        collapsed ? '' : 'gap-3'
+                      }`}
+                    >
+                      <Image
+                        src={examsWhite}
+                        alt='Exams'
+                        width={20}
+                        height={20}
+                        className='h-5 w-5 flex-shrink-0'
+                      />
+                      {!collapsed && <span className='text-sm'>Exams</span>}
+                    </span>
+                    {!collapsed && (
+                      <ChevronUpDownIcon open={examOpen || isExamActive} />
+                    )}
+                  </button>
+                </div>
+                {!collapsed && (examOpen || isExamActive) && (
+                  <div className='ml-6 mt-3 flex flex-col gap-2'>
+                    {examSubRoutes.map((sub) => {
+                      const isSubActive = pathname === sub.href;
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
                               ? 'bg-[#FFFFFF80] text-white shadow-sm'
                               : 'sidebar-item-inactive text-white hover:bg-white/20'

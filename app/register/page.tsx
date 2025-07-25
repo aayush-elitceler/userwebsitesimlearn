@@ -24,16 +24,7 @@ function RegisterComponent() {
 
       <div className="container mx-auto px-2 sm:px-4 z-10">
         <div className="flex flex-col lg:flex-row gap-8 items-center justify-center w-full">
-          {/* Left Section with Illustration */}
-          <div className="w-full lg:w-1/2 flex justify-center mb-8 lg:mb-0">
-            <div className="flex items-center justify-center w-full">
-              <img
-                src="/images/roboLogin.svg"
-                alt="AI Robot Illustration"
-                className="max-w-[320px] sm:max-w-[400px] md:max-w-[480px] w-full h-auto drop-shadow-2xl"
-              />
-            </div>
-          </div>
+       
 
           {/* Right Section with Form */}
           <div className="w-full lg:w-1/2 flex justify-center">

@@ -8,6 +8,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import LoaderOverlay from "@/components/ui/Loader";
 import { Poppins } from "next/font/google";
+import { Mail, Lock } from "lucide-react";
 const poppins = Poppins({ weight: ["400", "600", "700"], subsets: ["latin"] });
 
 export default function Login() {
@@ -44,14 +45,7 @@ export default function Login() {
       className={`${poppins.className} min-h-screen w-full flex flex-col md:flex-row bg-[#0B0B1F]`}
       style={{ backgroundImage: "url('/images/newBg.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
     >
-      {/* Left: Illustration */}
-      <div className="hidden md:flex flex-1 items-center justify-center relative z-10">
-        <img
-          src="/images/roboLogin.svg"
-          alt="AI Robot Illustration"
-          className="max-w-[480px] w-full h-auto drop-shadow-2xl"
-        />
-      </div>
+     
       {/* Mobile Illustration */}
       <div className="flex md:hidden w-full justify-center pt-10">
         <img
@@ -65,25 +59,37 @@ export default function Login() {
         <Card className="w-full max-w-md rounded-4xl shadow-xl  backdrop-blur-md border-0">
           <CardHeader className="text-left mt-6 md:mt-10">
             <div className="text-3xl md:text-4xl text-white font-bold mb-2 leading-tight">
-              SIGN IN TO YOUR <span className="text-[#007437]">ADVENTURE!</span>
+              SIGN IN TO YOUR <span className="text-[#0E7C42]">ADVENTURE!</span>
             </div>
             {/* <div className="text-gray-500 text-sm font-normal">Enter your E - mail Id and Password to get started</div> */}
           </CardHeader>
           <CardContent className="space-y-4 mt-2">
-            <Input
-              type="email"
-              placeholder="Enter your E - mail Id"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-white/80 p-6 rounded-md border border-[#EDF1F3] placeholder:text-gray-500 input-shadow"
+            {/* Email Input with Icon */}
+            <div className="flex items-center bg-white/80 rounded-md border border-[#EDF1F3] p-0 input-shadow mb-2">
+              <span className="pl-4 pr-2 text-gray-500">
+                <Mail size={24} />
+              </span>
+              <Input
+                type="email"
+                placeholder="Enter your E - mail Id"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 bg-transparent border-0 p-6 focus:ring-0 focus:outline-none"
               />
-            <Input
-              type="password"
-              placeholder="Enter your Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-white/80 p-6 rounded-md border border-[#EDF1F3] placeholder:text-gray-500"
-            />
+            </div>
+            {/* Password Input with Icon */}
+            <div className="flex items-center bg-white/80 rounded-md border border-[#EDF1F3] p-0 mb-2">
+              <span className="pl-4 pr-2 text-gray-500">
+                <Lock size={24} />
+              </span>
+              <Input
+                type="password"
+                placeholder="Enter your Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="flex-1 bg-transparent border-0 p-6 focus:ring-0 focus:outline-none"
+              />
+            </div>
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
             <Button
               onClick={handleLogin}
@@ -110,8 +116,8 @@ export default function Login() {
               <img src="/images/googleLogo.svg" alt="Google" className="w-5 h-5" />
               Google
             </Button>
-            <div className="text-center text-xs text-gray-400 mt-2">
-              By registering you with our <a href="#" className="text-[#007437] underline">Terms and Conditions</a>
+            <div className="text-center text-xs text-white mt-2">
+              By registering you with our <a href="#" className="text-[#127E45] underline">Terms and Conditions</a>
             </div>
           </CardContent>
         </Card>
