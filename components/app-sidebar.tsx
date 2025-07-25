@@ -119,7 +119,7 @@ const quizSubRoutes = [
   },
   {
     label: 'Generate Quiz',
-    href: '/quizes/generate',
+    href: '/quizes/takeQuiz',
     icon: quizWhite,
     bg: 'point-ask-gradient border-t border-white/30',
   },
@@ -187,7 +187,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       },
       {
         title: 'Generate Quiz',
-        url: '/quizes/generate',
+        url: '/quizes/takeQuiz',
         icon: quizWhite,
       },
       {

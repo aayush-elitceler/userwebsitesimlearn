@@ -31,6 +31,7 @@ export default function TakeExamPage() {
   const [autoSubmitted, setAutoSubmitted] = useState(false);
   const [lastViolationTime, setLastViolationTime] = useState<number>(0);
   const [violationArmed, setViolationArmed] = useState(true);
+  const [remainingTime, setRemainingTime] = useState<number | null>(null);
   console.log(warningCount , 'warningCount');
   
 
@@ -50,6 +51,7 @@ export default function TakeExamPage() {
           setExam(data.data.exam);
           setAnswers(Array(data.data.exam.questions.length).fill(""));
           setStartedAt(new Date().toISOString());
+          setRemainingTime(data.data.exam.timeLimitMinutes * 60);
         }
       } finally {
         setLoading(false);
@@ -57,6 +59,32 @@ export default function TakeExamPage() {
     }
     if (examId) fetchExam();
   }, [examId]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (remainingTime === null || loading || submitting || showFinalViolationModal) return;
+    if (remainingTime <= 0) {
+      if (!autoSubmitted) {
+        setAutoSubmitted(true);
+        handleSubmit(true, true); // auto-submit
+        setShowFinalViolationModal(true);
+      }
+      return;
+    }
+    const interval = setInterval(() => {
+      setRemainingTime((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line
+  }, [remainingTime, loading, submitting, showFinalViolationModal]);
+
+  // Format timer as MM:SS
+  function formatTime(secs: number | null) {
+    if (secs === null) return "--:--";
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }
 
   useEffect(() => {
     function handleViolation(reason: string) {
@@ -151,7 +179,7 @@ export default function TakeExamPage() {
         body: JSON.stringify(body),
       });
       if (!isFinalViolation) {
-        router.push("/exams");
+        router.push(`/exams/reports/${examId}`);
       }
       // else: wait for user to click Back to dashboard
     } finally {
@@ -159,12 +187,25 @@ export default function TakeExamPage() {
     }
   };
 
+  // Make the exam screen fullscreen and prevent scrolling
+  useEffect(() => {
+    // Add styles to make body unscrollable and fullscreen
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.height = "100%";
+    document.body.style.height = "100%";
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.height = "";
+      document.body.style.height = "";
+    };
+  }, []);
+
   if (loading || !exam) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Loading exam...</div>;
+    return <div className="fixed inset-0 flex items-center justify-center bg-[#181c24] text-white w-screen h-screen">Loading exam...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#181c24] py-8 px-2 md:px-0 flex flex-col items-center">
+    <div className="fixed inset-0 min-h-screen min-w-screen bg-[#181c24] py-8 px-2 md:px-0 flex flex-col items-center z-10">
       {/* Warning Modal */}
       {showWarning && warningCount > 0 && warningCount < 5 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
@@ -211,7 +252,12 @@ export default function TakeExamPage() {
           </div>
         </div>
       )}
-      <div className="w-full max-w-3xl">
+      {/* Timer Bar */}
+      <div className="w-full max-w-3xl flex justify-between items-center mb-4 sticky top-0 z-20">
+        <div className="text-green-400 font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
+        <div className="text-gray-400 text-sm">(Exam will auto-submit when time runs out)</div>
+      </div>
+      <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-32px)]">
         <div className="mb-4">
           <div className="text-green-400 font-semibold">Difficulty: {exam.difficulty?.charAt(0).toUpperCase() + exam.difficulty?.slice(1)}</div>
           <div className="text-2xl font-bold text-white mb-2">{exam.title}</div>

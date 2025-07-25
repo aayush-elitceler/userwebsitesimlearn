@@ -240,13 +240,17 @@ function guessSubjectFromTopic(topic?: string): string {
 }
 
 export default function QuizesPage() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  // Remove old quizzes/submissions state
+  // const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  // const [submissions, setSubmissions] = useState<Submission[]>([]);
+  // const [submissionsLoading, setSubmissionsLoading] = useState(true);
+  const [userExams, setUserExams] = useState<Quiz[]>([]);
+  const [teacherExams, setTeacherExams] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [submissionsLoading, setSubmissionsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    async function fetchQuizzes() {
+    async function fetchExams() {
       setLoading(true);
       try {
         const token = getTokenFromCookie();
@@ -263,8 +267,11 @@ export default function QuizesPage() {
           }
         );
         const data = await res.json();
-        if (data.success && data.data && data.data.exams) {
-          setQuizzes(data.data.exams);
+        if (data.success && data.data) {
+          const userGen = data.data.userGeneratedExams || {};
+          const teacherGen = data.data.teacherAssignedExams || {};
+          setUserExams([...(userGen.upcoming || []), ...(userGen.previous || [])]);
+          setTeacherExams([...(teacherGen.upcoming || []), ...(teacherGen.previous || [])]);
         }
       } catch (e) {
         // handle error
@@ -272,47 +279,8 @@ export default function QuizesPage() {
         setLoading(false);
       }
     }
-    fetchQuizzes();
+    fetchExams();
   }, []);
-
-  useEffect(() => {
-    async function fetchSubmissions() {
-      setSubmissionsLoading(true);
-      try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setSubmissionsLoading(false);
-          return;
-        }
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/submissions`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
-        if (data.success && data.data && data.data.submissions) {
-          setSubmissions(data.data.submissions);
-        }
-      } catch (e) {
-        // handle error
-      } finally {
-        setSubmissionsLoading(false);
-      }
-    }
-    fetchSubmissions();
-  }, []);
-
-  const upcoming = quizzes.filter((q) => !q.completed);
-  // Sort upcoming exams in reverse order (most recent first)
-  const sortedUpcoming = [...upcoming].sort((a, b) => {
-    const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return bDate - aDate;
-  });
-  const router = useRouter();
 
   return (
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]">
@@ -320,66 +288,57 @@ export default function QuizesPage() {
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-3xl font-bold text-white">Exam Preparation</h2>
         </div>
-       
         <div className="text-lg text-white mb-8">
-        AI-powered preparation to help you perform your best.{" "}
+        AI-powered preparation to help you perform your best.{' '}
           <span className="align-middle">🏅✨</span>
         </div>
+        {/* User Generated Exams Section */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-white">Upcoming Exams</h3>
-          <a
-            href="#"
-            className="text-white font-semibold flex items-center gap-1 hover:underline"
-          >
-            View all <span>→</span>
-          </a>
+          <h3 className="text-xl font-bold text-white">Your Exams</h3>
         </div>
         <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
           <div className="flex flex-row flex-nowrap gap-8 w-max">
             {loading ? (
               <div className="text-white">Loading...</div>
-            ) : sortedUpcoming.length === 0 ? (
-              <div className="text-white">No upcoming Exams.</div>
+            ) : userExams.length === 0 ? (
+              <div className="text-white">No user-generated exams found.</div>
             ) : (
-              sortedUpcoming.map((quiz) => (
+              userExams.map((quiz) => (
                 <ExamCard
                   exam={{
                     ...quiz,
                     subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
+                    dueDate: quiz.assignmentDetails?.endTime || quiz.createdAt,
                   }}
                   key={quiz.id}
                   onStart={() => router.push(`/exams/take/${quiz.id}`)}
+                  buttonText={quiz.assignmentDetails && 'completed' in quiz.assignmentDetails && quiz.assignmentDetails.completed ? 'Retake exam' : 'Take exam'}
                 />
               ))
             )}
           </div>
         </div>
+        {/* Teacher Assigned Exams Section */}
         <div className="flex items-center justify-between mb-4 mt-8">
-          <h3 className="text-xl font-bold text-white">Previous Exams</h3>
-          <a
-            href="#"
-            className="text-white font-semibold flex items-center gap-1 hover:underline"
-          >
-            View all <span>→</span>
-          </a>
+          <h3 className="text-xl font-bold text-white">Teacher Assigned Exams</h3>
         </div>
         <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
-          <div className="flex flex-row flex-nowrap gap-8 w-max ">
-            {submissionsLoading ? (
-              <div className="text-white">Loading previous quizzes...</div>
-            ) : submissions.length === 0 ? (
-              <div className="text-white">No previous quizzes.</div>
+          <div className="flex flex-row flex-nowrap gap-8 w-max">
+            {loading ? (
+              <div className="text-white">Loading...</div>
+            ) : teacherExams.length === 0 ? (
+              <div className="text-white">No teacher-assigned exams found.</div>
             ) : (
-              submissions.map((submission) => (
+              teacherExams.map((quiz) => (
                 <ExamCard
-                  key={submission.id}
                   exam={{
-                    ...submission.quiz,
-                    subject: submission.quiz.subject || guessSubjectFromTopic(submission.quiz.topic),
-                    dueDate: submission.quiz.assignmentDetails?.endTime || submission.submittedAt,
+                    ...quiz,
+                    subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
+                    dueDate: quiz.assignmentDetails?.endTime || quiz.createdAt,
                   }}
-                  onStart={() => { /* handle retake logic here */ }}
-                  buttonText="Retake exam"
+                  key={quiz.id}
+                  onStart={() => router.push(`/exams/take/${quiz.id}`)}
+                  buttonText={quiz.assignmentDetails && 'completed' in quiz.assignmentDetails && quiz.assignmentDetails.completed ? 'Retake exam' : 'Take exam'}
                 />
               ))
             )}

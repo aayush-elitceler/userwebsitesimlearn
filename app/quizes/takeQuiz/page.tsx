@@ -4,6 +4,18 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 
 // Update the Quiz type to match API
+interface Teacher {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
+interface Question {
+  id: string;
+  questionText: string;
+  // Add other fields as needed
+}
+
 interface Quiz {
   id: string;
   title: string;
@@ -16,10 +28,13 @@ interface Quiz {
   completed: boolean;
   score?: number;
   date?: string;
-  questions?: number;
+  questions?: Question[];
   time?: string;
-  teacher?: string;
+  teacher?: string | Teacher;
   subject?: string;
+  assignmentDetails?: {
+    endTime: string;
+  };
 }
 type Submission = {
   id: string;
@@ -41,6 +56,64 @@ const subjectColors: Record<string, string> = {
   EVS: "#E6AF3F",
   Default: "#E6AF3F",
 };
+
+function ExamCard({
+  exam,
+  onStart,
+  buttonText = "Take exam",
+}: {
+  exam: {
+    title: string;
+    subject?: string;
+    instructions?: string;
+    dueDate?: string; // ISO string
+    description?: string;
+  };
+  onStart?: () => void;
+  buttonText?: string;
+}) {
+  return (
+    <div className="flex flex-row bg-[#393e3a] rounded-2xl p-8 mb-6 shadow-lg max-w-3xl w-full items-center">
+      <div className="flex-1">
+        <div className="text-green-400 font-semibold mb-1">
+          Subject: {exam.subject || "N/A"}
+        </div>
+        <div className="text-2xl font-bold text-white mb-2">{exam.title}</div>
+        <div className="text-gray-200 mb-3">
+          {exam.description || exam.instructions}
+        </div>
+        <div className="text-gray-300 mb-4 flex items-center gap-2">
+          <span role="img" aria-label="clock">🕒</span>
+          Due date:{" "}
+          {exam.dueDate
+            ? new Date(exam.dueDate).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "-"}
+        </div>
+        <button
+          className="bg-[#007437] text-white rounded-lg px-6 py-2 font-semibold shadow hover:bg-green-700 transition"
+          onClick={onStart}
+        >
+          {buttonText}
+        </button>
+      </div>
+      <div className="ml-8 flex-shrink-0">
+        <div
+          className="rounded-xl flex items-center justify-center w-56 h-36 text-white text-2xl font-bold shadow-lg"
+          style={{
+            background: subjectColors[exam.subject || "Default"],
+            minWidth: 180,
+          }}
+        >
+          {exam.subject || "Subject"}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function QuizCard({
   quiz,
@@ -92,16 +165,22 @@ function QuizCard({
           ) : (
             <>
               <span className="flex items-center gap-1">
-                <span>📝</span>Questions: {quiz.questions || "-"}
+                <span>📝</span>Questions: {quiz.questions?.length ?? "-"}
               </span>
               <span className="flex items-center gap-1">
                 <span>⏰</span>{quiz.time || `${quiz.timeLimitMinutes} mins`}
               </span>
               <span className="flex items-center gap-1">
-                <span>👨‍🏫</span>{quiz.teacher || "-"}
+                <span>👨‍🏫</span>
+                {quiz.teacher
+                  ? typeof quiz.teacher === "string"
+                    ? quiz.teacher
+                    : quiz.teacher.firstName || quiz.teacher.lastName || "-"
+                  : "-"}
               </span>
             </>
           )}
+          
         </div>
         {previous ? (
           <button
@@ -115,7 +194,7 @@ function QuizCard({
             className="bg-[#1ec773] text-black rounded-full px-6 py-2 font-semibold mt-2 shadow hover:bg-[#16a34a] transition"
             onClick={() => router.push(`/quizes/${quiz.id}/start`)}
           >
-            Start Quiz
+            Start Exam
           </button>
         )}
       </div>
@@ -146,13 +225,29 @@ function getTokenFromCookie() {
   }
 }
 
+// Helper to guess subject from topic
+function guessSubjectFromTopic(topic?: string): string {
+  if (!topic) return "Default";
+  const t = topic.toLowerCase();
+  if (t.includes("math")) return "Maths";
+  if (t.includes("science")) return "Science";
+  if (t.includes("english") || t.includes("grammar")) return "English";
+  if (t.includes("evs")) return "EVS";
+  if (t.includes("bio") || t.includes("plant") || t.includes("food")) return "Science";
+  if (t.includes("motion") || t.includes("law")) return "Science";
+  // Add more rules as needed
+  return "Default";
+}
+
 export default function QuizesPage() {
-  const [upcomingQuizzes, setUpcomingQuizzes] = useState<Quiz[]>([]);
-  const [previousQuizzes, setPreviousQuizzes] = useState<Quiz[]>([]);
+  const [userQuizzes, setUserQuizzes] = useState<Quiz[]>([]);
+  const [institutionQuizzes, setInstitutionQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // Add state for submissions and loading
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     async function fetchQuizzes() {
@@ -172,10 +267,21 @@ export default function QuizesPage() {
           }
         );
         const data = await res.json();
-        if (data.success && data.data && data.data.userGeneratedQuizzes) {
-          const userObj = data.data.userGeneratedQuizzes;
-          setUpcomingQuizzes(Array.isArray(userObj.upcoming) ? userObj.upcoming : []);
-          setPreviousQuizzes(Array.isArray(userObj.previous) ? userObj.previous : []);
+        if (data.success && data.data) {
+          // Combine upcoming and previous for user quizzes
+          const userObj = data.data.userGeneratedQuizzes || {};
+          const userCombined = [
+            ...(Array.isArray(userObj.upcoming) ? userObj.upcoming : []),
+            ...(Array.isArray(userObj.previous) ? userObj.previous : []),
+          ];
+          setUserQuizzes(userCombined);
+          // Combine upcoming and previous for institution quizzes
+          const instObj = data.data.institutionGeneratedQuizzes || {};
+          const instCombined = [
+            ...(Array.isArray(instObj.upcoming) ? instObj.upcoming : []),
+            ...(Array.isArray(instObj.previous) ? instObj.previous : []),
+          ];
+          setInstitutionQuizzes(instCombined);
         }
       } catch (e) {
         // handle error
@@ -186,6 +292,7 @@ export default function QuizesPage() {
     fetchQuizzes();
   }, []);
 
+  // Fetch submissions on mount
   useEffect(() => {
     async function fetchSubmissions() {
       setSubmissionsLoading(true);
@@ -219,59 +326,25 @@ export default function QuizesPage() {
   return (
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-white mb-2">My Quizzes</h2>
-        <button
-          className="fixed top-6 right-6 z-50 flex items-center gap-2 bg-[#007437] hover:bg-green-700 text-white font-semibold px-5 py-3 rounded-lg shadow transition"
-          onClick={() => router.push("/quizes/generate")}
-        >
-          <Plus size={20} />
-          Create Quiz        
-        </button>
-        <div className="text-lg text-white mb-8">
-          🎯 Take quizzes, earn badges, and become a quiz champ!{" "}
-          <span className="align-middle">🏅✨</span>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-3xl font-bold text-white">Quiz Preparation</h2>
         </div>
-        {/* Upcoming Quizzes */}
+        <div className="text-lg text-white mb-8">
+          AI-powered quizzes to help you perform your best. <span className="align-middle">🏅✨</span>
+        </div>
+        {/* User Generated Quizzes */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-white">Upcoming quizzes</h3>
-          <a
-            href="#"
-            className="text-white font-semibold flex items-center gap-1 hover:underline"
-          >
-            View all <span>→</span>
-          </a>
+          <h3 className="text-xl font-bold text-white">Your Quizzes</h3>
         </div>
         <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
           <div className="flex flex-row flex-nowrap gap-8 w-max">
             {loading ? (
               <div className="text-white">Loading...</div>
-            ) : upcomingQuizzes.length === 0 ? (
-              <div className="text-white">No upcoming quizzes.</div>
+            ) : userQuizzes.length === 0 ? (
+              <div className="text-white">No user-generated quizzes.</div>
             ) : (
-              upcomingQuizzes.map((quiz) => (
-                <QuizCard quiz={quiz} key={quiz.id} />
-              ))
-            )}
-          </div>
-        </div>
-        {/* Previous Quizzes */}
-        <div className="flex items-center justify-between mb-4 mt-8">
-          <h3 className="text-xl font-bold text-white">Previous quizzes</h3>
-          <a
-            href="#"
-            className="text-white font-semibold flex items-center gap-1 hover:underline"
-          >
-            View all <span>→</span>
-          </a>
-        </div>
-        <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
-          <div className="flex flex-row flex-nowrap gap-8 w-max ">
-            {loading ? (
-              <div className="text-white">Loading previous quizzes...</div>
-            ) : previousQuizzes.length === 0 ? (
-              <div className="text-white">No previous quizzes.</div>
-            ) : (
-              previousQuizzes.map((quiz) => {
+              userQuizzes.map((quiz) => {
+                // Find the submission for this quiz (if any)
                 const submission = submissions.find((s) => s.quizId === quiz.id);
                 return (
                   <QuizCard
@@ -284,6 +357,27 @@ export default function QuizesPage() {
                   />
                 );
               })
+            )}
+          </div>
+        </div>
+        {/* Institution Generated Quizzes */}
+        <div className="flex items-center justify-between mb-4 mt-8">
+          <h3 className="text-xl font-bold text-white">Institution Quizzes</h3>
+        </div>
+        <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
+          <div className="flex flex-row flex-nowrap gap-8 w-max ">
+            {loading ? (
+              <div className="text-white">Loading...</div>
+            ) : institutionQuizzes.length === 0 ? (
+              <div className="text-white">No institution-generated quizzes.</div>
+            ) : (
+              institutionQuizzes.map((quiz) => (
+                <QuizCard
+                  quiz={quiz}
+                  key={quiz.id}
+                  previous={quiz.completed}
+                />
+              ))
             )}
           </div>
         </div>

@@ -147,10 +147,36 @@ export default function GenerateQuizPage() {
           </div>
           </div>
       )}
-      <div className="max-w-4xl w-full bg-[#222c24] rounded-2xl shadow-lg p-8">
+      <div className="max-w-4xl w-full bg-transparent bg-white/20 rounded-2xl shadow-lg p-8">
         <h2 className="text-2xl font-bold text-white mb-2">Create Quiz</h2>
         <hr className="border-gray-600 mb-6" />
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          {/* Grade */}
+          <div className="flex flex-col">
+            <label className="text-white mb-1 font-semibold">Grade</label>
+            <input
+              type="number"
+              value={grade}
+              onChange={e => setGrade(Number(e.target.value))}
+              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+              min={1}
+              max={12}
+              required
+            />
+          </div>
+          {/* Persona */}
+          <div className="flex flex-col">
+            <label className="text-white mb-1 font-semibold">Persona</label>
+            <select
+              value={persona}
+              onChange={e => setPersona(e.target.value)}
+              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+              required
+            >
+              <option value="teacher">Teacher</option>
+              <option value="student">Student</option>
+            </select>
+          </div>
           {/* Topic */}
           <div className="flex flex-col">
             <label className="text-white mb-1 font-semibold">Topic</label>
@@ -159,7 +185,7 @@ export default function GenerateQuizPage() {
               value={topic}
               onChange={e => setTopic(e.target.value)}
               className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
-              placeholder="Fractions, Photosynthesis"
+              placeholder="make a quiz on force and motion for physics."
               required
             />
           </div>
@@ -176,16 +202,6 @@ export default function GenerateQuizPage() {
               {difficulties.map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
             </select>
           </div>
-          {/* Subject (disabled, for UI match) */}
-          <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Subject</label>
-            <select
-              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 opacity-60 cursor-not-allowed"
-              disabled
-            >
-              <option>Math, Science, EVS, English</option>
-            </select>
-          </div>
           {/* Number of Questions */}
           <div className="flex flex-col">
             <label className="text-white mb-1 font-semibold">No. of Questions</label>
@@ -198,16 +214,6 @@ export default function GenerateQuizPage() {
               <option value="">3-10</option>
               {numQuestionsOptions.map(n => <option key={n} value={n}>{n}</option>)}
             </select>
-          </div>
-          {/* Due Date (disabled, for UI match) */}
-          <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Due Date</label>
-            <input
-              type="text"
-              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 opacity-60 cursor-not-allowed"
-              placeholder="(e.g., 27 June 2025)"
-              disabled
-            />
           </div>
           {/* Time Limit */}
           <div className="flex flex-col">
