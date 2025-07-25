@@ -314,6 +314,8 @@ export default function QuizesPage() {
   });
   const router = useRouter();
 
+  
+
   return (
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]">
       <div className="max-w-6xl mx-auto">
