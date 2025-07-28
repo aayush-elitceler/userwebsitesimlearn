@@ -64,7 +64,7 @@ export default function QuizAnswersPage() {
   if (!result) return <div className="text-white p-8">Result not found.</div>;
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-white mb-2">{result.quizTitle}</h2>
         <div className="text-lg text-white mb-4">

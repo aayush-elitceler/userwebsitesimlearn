@@ -51,7 +51,7 @@ export default function QuizReportPage() {
   // Calculate performance, etc. as needed
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-white mb-2">Assessment report</h2>
         <div className="text-white mb-2">

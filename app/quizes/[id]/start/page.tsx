@@ -210,7 +210,7 @@ export default function QuizStartPage() {
   // If there's a critical error, show a simple fallback
   if (hasError) {
     return (
-      <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]'>
+      <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-white'>
         <div className='max-w-3xl mx-auto'>
           <div className='text-white text-center py-20'>
             <h1 className='text-2xl font-bold mb-4'>Quiz Page Error</h1>
@@ -232,7 +232,7 @@ export default function QuizStartPage() {
 
   if (!mounted) {
     return (
-      <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]'>
+      <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-white'>
         <div className='max-w-3xl mx-auto'>
           <div className='text-white text-center py-20 text-lg'>Loading...</div>
         </div>
@@ -241,7 +241,7 @@ export default function QuizStartPage() {
   }
 
   return (
-    <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]'>
+    <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-white'>
       <div className='max-w-3xl mx-auto'>
         {loading ? (
           <div className='text-white text-center py-20 text-lg'>

@@ -9,6 +9,9 @@ import Cookies from 'js-cookie';
 import Logo from '@/public/images/logoAiDash.svg';
 import book from '@/public/images/book.png';
 import quizWhite from '@/public/images/quiz.svg';
+import { LayoutDashboard } from 'lucide-react';
+import { Pointer } from 'lucide-react';
+
 import projectsWhite from '@/public/images/project.svg';
 import progressWhite from '@/public/images/progress.svg';
 import examsWhite from '@/public/images/exams.svg';
@@ -16,24 +19,8 @@ import { Nunito_Sans } from 'next/font/google';
 import { MicIcon } from 'lucide-react';
 import '../app/globals.css';
 
-const DashboardIcon = ({ className = 'h-5 w-5', fill = 'white' }) => (
-  <svg
-    width='17'
-    height='17'
-    viewBox='0 0 17 17'
-    fill='none'
-    xmlns='http://www.w3.org/2000/svg'
-    className={className}
-  >
-    <path
-      d='M5.81494 0.616895H2.46768C1.31543 0.616895 0.378418 1.55391 0.378418 2.70615V14.2936C0.378418 15.4458 1.31543 16.3828 2.46768 16.3828H5.81494C6.96719 16.3828 7.9042 15.4458 7.9042 14.2936V2.70801C7.9042 1.55576 6.96719 0.616895 5.81494 0.616895ZM2.46768 15.2436C1.94443 15.2436 1.51768 14.8168 1.51768 14.2936V2.70801C1.51768 2.18477 1.94443 1.75801 2.46768 1.75801H5.81494C6.33818 1.75801 6.76494 2.18477 6.76494 2.70801V14.2936C6.76494 14.8168 6.33818 15.2436 5.81494 15.2436H2.46768ZM14.5932 7.93115H11.2459C10.0937 7.93115 9.15664 8.86816 9.15664 10.0204V14.2936C9.15664 15.4458 10.0937 16.3828 11.2459 16.3828H14.5932C15.7454 16.3828 16.6824 15.4458 16.6824 14.2936V10.0204C16.6824 8.86816 15.7454 7.93115 14.5932 7.93115ZM11.2478 15.2436C10.7245 15.2436 10.2978 14.8168 10.2978 14.2936V10.0204C10.2978 9.49717 10.7245 9.07041 11.2478 9.07041H14.595C15.1183 9.07041 15.545 9.49717 15.545 10.0204V14.2936C15.545 14.8168 15.1183 15.2436 14.595 15.2436H11.2478Z'
-      fill={fill}
-    />
-    <path
-      d='M14.5933 0.616991H11.246C10.0937 0.616991 9.15674 1.554 9.15674 2.70625V4.57285C9.15674 5.7251 10.0937 6.66211 11.246 6.66211H14.5933C15.7455 6.66211 16.6825 5.7251 16.6825 4.57285V2.70625C16.6825 1.55586 15.7455 0.616991 14.5933 0.616991ZM11.2479 5.52285C10.7246 5.52285 10.2979 5.09609 10.2979 4.57285V2.70625C10.2979 2.18301 10.7246 1.75625 11.2479 1.75625H14.5951C15.1184 1.75625 15.5451 2.18301 15.5451 2.70625V4.57285C15.5451 5.09609 15.1184 5.52285 14.5951 5.52285H11.2479Z'
-      fill={fill}
-    />
-  </svg>
+const DashboardIcon = ({ color = '#222' }) => (
+  <LayoutDashboard style={{ color }} />
 );
 
 const nunitoSans = Nunito_Sans({
@@ -255,7 +242,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   console.log(mobileOpen);
 
   return (
-    <div className='bg-black'>
+    <div >
       {/* Mobile Hamburger Button */}
       <button
         className='lg:hidden fixed top-4 left-4 z-50 point-ask-gradient text-black rounded-full p-2 shadow-lg focus:outline-none'
@@ -278,11 +265,11 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       {mobileOpen && (
         <>
           <div
-            className='fixed inset-0 bg-black/40 z-[9998] lg:hidden'
+            className='fixed  lg:hidden'
             onClick={() => setMobileOpen(false)}
           />{' '}
           <SidebarContent
-            className={`bg-[black] h-screen fixed left-0 top-0 z-[9999] transition-transform duration-300 flex flex-col justify-between w-64 overflow-hidden
+            className={`bg-white h-screen fixed left-0 top-0 z-[9999] transition-transform duration-300 flex flex-col justify-between w-64 overflow-hidden
             ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden
             ${nunitoSans.className} overflow-y-auto scrollbar-hide`}
             style={{ width: '16rem', minWidth: '16rem', maxWidth: '16rem' }}
@@ -324,12 +311,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 relative ${
                       pathname === '/'
-                        ? 'point-ask-gradient text-white shadow-sm'
-                        : 'text-white hover:bg-white/10'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
                     }`}
                   >
                     {' '}
-                    <DashboardIcon className='h-5 w-5 flex-shrink-0' />{' '}
+                    <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />{' '}
                     <span className='text-sm'>Dashboard</span>{' '}
                   </Link>{' '}
                 </div>
@@ -348,7 +335,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       }`}
                     >
                       <span className='flex items-center gap-3'>
-                        <AiIcon />
+                        {/* <MicIcon style={{ color: isAiTutorActive ? '#fff' : '#222' }} /> */}
                         <span className='text-sm'>AI Tutor</span>
                       </span>
                       <ChevronUpDownIcon open={aiOpen || isAiTutorActive} />
@@ -364,8 +351,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                                : 'sidebar-item-inactive text-white hover:bg-white/20'
+                                ? 'bg-[#FFB12133] text-[#FF4949]'
+                                : 'text-[#222] hover:bg-[#FFB12133]'
                             }`}
                           >
                             <div className='flex-shrink-0'>{sub.icon}</div>
@@ -391,13 +378,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       }`}
                     >
                       <span className='flex items-center gap-3'>
-                        <Image
-                          src='/images/pointWhite.svg'
-                          alt=''
-                          width={20}
-                          height={20}
-                          className='h-5 w-5 flex-shrink-0'
-                        />
+                      
                         <span className='text-sm'>Point & Ask</span>
                       </span>
                       <ChevronUpDownIcon open={pointOpen || isPointAskActive} />
@@ -413,8 +394,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                                : 'sidebar-item-inactive text-white hover:bg-white/20'
+                                ? 'bg-[#FFB12133] text-[#FF4949]'
+                                : 'text-[#222] hover:bg-[#FFB12133]'
                             }`}
                           >
                             <div className='flex-shrink-0'>{sub.icon}</div>
@@ -445,7 +426,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           alt='Quiz'
                           width={20}
                           height={20}
-                          className='h-5 w-5 flex-shrink-0'
+                          className={`h-5 w-5 flex-shrink-0 ${isQuizActive ? '' : 'brightness-0'}`}
                         />
                         <span className='text-sm'>Quizzes</span>
                       </span>
@@ -462,8 +443,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                                : 'sidebar-item-inactive text-white hover:bg-white/20'
+                                ? 'bg-[#FFB12133] text-[#FF4949]'
+                                : 'text-[#222] hover:bg-[#FFB12133]'
                             }`}
                           >
                             <Image
@@ -471,7 +452,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                               alt={sub.label}
                               width={20}
                               height={20}
-                              className='h-5 w-5 flex-shrink-0'
+                              className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
                             />
                             <span>{sub.label}</span>
                           </Link>
@@ -489,8 +470,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                                : 'sidebar-item-inactive text-white hover:bg-white/20'
+                                ? 'bg-[#FFB12133] text-[#FF4949]'
+                                : 'text-[#222] hover:bg-[#FFB12133]'
                             }`}
                           >
                             <Image
@@ -498,7 +479,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                               alt={sub.label}
                               width={20}
                               height={20}
-                              className='h-5 w-5 flex-shrink-0'
+                              className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
                             />
                             <span>{sub.label}</span>
                           </Link>
@@ -527,7 +508,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           alt='Exams'
                           width={20}
                           height={20}
-                          className='h-5 w-5 flex-shrink-0'
+                          className={`h-5 w-5 flex-shrink-0 ${isExamActive ? '' : 'brightness-0'}`}
                         />
                         <span className='text-sm'>Exams</span>
                       </span>
@@ -544,8 +525,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                                : 'sidebar-item-inactive text-white hover:bg-white/20'
+                                ? 'bg-[#FFB12133] text-[#FF4949]'
+                                : 'text-[#222] hover:bg-[#FFB12133]'
                             }`}
                           >
                             <Image
@@ -553,7 +534,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                               alt={sub.label}
                               width={20}
                               height={20}
-                              className='h-5 w-5 flex-shrink-0'
+                              className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
                             />
                             <span>{sub.label}</span>
                           </Link>
@@ -591,14 +572,14 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={item.url}
                           className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                             isActive
-                              ? 'point-ask-gradient text-white shadow-sm'
-                              : 'text-white hover:bg-white/10'
+                              ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                              : 'text-[#222] hover:bg-[#FFB12133]'
                           }`}
                         >
                           <Image
                             src={item.icon}
                             alt={item.title}
-                            className='h-5 w-5 flex-shrink-0'
+                            className={`h-5 w-5 flex-shrink-0 ${isActive ? '' : 'brightness-0'}`}
                           />
                           <span className='text-sm'>{item.title}</span>
                         </Link>
@@ -630,7 +611,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       alt='Mock Interview'
                       width={20}
                       height={20}
-                      className='h-5 w-5 flex-shrink-0'
+                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/mock-interview' ? '' : 'brightness-0'}`}
                     />
                     <span className='text-sm'>Mock Interview</span>
                   </Link>
@@ -652,7 +633,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       alt='Onboard Job (AI)'
                       width={20}
                       height={20}
-                      className='h-5 w-5 flex-shrink-0'
+                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/onboard-job' ? '' : 'brightness-0'}`}
                     />
                     <span className='text-sm'>Onboard Job (AI)</span>
                   </Link>
@@ -666,7 +647,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       {/* Sidebar for desktop (always visible) */}
       <Sidebar>
         <SidebarContent
-          className={`bg-[black] h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col justify-between overflow-hidden ${
+          className={`bg-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col justify-between overflow-hidden ${
             collapsed ? 'w-16' : 'w-64'
           } ${
             nunitoSans.className
@@ -725,12 +706,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                   } py-3 rounded-md font-medium transition-all duration-200 relative ${
                     pathname === '/'
-                      ? 'point-ask-gradient text-white shadow-sm'
-                      : 'text-white hover:bg-white/10'
+                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                      : 'text-[#222] hover:bg-[#FFB12133]'
                   }`}
                 >
                   {' '}
-                  <DashboardIcon className='h-5 w-5 flex-shrink-0' />{' '}
+                  <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />{' '}
                   {!collapsed && <span className='text-sm'>Dashboard</span>}{' '}
                 </Link>{' '}
               </div>
@@ -746,8 +727,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isAiTutorActive
-                        ? 'point-ask-gradient text-white shadow-sm'
-                        : 'text-white hover:bg-white/10'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-black hover:bg-white/10'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -756,7 +737,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         collapsed ? '' : 'gap-3'
                       }`}
                     >
-                      <AiIcon />
+                      <MicIcon style={{ color: isAiTutorActive ? '#fff' : '#222' }} />
                       {!collapsed && <span className='text-sm'>AI Tutor</span>}
                     </span>
                     {!collapsed && (
@@ -774,8 +755,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                              : 'sidebar-item-inactive text-white hover:bg-white/20'
+                              ? 'bg-[#FFB12133] text-[#FF4949]'
+                              : 'text-[#222] hover:bg-[#FFB12133]'
                           }`}
                         >
                           <div className='flex-shrink-0'>{sub.icon}</div>
@@ -798,8 +779,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isPointAskActive
-                        ? 'point-ask-gradient text-white shadow-sm'
-                        : 'text-white hover:bg-white/10'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-black hover:bg-white/10'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -808,13 +789,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         collapsed ? '' : 'gap-3'
                       }`}
                     >
-                      <Image
-                        src='/images/pointWhite.svg'
-                        alt=''
-                        width={20}
-                        height={20}
-                        className='h-5 w-5 flex-shrink-0'
-                      />
+                      <Pointer style={{ color: isPointAskActive ? '#fff' : '#222' }} />
                       {!collapsed && (
                         <span className='text-sm'>Point & Ask</span>
                       )}
@@ -834,8 +809,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                              : 'sidebar-item-inactive text-white hover:bg-white/20'
+                              ? 'bg-[#FFB12133] text-[#FF4949]'
+                              : 'text-[#222] hover:bg-[#FFB12133]'
                           }`}
                         >
                           <div className='flex-shrink-0'>{sub.icon}</div>
@@ -858,8 +833,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isQuizActive
-                        ? 'point-ask-gradient text-white shadow-sm'
-                        : 'text-white hover:bg-white/10'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-black hover:bg-white/10'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -873,7 +848,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         alt='Quiz'
                         width={20}
                         height={20}
-                        className='h-5 w-5 flex-shrink-0'
+                        className={`h-5 w-5 flex-shrink-0 ${isQuizActive ? '' : 'brightness-0'}`}
                       />
                       {!collapsed && <span className='text-sm'>Quizzes</span>}
                     </span>
@@ -892,8 +867,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                              : 'sidebar-item-inactive text-white hover:bg-white/20'
+                              ? 'bg-[#FFB12133] text-[#FF4949]'
+                              : 'text-[#222] hover:bg-[#FFB12133]'
                           }`}
                         >
                           <Image
@@ -901,7 +876,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             alt={sub.label}
                             width={20}
                             height={20}
-                            className='h-5 w-5 flex-shrink-0'
+                            className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
                           />
                           <span>{sub.label}</span>
                         </Link>
@@ -922,8 +897,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isExamActive
-                        ? 'point-ask-gradient text-white shadow-sm'
-                        : 'text-white hover:bg-white/10'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-black hover:bg-white/10'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -937,7 +912,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         alt='Exams'
                         width={20}
                         height={20}
-                        className='h-5 w-5 flex-shrink-0'
+                        className={`h-5 w-5 flex-shrink-0 ${isExamActive ? '' : 'brightness-0'}`}
                       />
                       {!collapsed && <span className='text-sm'>Exams</span>}
                     </span>
@@ -956,8 +931,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFFFFF80] text-white shadow-sm'
-                              : 'sidebar-item-inactive text-white hover:bg-white/20'
+                              ? 'bg-[#FFB12133] text-[#FF4949]'
+                              : 'text-[#222] hover:bg-[#FFB12133]'
                           }`}
                         >
                           <Image
@@ -965,7 +940,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             alt={sub.label}
                             width={20}
                             height={20}
-                            className='h-5 w-5 flex-shrink-0'
+                            className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
                           />
                           <span>{sub.label}</span>
                         </Link>
@@ -1003,14 +978,14 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                         } py-3 rounded-md font-medium transition-all duration-200 ${
                           isActive
-                            ? 'point-ask-gradient text-white shadow-sm'
-                            : 'text-white hover:bg-white/10'
+                            ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                            : 'text-[#222] hover:bg-[#FFB12133]'
                         }`}
                       >
                         <Image
                           src={item.icon}
                           alt={item.title}
-                          className='h-5 w-5 flex-shrink-0'
+                          className={`h-5 w-5 flex-shrink-0 ${isActive ? '' : 'brightness-0'}`}
                         />
                         {!collapsed && (
                           <span className='text-sm'>{item.title}</span>
@@ -1040,8 +1015,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                   } py-3 rounded-md font-medium transition-all duration-200 ${
                     pathname === '/mock-interview'
-                      ? 'point-ask-gradient text-white shadow-sm'
-                      : 'text-white hover:bg-white/10'
+                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                      : 'text-black hover:bg-white/10'
                   }`}
                 >
                   <Image
@@ -1049,7 +1024,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     alt='Mock Interview'
                     width={20}
                     height={20}
-                    className='h-5 w-5 flex-shrink-0'
+                    className={`h-5 w-5 flex-shrink-0 ${pathname === '/mock-interview' ? '' : 'brightness-0'}`}
                   />
                   {!collapsed && (
                     <span className='text-sm'>Mock Interview</span>
@@ -1067,8 +1042,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                   } py-3 rounded-md font-medium transition-all duration-200 ${
                     pathname === '/onboard-job'
-                      ? 'point-ask-gradient text-white shadow-sm'
-                      : 'text-white hover:bg-white/10'
+                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                      : 'text-black hover:bg-white/10'
                   }`}
                 >
                   <Image
@@ -1076,7 +1051,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     alt='Onboard Job (AI)'
                     width={20}
                     height={20}
-                    className='h-5 w-5 flex-shrink-0'
+                    className={`h-5 w-5 flex-shrink-0 ${pathname === '/onboard-job' ? '' : 'brightness-0'}`}
                   />
                   {!collapsed && (
                     <span className='text-sm'>Onboard Job (AI)</span>

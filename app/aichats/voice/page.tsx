@@ -25,6 +25,7 @@ const grades = [
 const styles = [
   {
     label: "Professor",
+    value: "professor",
     icon: (
       <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
@@ -45,6 +46,7 @@ const styles = [
   },
   {
     label: "Friend",
+    value: "friend",
     icon: (
       <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
@@ -63,6 +65,7 @@ const styles = [
   },
   {
     label: "Robot",
+    value: "robot",
     icon: (
       <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
@@ -150,8 +153,8 @@ export default function AiChatsVoicePage() {
   // Floating selectors (always visible)
   const FloatingSelectors = (
     <div
-      className="fixed z-40 flex flex-col gap-[10px] left-4 sm:left-8 lg:left-72"
-      style={{ top: "190px" }}
+      className="fixed z-40 flex flex-row gap-[10px] right-4 sm:right-8 lg:right-40"
+      style={{ top: "40px" }}
     >
       {/* Grade selector */}
       <div className="relative">
@@ -212,6 +215,7 @@ export default function AiChatsVoicePage() {
             <img src="/images/classIcon.svg" alt="" className="w-5 h-5" />
           )}
         </button>
+
         {showGradeDropdown && (
           <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-lg w-48 sm:w-56 py-3 z-50 border border-gray-200">
             <div className="px-4 py-2 text-gray-700 font-semibold text-sm sm:text-base">
@@ -319,12 +323,12 @@ export default function AiChatsVoicePage() {
                 <div key={style.label}>
                   <div
                     className={`px-3 py-2.5 cursor-pointer hover:bg-gray-50 flex items-center gap-3 text-sm sm:text-base transition-colors ${
-                      selectedStyle === style.label
+                      selectedStyle === style.value
                         ? "text-[#096835]"
                         : "text-[#777777]"
                     }`}
                     style={
-                      selectedStyle === style.label
+                      selectedStyle === style.value
                         ? {
                             background:
                               "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
@@ -334,12 +338,12 @@ export default function AiChatsVoicePage() {
                         : {}
                     }
                     onClick={() => {
-                      setSelectedStyle(style.label);
+                      setSelectedStyle(style.value);
                       setShowStyleDropdown(false);
                     }}
                   >
                     <span className="w-7 h-7 sm:w-9 sm:h-9 point-ask-gradient rounded-lg flex items-center justify-center flex-shrink-0">
-                      {style.label === "Professor" && (
+                      {style.value === "professor" && (
                         <svg
                           width="26"
                           height="26"
@@ -353,7 +357,7 @@ export default function AiChatsVoicePage() {
                           />
                         </svg>
                       )}
-                      {style.label === "Friend" && (
+                      {style.value === "friend" && (
                         <svg
                           width="20"
                           height="20"
@@ -367,7 +371,7 @@ export default function AiChatsVoicePage() {
                           />
                         </svg>
                       )}
-                      {style.label === "Robot" && (
+                      {style.value === "robot" && (
                         <svg
                           width="20"
                           height="20"
@@ -382,7 +386,6 @@ export default function AiChatsVoicePage() {
                         </svg>
                       )}
                     </span>
-
                     {style.label}
                   </div>
                   {index < styles.length - 1 && (
@@ -491,7 +494,7 @@ export default function AiChatsVoicePage() {
         }}
       >
         <input
-          className="flex-1 bg-transparent text-white placeholder-gray-300 border-none focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
+          className="flex-1 bg-transparent text-black placeholder-gray-300 border border-black p-3 rounded-md focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
           type="text"
           placeholder="Tap the mic and ask anything"
           value={thinking ? transcript : inputValue}
@@ -543,7 +546,7 @@ export default function AiChatsVoicePage() {
           </svg>
         </button>
         <button
-          className="rounded-lg p-2 sm:p-3 bg-[#007437] text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+          className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
           onClick={handleSend}
           disabled={
             !inputValue.trim() ||
@@ -564,7 +567,7 @@ export default function AiChatsVoicePage() {
     <div
       className="min-h-screen flex flex-col items-center justify-center relative"
       style={{
-        backgroundImage: "url('/images/newBg.jpg')",
+        // backgroundImage: "url('/images/newBg.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -575,7 +578,7 @@ export default function AiChatsVoicePage() {
         {chatHistory.length === 0 && (
           <div className="min-h-screen flex flex-col justify-center items-center max-w-4xl mx-auto">
             <div className="mt-24 mb-4 text-center w-full">
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+              <div className="text-2xl md:text-3xl font-bold text-black mb-2">
                 <span role="img" aria-label="wave">
                   👋
                 </span>{" "}
@@ -590,7 +593,7 @@ export default function AiChatsVoicePage() {
               {suggestions.map((s, i) => (
                 <button
                   key={i}
-                  className="border border-[#007437] rounded-xl py-8 px-6 text-lg text-[#007437] bg-transparent hover:bg-[#007437]/10 transition font-medium w-full"
+                  className="border border-black rounded-xl py-8 px-6 text-lg text-black bg-transparent hover:bg-[#FFB12133] transition font-medium w-full"
                   onClick={() => handleSuggestion(s)}
                 >
                   {s}

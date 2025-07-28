@@ -213,8 +213,8 @@ export default function AiChatsChatPage() {
 
   const FloatingSelectors = (
     <div
-      className="fixed z-40 flex flex-col gap-[10px] left-4 sm:left-8 lg:left-72"
-      style={{ top: "190px" }}
+      className="fixed z-40 flex flex-row gap-[10px] right-4 sm:right-8 lg:right-20"
+      style={{ top: "40px" }}
     >
       {/* Grade selector */}
       <div className="relative">
@@ -464,7 +464,7 @@ export default function AiChatsChatPage() {
     <div
       className="min-h-screen flex flex-col relative"
       style={{
-        backgroundImage: "url('/images/newBg.jpg')",
+        // backgroundImage: "url('/images/newBg.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -476,7 +476,7 @@ export default function AiChatsChatPage() {
         {chatHistory.length === 0 && (
           <div className="min-h-screen flex flex-col justify-center items-center max-w-4xl mx-auto">
             <div className="mt-24 mb-4 text-center w-full">
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+              <div className="text-2xl md:text-3xl font-bold text-black mb-2">
                 <span role="img" aria-label="wave">
                   👋
                 </span>{" "}
@@ -492,7 +492,7 @@ export default function AiChatsChatPage() {
               {suggestions.map((s, i) => (
                 <button
                   key={i}
-                  className="border border-[#007437] rounded-xl py-8 px-6 text-lg text-[#007437] bg-transparent hover:bg-[#007437]/10 transition font-medium w-full"
+                  className="border border-black rounded-xl py-8 px-6 text-lg text-black bg-transparent hover:bg-[#FFB12133] transition font-medium w-full"
                   onClick={() => handleSuggestion(s)}
                 >
                   {s}
@@ -517,7 +517,7 @@ export default function AiChatsChatPage() {
                     className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 ${
                       msg.role === "user"
                         ? "point-ask-gradient text-white"
-                        : "bg-[rgba(34,34,34,0.9)] text-white border border-[#007437]/20"
+                        : "bg-[rgba(34,34,34,0.9)] text-white border border-black"
                     }`}
                   >
                     <p className="text-sm md:text-base leading-relaxed">
@@ -601,12 +601,12 @@ const ChatInputBar = forwardRef(
           onKeyDown={(e) => e.key === "Enter" && onSend()}
           disabled={disabled}
           autoFocus={autoFocus}
-          className="flex-1 bg-transparent text-white placeholder-gray-300 border-none focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
+          className="flex-1 bg-transparent rounded-md p-3 text-black placeholder-gray-300 border-black focus:outline-none text-sm sm:text-base border border-black font-medium px-1 sm:px-2"
         />
         <button
           onClick={onSend}
           disabled={disabled || !value.trim()}
-          className="rounded-lg p-2 sm:p-3 bg-[#007437] text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+          className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
         >
           <ArrowRight size={16} className="sm:hidden" />
           <ArrowRight size={20} className="hidden sm:block" />
