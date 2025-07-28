@@ -165,8 +165,8 @@ export default function PointAskChatPage() {
   // Floating selectors (always visible)
   const FloatingSelectors = (
     <div
-      className="fixed z-40 flex flex-col gap-[10px] left-4 sm:left-8 lg:left-72"
-      style={{ top: "190px" }}
+      className="fixed z-40 flex flex-row gap-[10px] right-4 sm:right-8 lg:right-40"
+      style={{ top: "40px" }}
     >
       {/* Grade selector */}
       <div className="relative">
@@ -233,7 +233,7 @@ export default function PointAskChatPage() {
             <div className="px-4 py-2 text-gray-700 font-semibold text-sm sm:text-base">
               Select Grade
             </div>
-            <div className="border-t border-gray-400 mt-2">
+            <div className="border-t border-gray-400  mt-2">
               {grades.map((grade, index) => (
                 <div key={grade}>
                   <div
@@ -274,7 +274,7 @@ export default function PointAskChatPage() {
         <button
           className={`hover:bg-[#005f2e] text-white flex items-center shadow-lg ${
             selectedStyle
-              ? "point-ask-gradient rounded-lg px-6 py-2 sm:px-6 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
+              ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
               : "point-ask-gradient border border-white/20 justify-center"
           }`}
           style={
@@ -298,18 +298,11 @@ export default function PointAskChatPage() {
           {selectedStyle ? (
             <>
               <div className="flex items-center gap-2">
-                <svg
-                  width="16"
-                  height="8"
-                  viewBox="0 0 30 10"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M6.71551 9.66688C5.86773 9.66688 5.11007 9.39888 4.44251 8.86288C3.77495 8.3271 3.34973 7.63521 3.16684 6.78721L2.26451 2.62854L0.772177 2.74121L0.589844 0.741211C2.22073 0.585655 3.56951 0.476655 4.63618 0.414211C5.70284 0.351989 6.69084 0.3251 7.60018 0.333545C8.87373 0.342212 9.94429 0.406767 10.8118 0.527211C11.6792 0.647656 12.4471 0.848878 13.1155 1.13088C13.4522 1.26954 13.7765 1.37221 14.0885 1.43888C14.4005 1.50554 14.7044 1.53888 15.0002 1.53888C15.296 1.53888 15.5862 1.50554 15.8708 1.43888C16.1553 1.37221 16.4574 1.27643 16.7772 1.15154C17.4507 0.869544 18.2524 0.664878 19.1822 0.537545C20.1122 0.410211 21.2848 0.342212 22.7002 0.333545C23.654 0.3251 24.6697 0.351989 25.7475 0.414211C26.8253 0.476655 28.0463 0.574544 29.4105 0.707878L29.2412 2.67454L27.7692 2.56188L26.8335 6.82054C26.6506 7.65988 26.231 8.3441 25.5745 8.87321C24.9181 9.40232 24.166 9.66688 23.3182 9.66688H20.4155C19.5762 9.66688 18.8373 9.41132 18.1988 8.90021C17.5604 8.3891 17.1386 7.7361 16.9335 6.94121L16.1232 3.73355H13.9105L13.1002 6.94121C12.8813 7.74966 12.4505 8.4061 11.8078 8.91055C11.1652 9.41477 10.4353 9.66688 9.61818 9.66688H6.71551ZM5.11318 6.39521C5.19673 6.7661 5.3864 7.07077 5.68218 7.30921C5.97795 7.54766 6.31129 7.66688 6.68218 7.66688H9.58484C9.95573 7.66688 10.2891 7.55532 10.5848 7.33221C10.8806 7.1091 11.0704 6.82321 11.1542 6.47455L12.0975 2.80021C11.4464 2.62066 10.7045 2.50355 9.87184 2.44888C9.0394 2.39421 8.28218 2.36688 7.60018 2.36688C7.10618 2.36688 6.56473 2.37243 5.97584 2.38354C5.38695 2.39466 4.84551 2.42243 4.35151 2.46688L5.11318 6.39521ZM18.8462 6.46188C18.93 6.81055 19.1176 7.09855 19.4092 7.32588C19.7005 7.55321 20.036 7.66688 20.4155 7.66688H23.3182C23.6975 7.66688 24.033 7.54555 24.3245 7.30288C24.6161 7.05999 24.8036 6.75743 24.8872 6.39521L25.7155 2.43355C25.2711 2.41132 24.7685 2.39466 24.2078 2.38354C23.6472 2.37243 23.1446 2.36688 22.7002 2.36688C21.9651 2.36688 21.1556 2.39421 20.2718 2.44888C19.3881 2.50355 18.5984 2.62066 17.9028 2.80021L18.8462 6.46188Z"
-                    fill="white"
-                  />
-                </svg>
+                <img
+                  src="/images/professor.svg"
+                  alt=""
+                  className="w-4 h-4 sm:w-5 sm:h-5"
+                />
                 <span className="text-xs sm:text-sm font-medium">
                   Style : {selectedStyle || "Select Style"}
                 </span>
@@ -332,9 +325,8 @@ export default function PointAskChatPage() {
             <img src="/images/professor.svg" alt="" className="w-5 h-5" />
           )}
         </button>
-
         {showStyleDropdown && (
-          <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50 ">
+          <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50">
             <div className="px-4 py-1 text-gray-700 font-semibold text-sm sm:text-base">
               Select Style
             </div>
@@ -521,7 +513,6 @@ export default function PointAskChatPage() {
     <div
       className="min-h-screen flex flex-col relative"
       style={{
-        backgroundImage: "url('/images/newBg.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -532,7 +523,7 @@ export default function PointAskChatPage() {
         {chatHistory.length === 0 && (
           <div className="min-h-screen flex flex-col justify-center items-center max-w-4xl mx-auto">
             <div className="mt-24 mb-4 text-center w-full">
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+              <div className="text-2xl md:text-3xl font-bold text-black mb-2">
                 <span role="img" aria-label="wave">
                   👋
                 </span>{" "}
@@ -550,7 +541,7 @@ export default function PointAskChatPage() {
                 {suggestions.map((s, i) => (
                   <button
                     key={i}
-                    className="border border-[#007437] rounded-xl py-8 px-6 text-lg text-[#007437] bg-transparent hover:bg-[#007437]/10 transition font-medium w-full"
+                    className="border border-black rounded-xl py-8 px-6 text-lg text-black bg-transparent hover:bg-[#FFB12133] transition font-medium w-full"
                     onClick={() => handleSuggestion(s)}
                   >
                     {s}
@@ -563,7 +554,7 @@ export default function PointAskChatPage() {
             {!image && (
               <div className="flex flex-col md:flex-row gap-8 w-full justify-center mb-8">
                 <button
-                  className="flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-transparent text-[#007437] w-full md:w-1/2 border border-[#007437]/30"
+                  className="flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-transparent text-black w-full md:w-1/2 border border-black"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <span className="point-ask-gradient rounded-full w-12 h-12 flex items-center justify-center">
@@ -822,7 +813,7 @@ export default function PointAskChatPage() {
           }}
         >
           <input
-            className="flex-1 bg-transparent text-white placeholder-gray-300 border-none focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
+            className="flex-1 bg-transparent text-black placeholder-gray-300 p-3 rounded-md border border-black focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
             type="text"
             placeholder="Type your question..."
             value={message}
@@ -837,7 +828,7 @@ export default function PointAskChatPage() {
             autoComplete="off"
           />
           <button
-            className="rounded-lg p-2 sm:p-3 bg-[#007437] text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+            className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
             onClick={() => handleSend()}
             disabled={
               !message.trim() ||

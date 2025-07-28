@@ -8,7 +8,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 const Home = () => {
   
     return (
-      <div className={`min-h-screen bg-[black] ${poppins.className}`}>
+      <div className={`min-h-screen bg-white ${poppins.className}`}>
         {/* Header */}
       
       </div>

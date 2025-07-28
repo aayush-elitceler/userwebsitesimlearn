@@ -73,16 +73,16 @@ function ExamCard({
   buttonText?: string;
 }) {
   return (
-    <div className="flex flex-row bg-[#393e3a] rounded-2xl p-8 mb-6 shadow-lg max-w-3xl w-full items-center">
+    <div className="flex flex-row bg-white rounded-2xl p-8 mb-6 shadow-lg max-w-3xl w-full items-center">
       <div className="flex-1">
-        <div className="text-green-400 font-semibold mb-1">
+        <div className="text-black font-semibold mb-1">
           Subject: {exam.subject || "N/A"}
         </div>
-        <div className="text-2xl font-bold text-white mb-2">{exam.title}</div>
-        <div className="text-gray-200 mb-3">
+        <div className="text-2xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text">{exam.title}</div>
+        <div className="text-black mb-3">
           {exam.description || exam.instructions}
         </div>
-        <div className="text-gray-300 mb-4 flex items-center gap-2">
+        <div className="text-black mb-4 flex items-center gap-2">
           <span role="img" aria-label="clock">🕒</span>
           Due date:{" "}
           {exam.dueDate
@@ -94,7 +94,7 @@ function ExamCard({
             : "-"}
         </div>
         <button
-          className="bg-[#007437] text-white rounded-lg px-6 py-2 font-semibold shadow hover:bg-green-700 transition"
+          className="point-ask-gradient cursor-pointer text-white rounded-lg px-6 py-2 font-semibold shadow hover:bg-green-700 transition"
           onClick={onStart}
         >
           {buttonText}
@@ -148,7 +148,7 @@ function QuizCard({
         >
           Difficulty: {quiz.difficulty?.charAt(0).toUpperCase() + quiz.difficulty?.slice(1)}
         </div>
-        <div className="text-2xl font-bold text-white mb-2">
+        <div className="text-2xl font-bold text-black mb-2">
           {quiz.title}
         </div>
         <div className="flex items-center gap-4 text-gray-200 text-sm mb-4">
@@ -184,7 +184,7 @@ function QuizCard({
         </div>
         {previous ? (
           <button
-            className="bg-black text-white rounded-full px-6 py-2 font-semibold mt-2 shadow hover:bg-[#333] transition"
+            className="bg-black text-black rounded-full px-6 py-2 font-semibold mt-2 shadow hover:bg-[#333] transition"
             onClick={() => router.push(`/quizes/${quiz.id}/answers?submissionId=${submissionId}`)}
           >
             View answers
@@ -200,7 +200,7 @@ function QuizCard({
       </div>
       <div className="ml-6 flex-shrink-0 relative">
         <div
-          className="rounded-2xl flex items-center justify-center w-40 h-28 md:w-44 md:h-32 text-white text-xl font-bold shadow-lg relative overflow-hidden"
+          className="rounded-2xl flex items-center justify-center w-40 h-28 md:w-44 md:h-32 text-black text-xl font-bold shadow-lg relative overflow-hidden"
           style={{ background: subjectColors[quiz.subject || 'Default'], minWidth: 140 }}
         >
           <span className="z-10 text-lg font-semibold tracking-wide">{quiz.subject || "-"}</span>
@@ -281,15 +281,15 @@ export default function QuizesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-3xl font-bold text-white">Exam Preparation</h2>
+          <h2 className="text-3xl font-bold text-black">Exam Preparation</h2>
         </div>
         <div className="w-full px-4 md:px-0 mb-6">
           <div className="flex justify-end">
             <button
-              className="flex items-center gap-2 bg-[#007437] hover:bg-green-700 text-white font-semibold px-5 py-3 rounded-lg shadow transition"
+              className="flex items-center gap-2 point-ask-gradient hover:bg-green-700 text-white cursor-pointer font-semibold px-5 py-3 rounded-lg shadow transition"
               onClick={() => router.push("/exams/create")}
             >
               <Plus size={20} />
@@ -297,15 +297,15 @@ export default function QuizesPage() {
             </button>
           </div>
         </div>
-        <div className="text-lg text-white mb-8">
+        <div className="text-lg text-black mb-8">
         AI-powered preparation to help you perform your best.{' '}
           <span className="align-middle">🏅✨</span>
         </div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-white">Upcoming Exams</h3>
+          <h3 className="text-xl font-bold text-black">Upcoming Exams</h3>
           <a
             href="#"
-            className="text-white font-semibold flex items-center gap-1 hover:underline"
+            className="text-black font-semibold flex items-center gap-1 hover:underline"
           >
             View all <span>→</span>
           </a>
@@ -313,9 +313,9 @@ export default function QuizesPage() {
         <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
           <div className="flex flex-row flex-nowrap gap-8 w-max">
             {loading ? (
-              <div className="text-white">Loading...</div>
+              <div className="text-black">Loading...</div>
             ) : upcomingExams.length === 0 ? (
-              <div className="text-white">No upcoming Exams.</div>
+              <div className="text-black">No upcoming Exams.</div>
             ) : (
               upcomingExams.map((quiz) => (
                 <ExamCard
@@ -331,10 +331,10 @@ export default function QuizesPage() {
           </div>
         </div>
         <div className="flex items-center justify-between mb-4 mt-8">
-          <h3 className="text-xl font-bold text-white">Previous Exams</h3>
+          <h3 className="text-xl font-bold text-black">Previous Exams</h3>
           <a
             href="#"
-            className="text-white font-semibold flex items-center gap-1 hover:underline"
+            className="text-black font-semibold flex items-center gap-1 hover:underline"
           >
             View all <span>→</span>
           </a>
@@ -342,9 +342,9 @@ export default function QuizesPage() {
         <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
           <div className="flex flex-row flex-nowrap gap-8 w-max ">
             {loading ? (
-              <div className="text-white">Loading previous exams...</div>
+              <div className="text-black">Loading previous exams...</div>
             ) : previousExams.length === 0 ? (
-              <div className="text-white">No previous exams.</div>
+              <div className="text-black">No previous exams.</div>
             ) : (
               previousExams.map((quiz) => (
                 <ExamCard

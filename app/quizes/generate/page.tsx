@@ -113,7 +113,7 @@ export default function GenerateQuizPage() {
   }
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22] flex flex-col items-center">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white flex flex-col items-center">
       {/* Modal Popup */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
@@ -121,17 +121,17 @@ export default function GenerateQuizPage() {
             {loading ? (
               <>
                 <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <div className="text-white font-semibold text-lg">Generating quiz...</div>
+                <div className="text-black font-semibold text-lg">Generating quiz...</div>
               </>
             ) : error ? (
               <>
                 <div className="text-red-400 font-semibold mb-4">{error}</div>
-                <button className="mt-2 px-6 py-2 rounded bg-gray-700 text-white" onClick={() => setShowModal(false)}>Close</button>
+                <button className="mt-2 px-6 py-2 rounded bg-gray-700 text-black" onClick={() => setShowModal(false)}>Close</button>
               </>
             ) : (
               <>
                 <div className="text-green-400 text-2xl font-bold mb-2">Quiz created!</div>
-                <div className="text-white mb-6">Your quiz has been generated successfully.</div>
+                <div className="text-black mb-6">Your quiz has been generated successfully.</div>
                 <button
                   className="bg-[#1ec773] text-black rounded-full px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition"
                   onClick={() => {
@@ -147,18 +147,18 @@ export default function GenerateQuizPage() {
           </div>
           </div>
       )}
-      <div className="max-w-4xl w-full bg-transparent bg-white/20 rounded-2xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-white mb-2">Create Quiz</h2>
+      <div className="max-w-4xl w-full bg-transparent bg-gray-100 rounded-2xl shadow-lg p-8">
+        <h2 className="text-2xl font-bold text-black mb-2">Create Quiz</h2>
         <hr className="border-gray-600 mb-6" />
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           {/* Grade */}
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Grade</label>
+            <label className="text-black mb-1 font-semibold">Grade</label>
             <input
               type="number"
               value={grade}
               onChange={e => setGrade(Number(e.target.value))}
-              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none "
               min={1}
               max={12}
               required
@@ -166,11 +166,11 @@ export default function GenerateQuizPage() {
           </div>
           {/* Persona */}
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Persona</label>
+            <label className="text-black mb-1 font-semibold">Persona</label>
             <select
               value={persona}
               onChange={e => setPersona(e.target.value)}
-              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none "
               required
             >
               <option value="teacher">Teacher</option>
@@ -179,23 +179,23 @@ export default function GenerateQuizPage() {
           </div>
           {/* Topic */}
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Topic</label>
+            <label className="text-black mb-1 font-semibold">Topic</label>
             <input
               type="text"
               value={topic}
               onChange={e => setTopic(e.target.value)}
-              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none "
               placeholder="make a quiz on force and motion for physics."
               required
             />
           </div>
           {/* Difficulty */}
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Difficulty</label>
+            <label className="text-black mb-1 font-semibold">Difficulty</label>
             <select
               value={difficulty}
               onChange={e => setDifficulty(e.target.value)}
-              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none "
               required
             >
               <option value="">Easy / Medium / Hard</option>
@@ -204,11 +204,11 @@ export default function GenerateQuizPage() {
           </div>
           {/* Number of Questions */}
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">No. of Questions</label>
+            <label className="text-black mb-1 font-semibold">No. of Questions</label>
             <select
               value={numQuestions}
               onChange={e => setNumQuestions(Number(e.target.value))}
-              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none "
               required
             >
               <option value="">3-10</option>
@@ -217,11 +217,11 @@ export default function GenerateQuizPage() {
           </div>
           {/* Time Limit */}
           <div className="flex flex-col">
-            <label className="text-white mb-1 font-semibold">Time Limit</label>
+            <label className="text-black mb-1 font-semibold">Time Limit</label>
             <select
               value={timer}
               onChange={e => setTimer(Number(e.target.value))}
-              className="rounded px-3 py-2 bg-[#181c24] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none "
               required
             >
               <option value="">5, 10, 15 minutes</option>
@@ -233,7 +233,7 @@ export default function GenerateQuizPage() {
         <div className="flex justify-end gap-4 mt-8">
           <button
             type="button"
-            className="border border-white text-white rounded-lg px-8 py-2 font-semibold bg-transparent hover:bg-white/10 transition"
+            className="border border-white text-black rounded-lg px-8 py-2 font-semibold bg-transparent hover:bg-white/10 transition"
             onClick={() => {
               setTopic("");
               setDifficulty("medium");
@@ -249,7 +249,7 @@ export default function GenerateQuizPage() {
           <button
             type="submit"
             form="quiz-gen-form"
-            className="bg-[#1ec773] text-black rounded-lg px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition disabled:opacity-60"
+            className="point-ask-gradient text-white cursor-pointer rounded-lg px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition disabled:opacity-60"
             disabled={loading}
             onClick={handleSubmit}
           >
@@ -258,7 +258,7 @@ export default function GenerateQuizPage() {
         </div>
         {error && <div className="text-red-400 font-semibold mt-4">{error}</div>}
         {result && (
-          <div className="mt-8 bg-[#181c24] rounded-lg p-4 text-white">
+          <div className="mt-8 bg-[#FFB12133] rounded-lg p-4 text-black">
             <h3 className="text-lg font-bold mb-2">Generated Quiz</h3>
             <pre className="whitespace-pre-wrap break-words text-sm">{JSON.stringify(result, null, 2)}</pre>
           </div>

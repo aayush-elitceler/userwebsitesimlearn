@@ -78,7 +78,7 @@ function ExamCard({
         <div className="text-green-400 font-semibold mb-1">
           Subject: {exam.subject || "N/A"}
         </div>
-        <div className="text-2xl font-bold text-white mb-2">{exam.title}</div>
+        <div className="text-2xl font-bold text-black mb-2">{exam.title}</div>
         <div className="text-gray-200 mb-3">
           {exam.description || exam.instructions}
         </div>
@@ -94,7 +94,7 @@ function ExamCard({
             : "-"}
         </div>
         <button
-          className="bg-[#007437] text-white rounded-lg px-6 py-2 font-semibold shadow hover:bg-green-700 transition"
+          className="bg-[#007437] text-black rounded-lg px-6 py-2 font-semibold shadow hover:bg-green-700 transition"
           onClick={onStart}
         >
           {buttonText}
@@ -102,7 +102,7 @@ function ExamCard({
       </div>
       <div className="ml-8 flex-shrink-0">
         <div
-          className="rounded-xl flex items-center justify-center w-56 h-36 text-white text-2xl font-bold shadow-lg"
+          className="rounded-xl flex items-center justify-center w-56 h-36 text-black text-2xl font-bold shadow-lg"
           style={{
             background: subjectColors[exam.subject || "Default"],
             minWidth: 180,
@@ -129,29 +129,22 @@ function QuizCard({
   submissionId?: string;
 }) {
   const router = useRouter();
-  const boxShadow =
-    "0px 2.15px 1.72px 0px #00000005, 0px 5.16px 4.13px 0px #00000007, 0px 9.71px 7.77px 0px #00000009, 0px 17.33px 13.86px 0px #0000000B, 0px 32.41px 25.93px 0px #0000000D, 0px 77.57px 62.06px 0px #00000012";
+  
   return (
     <div
-      className={`min-w-[380px] max-w-[500px] w-full flex flex-row items-center rounded-2xl p-6 mb-4 shadow-lg transition ${
-        previous ? "bg-[#393e3a]" : "bg-[#13381e]"
-      }`}
-      style={{
-        boxShadow,
-      }}
+      className={`min-w-[380px] max-w-[500px] w-full flex flex-row items-center rounded-2xl p-6 mb-4 shadow-lg transition bg-white`}
+     
     >
       <div className="flex-1">
         <div
-          className={`text-sm font-semibold mb-1 ${
-            previous ? "text-gray-300" : "text-green-400"
-          }`}
+          className={`text-sm font-semibold mb-1 text-black`}
         >
           Difficulty: {quiz.difficulty?.charAt(0).toUpperCase() + quiz.difficulty?.slice(1)}
         </div>
-        <div className="text-2xl font-bold text-white mb-2">
+        <div className="text-2xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text">
           {quiz.title}
         </div>
-        <div className="flex items-center gap-4 text-gray-200 text-sm mb-4">
+        <div className="flex items-center gap-4 text-black text-sm mb-4">
           {previous ? (
             <>
               <span className="flex items-center gap-1">
@@ -184,15 +177,15 @@ function QuizCard({
         </div>
         {previous ? (
           <button
-            className="bg-black text-white rounded-full px-6 py-2 font-semibold mt-2 shadow hover:bg-[#333] transition"
-            onClick={() => router.push(`/quizes/${quiz.id}/answers?submissionId=${submissionId}`)}
+          className="point-ask-gradient cursor-pointer text-white rounded-full px-6 py-2 font-semibold mt-2 shadow hover:bg-[#333] transition"
+          onClick={() => router.push(`/quizes/${quiz.id}/answers?submissionId=${submissionId}`)}
           >
             View answers
           </button>
         ) : (
           <button
-            className="bg-[#1ec773] text-black rounded-full px-6 py-2 font-semibold mt-2 shadow hover:bg-[#16a34a] transition"
-            onClick={() => router.push(`/quizes/${quiz.id}/start`)}
+          className="point-ask-gradient cursor-pointer text-white rounded-full px-6 py-2 font-semibold mt-2 shadow hover:bg-[#333] transition"
+          onClick={() => router.push(`/quizes/${quiz.id}/start`)}
           >
             Start Exam
           </button>
@@ -200,7 +193,7 @@ function QuizCard({
       </div>
       <div className="ml-6 flex-shrink-0 relative">
         <div
-          className="rounded-2xl flex items-center justify-center w-40 h-28 md:w-44 md:h-32 text-white text-xl font-bold shadow-lg relative overflow-hidden"
+          className="rounded-2xl flex items-center justify-center w-40 h-28 md:w-44 md:h-32 text-black text-xl font-bold shadow-lg relative overflow-hidden"
           style={{ background: subjectColors[quiz.subject || 'Default'], minWidth: 140 }}
         >
           <span className="z-10 text-lg font-semibold tracking-wide">{quiz.subject || "-"}</span>
@@ -241,7 +234,7 @@ function guessSubjectFromTopic(topic?: string): string {
 
 export default function QuizesPage() {
   const [userQuizzes, setUserQuizzes] = useState<Quiz[]>([]);
-  const [institutionQuizzes, setInstitutionQuizzes] = useState<Quiz[]>([]);
+  // const [institutionQuizzes, setInstitutionQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -276,12 +269,7 @@ export default function QuizesPage() {
           ];
           setUserQuizzes(userCombined);
           // Combine upcoming and previous for institution quizzes
-          const instObj = data.data.institutionGeneratedQuizzes || {};
-          const instCombined = [
-            ...(Array.isArray(instObj.upcoming) ? instObj.upcoming : []),
-            ...(Array.isArray(instObj.previous) ? instObj.previous : []),
-          ];
-          setInstitutionQuizzes(instCombined);
+        
         }
       } catch (e) {
         // handle error
@@ -324,54 +312,34 @@ export default function QuizesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gradient-to-br from-[#181c24] to-[#1a2a22]">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-3xl font-bold text-white">Quiz Preparation</h2>
+          <h2 className="text-3xl font-bold text-black">Quiz Preparation</h2>
+          <button
+          className="fixed top-6 right-6 cursor-pointer z-50 flex items-center gap-2 point-ask-gradient hover:bg-green-700 text-white font-semibold px-5 py-3 rounded-lg shadow transition"
+          onClick={() => router.push("/quizes/generate")}
+        >
+          <Plus size={20} />
+          Create Quiz        
+        </button>
         </div>
-        <div className="text-lg text-white mb-8">
+        <div className="text-lg text-black mb-8">
           AI-powered quizzes to help you perform your best. <span className="align-middle">🏅✨</span>
         </div>
-        {/* User Generated Quizzes */}
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-white">Your Quizzes</h3>
-        </div>
-        <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
-          <div className="flex flex-row flex-nowrap gap-8 w-max">
-            {loading ? (
-              <div className="text-white">Loading...</div>
-            ) : userQuizzes.length === 0 ? (
-              <div className="text-white">No user-generated quizzes.</div>
-            ) : (
-              userQuizzes.map((quiz) => {
-                // Find the submission for this quiz (if any)
-                const submission = submissions.find((s) => s.quizId === quiz.id);
-                return (
-                  <QuizCard
-                    quiz={quiz}
-                    key={quiz.id}
-                    previous={quiz.completed}
-                    score={submission?.score}
-                    date={submission?.submittedAt}
-                    submissionId={submission?.id}
-                  />
-                );
-              })
-            )}
-          </div>
-        </div>
+       
         {/* Institution Generated Quizzes */}
         <div className="flex items-center justify-between mb-4 mt-8">
-          <h3 className="text-xl font-bold text-white">Institution Quizzes</h3>
+          <h3 className="text-xl font-bold text-black">Your Quizzes</h3>
         </div>
         <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
           <div className="flex flex-row flex-nowrap gap-8 w-max ">
             {loading ? (
-              <div className="text-white">Loading...</div>
-            ) : institutionQuizzes.length === 0 ? (
-              <div className="text-white">No institution-generated quizzes.</div>
+              <div className="text-black">Loading...</div>
+            ) : userQuizzes.length === 0 ? (
+              <div className="text-black">No institution-generated quizzes.</div>
             ) : (
-              institutionQuizzes.map((quiz) => (
+              userQuizzes.map((quiz) => (
                 <QuizCard
                   quiz={quiz}
                   key={quiz.id}
