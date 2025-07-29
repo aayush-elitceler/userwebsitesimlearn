@@ -116,11 +116,12 @@ export default function GenerateQuizPage() {
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white flex flex-col items-center">
       {/* Modal Popup */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-          <div className="bg-[#232c24] rounded-2xl shadow-lg p-8 min-w-[320px] max-w-[90vw] flex flex-col items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60">
+          <div className="point-ask-gradient rounded-2xl shadow-lg p-8 min-w-[320px] max-w-[90vw] flex flex-col items-center">
             {loading ? (
               <>
-                <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
+
                 <div className="text-black font-semibold text-lg">Generating quiz...</div>
               </>
             ) : error ? (
@@ -130,10 +131,10 @@ export default function GenerateQuizPage() {
               </>
             ) : (
               <>
-                <div className="text-green-400 text-2xl font-bold mb-2">Quiz created!</div>
+                <div className="text-black text-2xl font-bold mb-2">Quiz created!</div>
                 <div className="text-black mb-6">Your quiz has been generated successfully.</div>
                 <button
-                  className="bg-[#1ec773] text-black rounded-full px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition"
+                  className="bg-black cursor-pointer text-white rounded-full px-8 py-2 font-semibold shadow hover:bg-black/50 transition"
                   onClick={() => {
                     setShowModal(false);
                     if (createdQuizId) router.push(`/quizes/${createdQuizId}/start`);

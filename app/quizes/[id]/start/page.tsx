@@ -241,7 +241,7 @@ export default function QuizStartPage() {
   }
 
   return (
-    <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-white'>
+    <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100'>
       <div className='max-w-3xl mx-auto'>
         {loading ? (
           <div className='text-white text-center py-20 text-lg'>
@@ -255,17 +255,17 @@ export default function QuizStartPage() {
           <>
             <div className='flex items-center justify-between mb-2'>
               <div>
-                <div className='text-green-400 font-semibold text-sm mb-1'>
+                <div className='text-black font-semibold text-sm mb-1'>
                   Difficulty:{' '}
                   {quiz.difficulty?.charAt(0).toUpperCase() +
                     quiz.difficulty?.slice(1)}
                 </div>
-                <div className='text-2xl md:text-3xl font-bold text-white mb-1'>
+                <div className='text-2xl md:text-3xl font-bold text-black mb-1'>
                   {quiz.title}
                 </div>
               </div>
               <div className='flex items-center gap-2'>
-                <div className='bg-green-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2'>
+                <div className='point-ask-gradient text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2'>
                   <svg
                     width='20'
                     height='20'
@@ -297,9 +297,9 @@ export default function QuizStartPage() {
                 </div>
               </div>
             </div>
-            <div className='w-full h-3 bg-gray-700 rounded-full overflow-hidden mb-4'>
+            <div className='w-full h-3 bg-white rounded-full overflow-hidden mb-4'>
               <div
-                className='h-full bg-green-500 transition-all'
+                className='h-full point-ask-gradient transition-all'
                 style={{ width: `${progress * 100}%` }}
               ></div>
             </div>
@@ -307,8 +307,8 @@ export default function QuizStartPage() {
               {answered}/{total}
             </div>
             {quiz.questions?.map((q, idx) => (
-              <div key={q.id} className='mb-8 bg-[#23282f] rounded-2xl p-6'>
-                <div className='font-semibold text-white mb-4 text-lg'>
+              <div key={q.id} className='mb-8 bg-white rounded-2xl p-6'>
+                <div className='font-semibold text-black mb-4 text-lg'>
                   {idx + 1}. {q.questionText}
                 </div>
                 <div className='flex flex-col gap-3'>
@@ -317,8 +317,8 @@ export default function QuizStartPage() {
                       key={opt.id}
                       className={`block rounded-lg px-4 py-3 cursor-pointer transition-all border border-transparent ${
                         selected[q.id] === opt.id
-                          ? 'bg-green-700/80 text-white border-green-400'
-                          : 'bg-[#353a42] text-gray-200 hover:bg-green-900/40'
+                          ? 'point-ask-gradient text-white border-green-400'
+                          : 'bg-[#FFB12133] text-[#646464] hover:point-ask-gradient'
                       }`}
                     >
                       <input
@@ -329,7 +329,7 @@ export default function QuizStartPage() {
                         onChange={() =>
                           setSelected((s) => ({ ...s, [q.id]: opt.id }))
                         }
-                        className='mr-3 accent-green-500'
+                        className='mr-3 accent-black'
                       />
                       <span className='font-semibold mr-2'>
                         {String.fromCharCode(65 + i)})
@@ -341,7 +341,7 @@ export default function QuizStartPage() {
               </div>
             ))}
             <button
-              className='bg-green-700/80 text-white p-4'
+              className='point-ask-gradient text-white p-4 cursor-pointer'
               onClick={() => submitQuiz(quiz, selected, quizStartedAt, router)}
             >
               Submit Quiz

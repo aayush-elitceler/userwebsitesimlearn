@@ -585,7 +585,7 @@ export default function AiChatsVoicePage() {
                 Got it! I&apos;ll teach you like a friend for Grade{" "}
                 {selectedGrade ? selectedGrade.replace(/\D/g, "") : "6"}.
               </div>
-              <div className="text-lg text-gray-300 mb-8">
+              <div className="text-lg text-black mb-8">
                 Ask me anything when you&apos;re ready.
               </div>
             </div>

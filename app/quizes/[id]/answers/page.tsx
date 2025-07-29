@@ -60,22 +60,22 @@ export default function QuizAnswersPage() {
     if (submissionId) fetchResult();
   }, [submissionId]);
 
-  if (loading) return <div className="text-white p-8">Loading...</div>;
-  if (!result) return <div className="text-white p-8">Result not found.</div>;
+  if (loading) return <div className="text-black p-8">Loading...</div>;
+  if (!result) return <div className="text-black p-8">Result not found.</div>;
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-3xl font-bold text-white mb-2">{result.quizTitle}</h2>
-        <div className="text-lg text-white mb-4">
+        <h2 className="text-3xl font-bold text-black mb-2">{result.quizTitle}</h2>
+        <div className="text-lg text-black mb-4">
           Score: {result.score} / {result.totalQuestions * 20} | Correct: {result.correctAnswers} / {result.totalQuestions}
         </div>
-        <div className="text-white mb-8">
+        <div className="text-black mb-8">
           Submitted at: {new Date(result.submittedAt).toLocaleString()}
         </div>
         {result.questions.map((q, idx) => (
-          <div key={q.id} className="mb-8 p-6 rounded-xl bg-[#222c2a] shadow">
-            <div className="text-white font-semibold mb-2">
+          <div key={q.id} className="mb-8 p-6 rounded-xl bg-white shadow">
+            <div className="text-black font-semibold mb-2">
               Q{idx + 1}. {q.questionText}
             </div>
             <div className="flex flex-col gap-2">
@@ -87,7 +87,7 @@ export default function QuizAnswersPage() {
                     className={`px-4 py-2 rounded flex items-center gap-2
                       ${opt.isCorrect ? "bg-green-600 text-white font-bold" : ""}
                       ${isUserSelected && !opt.isCorrect ? "bg-red-600 text-white font-bold" : ""}
-                      ${!opt.isCorrect && !isUserSelected ? "bg-[#333] text-gray-200" : ""}
+                      ${!opt.isCorrect && !isUserSelected ? "bg-[#FFB12133] text-[#646464]" : ""}
                     `}
                   >
                     {opt.optionText}

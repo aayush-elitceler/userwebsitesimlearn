@@ -57,8 +57,8 @@ export default function ProjectsPage() {
           },
         });
         const data = await res.json();
-        if (data.success && data.data && data.data.projects) {
-          setProjects(data.data.projects);
+        if (data.success && data.data && data.data.teacherAssigned) {
+          setProjects(data.data.teacherAssigned);
         }
       } catch (e) {
         // handle error
@@ -74,7 +74,7 @@ export default function ProjectsPage() {
   const previous: Project[] = [];
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-black mb-2">Projects</h2>
         <div className="text-lg text-black mb-8">Complete Fun Projects and Earn Feedback<span className="align-middle">🏅✨</span></div>
@@ -89,19 +89,19 @@ export default function ProjectsPage() {
             <div className="text-black">No upcoming projects.</div>
           ) : (
             upcoming.map((project) => (
-              <div key={project.id} className="flex flex-row items-center bg-[#393e3a] rounded-2xl p-6 shadow-lg min-w-[340px] max-w-full">
+              <div key={project.id} className="flex flex-row items-center bg-white rounded-2xl p-6 shadow-lg min-w-[340px] max-w-full">
                 <div className="flex-1">
-                  <div className="text-green-400 font-semibold text-sm mb-1">Subject: {project.subject || "-"}</div>
-                  <div className="text-2xl font-bold text-black mb-2">{project.title}</div>
+                  <div className="text-black font-semibold text-sm mb-1">Subject: {project.subject || "-"}</div>
+                  <div className="text-2xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text">{project.title}</div>
                   <div className="text-black mb-2">{project.description}</div>
-                  <div className="text-gray-200 text-sm mb-4 flex items-center gap-2">
+                  <div className="text-black text-sm mb-4 flex items-center gap-2">
                     <span>🗓️ Deadline: {project.deadline ? new Date(project.deadline).toLocaleDateString() : "-"}</span>
                   </div>
                   <a
                     href={project.projectUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block bg-[#1ec773] text-black rounded-full px-6 py-2 font-semibold shadow hover:bg-[#16a34a] transition"
+                    className="inline-block point-ask-gradient text-white cursor-pointer rounded-full px-6 py-2 font-semibold shadow hover:bg-[#16a34a] transition"
                   >
                     Download project
                   </a>
@@ -130,21 +130,21 @@ export default function ProjectsPage() {
             <div className="text-black">No previous projects.</div>
           ) : (
             previous.map((project) => (
-              <div key={project.id} className="flex flex-row items-center bg-[#393e3a] rounded-2xl p-6 shadow-lg min-w-[340px] max-w-full">
+              <div key={project.id} className="flex flex-row items-center bg-white rounded-2xl p-6 shadow-lg min-w-[340px] max-w-full">
                 <div className="flex-1">
-                  <div className="text-green-400 font-semibold text-sm mb-1">Subject: {project.subject || "-"}</div>
-                  <div className="text-2xl font-bold text-black mb-2">{project.title}</div>
+                  <div className="text-black font-semibold text-sm mb-1">Subject: {project.subject || "-"}</div>
+                  <div className="text-2xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text">{project.title}</div>
                   <div className="text-black mb-2">{project.description}</div>
-                  <div className="text-gray-200 text-sm mb-4 flex items-center gap-2">
+                  <div className="text-black text-sm mb-4 flex items-center gap-2">
                     <span>🗓️ Deadline: {project.deadline ? new Date(project.deadline).toLocaleDateString() : "-"}</span>
                   </div>
                   <a
                     href={project.projectUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block bg-[#1ec773] text-black rounded-full px-6 py-2 font-semibold shadow hover:bg-[#16a34a] transition"
+                    className="inline-block point-ask-gradient text-white cursor-pointer rounded-full px-6 py-2 font-semibold shadow hover:bg-[#16a34a] transition"
                   >
-                    View project
+                    Download project
                   </a>
                 </div>
                 <div className="ml-6 flex-shrink-0 relative">
