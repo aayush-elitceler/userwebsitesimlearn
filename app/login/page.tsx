@@ -22,8 +22,13 @@ export default function Login() {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/login`, { email, password });
-      Cookies.set("auth", JSON.stringify({ token: res.data.data.token }), { expires: 1 });
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/login`,
+        { email, password }
+      );
+      Cookies.set("auth", JSON.stringify({ token: res.data.data.token }), {
+        expires: 1,
+      });
       router.push("/");
     } catch (err) {
       console.error(err);
@@ -38,8 +43,12 @@ export default function Login() {
   };
 
   return (
-    <div className={`${poppins.className} min-h-screen flex flex-col md:flex-row bg-white`}>
-      
+    <div
+      className={`${poppins.className} min-h-screen flex flex-col md:flex-row`}
+      style={{
+        background: "linear-gradient(180deg, #FFF0D3 11%, #FEF9F3 100%)",
+      }}
+    >
       {/* Left Illustration Panel */}
       <div className="w-full md:w-1/2  flex items-center justify-center p-10">
         <img
@@ -59,7 +68,7 @@ export default function Login() {
           </CardHeader>
           <CardContent className="space-y-5">
             <form
-              onSubmit={e => {
+              onSubmit={(e) => {
                 e.preventDefault();
                 handleLogin();
               }}
@@ -79,16 +88,18 @@ export default function Login() {
                   placeholder="Enter your Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleLogin()}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white text-gray-700"
                 />
               </div>
-              {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+              {error && (
+                <p className="text-red-500 text-sm text-center">{error}</p>
+              )}
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#FFA903] cursor-pointer hover:bg-yellow-600 text-white font-normal py-4 rounded-lg transition"
+                className="w-full text-lg point-ask-gradient cursor-pointer hover:bg-yellow-600 text-white font-normal py-6 rounded-lg transition"
               >
                 {loading ? "Signing in..." : "Sign in"}
               </Button>
@@ -96,7 +107,7 @@ export default function Login() {
 
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-gray-400 text-sm">Or continue with</span>
+              <span className="text-black text-sm">Or continue with</span>
               <div className="flex-1 h-px bg-gray-200" />
             </div>
 
@@ -104,13 +115,17 @@ export default function Login() {
               variant="outline"
               type="button"
               onClick={handleGoogleSignIn}
-              className="w-full bg-[#FCEED5] cursor-pointer hover:bg-[#f7dfb3] border border-gray-200 text-gray-700 flex items-center justify-center gap-2 rounded-lg py-3"
+              className="w-full bg-white cursor-pointer hover:bg-[#f7dfb3] border border-gray-200 text-gray-700 flex items-center justify-center gap-2 rounded-lg py-3"
             >
-              <img src="/images/googleLogo.svg" alt="Google" className="w-5 h-5" />
+              <img
+                src="/images/googleLogo.svg"
+                alt="Google"
+                className="w-5 h-5"
+              />
               Google
             </Button>
 
-            <div className="text-center text-sm text-gray-500">
+            <div className="text-center text-sm text-black">
               Don’t have an account?{" "}
               {/* <a href="/register" className="text-[#FFA903] font-normal underline">
                 Sign up

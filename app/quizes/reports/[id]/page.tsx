@@ -45,19 +45,19 @@ export default function QuizReportPage() {
     if (submissionId) fetchResult();
   }, [submissionId]);
 
-  if (loading) return <div className="text-white p-8">Loading...</div>;
-  if (!result) return <div className="text-white p-8">Result not found.</div>;
+  if (loading) return <div className="text-black p-8">Loading...</div>;
+  if (!result) return <div className="text-black p-8">Result not found.</div>;
 
   // Calculate performance, etc. as needed
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-2">Assessment report</h2>
-        <div className="text-white mb-2">
+        <h2 className="text-2xl font-bold text-black mb-2">Assessment report</h2>
+        <div className="text-black mb-2">
           {result.quizTitle} &nbsp; • &nbsp; Difficulty - {result.difficulty || "N/A"}
         </div>
-        <div className="text-white mb-4">
+        <div className="text-black mb-4">
           You received a score of <span className="text-yellow-400 font-bold">{result.score / 20}</span> / {result.totalQuestions}.
           {/* Example: */}
           <span className="ml-2">you performed better than <span className="font-bold">10%</span> of all others that have taken this quiz</span>
@@ -68,7 +68,7 @@ export default function QuizReportPage() {
             {/* Add more attempts if available */}
           </select>
           <button
-            className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2"
+            className="point-ask-gradient text-white cursor-pointer px-6 py-2 rounded-lg font-semibold flex items-center gap-2"
             onClick={() => {
               window.location.href = `/quizes/${id}/answers?submissionId=${submissionId}`;
             }}
@@ -102,19 +102,19 @@ export default function QuizReportPage() {
         </div>
         {/* Recommended quizzes section */}
         <div className="mt-12">
-          <h3 className="text-2xl font-bold text-white mb-4">Recommended quizzes</h3>
+          <h3 className="text-2xl font-bold text-black mb-4">Recommended quizzes</h3>
           <div className="flex gap-6 flex-wrap">
-            <div className="bg-[#23282f] rounded-xl p-6 w-64">
-              <div className="text-green-400 font-semibold mb-1">Difficulty: Easy</div>
-              <div className="text-xl font-bold text-white mb-2">Tables Level 5</div>
-              <div className="text-gray-300 mb-2">Questions: 5 • 10 mins • Mr. Sharma</div>
-              <div className="bg-blue-500 text-white rounded-lg px-4 py-2 text-center font-semibold">Maths</div>
+            <div className="bg-white rounded-xl p-6 w-64">
+              <div className="text-text-black font-semibold mb-1">Difficulty: Easy</div>
+              <div className="text-xl font-bold text-black mb-2">Tables Level 5</div>
+              <div className="text-black mb-2">Questions: 5 • 10 mins • Mr. Sharma</div>
+              <div className="point-ask-gradient text-white rounded-lg px-4 py-2 text-center font-semibold">Maths</div>
             </div>
-            <div className="bg-[#23282f] rounded-xl p-6 w-64">
-              <div className="text-green-400 font-semibold mb-1">Difficulty: Hard</div>
-              <div className="text-xl font-bold text-white mb-2">Grammer - Vowels</div>
-              <div className="text-gray-300 mb-2">Questions: 5 • 10 mins • Mr. Sharma</div>
-              <div className="bg-red-500 text-white rounded-lg px-4 py-2 text-center font-semibold">English</div>
+            <div className="bg-white rounded-xl p-6 w-64">
+              <div className="text-text-black font-semibold mb-1">Difficulty: Hard</div>
+              <div className="text-xl font-bold text-black mb-2">Grammer - Vowels</div>
+              <div className="text-black mb-2">Questions: 5 • 10 mins • Mr. Sharma</div>
+              <div className="point-ask-gradient text-white rounded-lg px-4 py-2 text-center font-semibold">English</div>
             </div>
             {/* Add more cards as needed */}
           </div>

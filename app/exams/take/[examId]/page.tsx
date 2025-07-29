@@ -205,7 +205,7 @@ export default function TakeExamPage() {
   }
 
   return (
-    <div className="fixed inset-0 min-h-screen min-w-screen bg-[#181c24] py-8 px-2 md:px-0 flex flex-col items-center z-10">
+    <div className="fixed inset-0 min-h-screen min-w-screen bg-gray-100 py-8 px-2 md:px-0 flex flex-col items-center z-10">
       {/* Warning Modal */}
       {showWarning && warningCount > 0 && warningCount < 5 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
@@ -254,24 +254,22 @@ export default function TakeExamPage() {
       )}
       {/* Timer Bar */}
       <div className="w-full max-w-3xl flex justify-between items-center mb-4 sticky top-0 z-20">
-        <div className="text-green-400 font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
+        <div className="text-black font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
         <div className="text-gray-400 text-sm">(Exam will auto-submit when time runs out)</div>
       </div>
       <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-32px)]">
         <div className="mb-4">
-          <div className="text-green-400 font-semibold">Difficulty: {exam.difficulty?.charAt(0).toUpperCase() + exam.difficulty?.slice(1)}</div>
-          <div className="text-2xl font-bold text-white mb-2">{exam.title}</div>
+          <div className="text-black font-semibold">Difficulty: {exam.difficulty?.charAt(0).toUpperCase() + exam.difficulty?.slice(1)}</div>
+          <div className="text-2xl font-bold text-black mb-2">{exam.title}</div>
         </div>
-        <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden mb-4">
-          {/* Progress bar can be added here */}
-        </div>
+       
         {exam.questions.map((q, idx) => (
-          <div key={q.id} className="mb-8 bg-[#23282f] rounded-2xl p-6">
-            <div className="font-semibold text-white mb-4 text-lg">
+          <div key={q.id} className="mb-8 bg-white rounded-2xl p-6">
+            <div className="font-semibold text-black mb-4 text-lg">
               Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ""}
             </div>
             <textarea
-              className="w-full p-4 rounded bg-[#393e3a] text-white min-h-[60px]"
+              className="w-full p-4 rounded bg-[#FFB12133] text-gray-700 min-h-[60px]"
               placeholder="Type your short answer here"
               value={answers[idx]}
               onChange={(e) => handleAnswerChange(idx, e.target.value)}
@@ -279,7 +277,7 @@ export default function TakeExamPage() {
           </div>
         ))}
         <button
-          className="bg-green-700/80 text-white p-4 rounded-lg w-full max-w-xs mx-auto block"
+          className="point-ask-gradient text-white p-4 rounded-lg w-full max-w-xs mx-auto block"
           onClick={() => handleSubmit(false)}
           disabled={submitting}
         >

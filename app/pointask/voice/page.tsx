@@ -660,7 +660,7 @@ export default function PointAskVoicePage() {
                 </span>{" "}
                 Upload a question image to get started!
               </div>
-              <div className="text-lg text-gray-300 mb-8">
+              <div className="text-lg text-black mb-8">
                 Select your class and style, then upload a photo of your
                 question.
               </div>

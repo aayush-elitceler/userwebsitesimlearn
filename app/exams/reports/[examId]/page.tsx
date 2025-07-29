@@ -46,26 +46,26 @@ export default function ExamReportPage() {
     if (examId) fetchResult();
   }, [examId]);
 
-  if (loading) return <div className="text-white p-8">Loading...</div>;
-  if (!result) return <div className="text-white p-8">Result not found.</div>;
+  if (loading) return <div className="text-black p-8">Loading...</div>;
+  if (!result) return <div className="text-black p-8">Result not found.</div>;
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white">
+    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-2">Assessment report</h2>
-        <div className="text-white mb-2">
+        <h2 className="text-2xl font-bold text-black mb-2">Assessment report</h2>
+        <div className="text-black mb-2">
           {result.exam.title} &nbsp; • &nbsp; Difficulty - {result.exam.difficulty || "N/A"}
         </div>
-        <div className="text-white mb-4">
+        <div className="text-black mb-4">
           You received a score of <span className="text-yellow-400 font-bold">{result.score}</span> / {result.exam.questions.length}.
         </div>
         <div className="flex items-center gap-4 mb-8">
-          <button
-            className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2"
+          {/* <button
+            className="point-ask-gradient text-white cursor-pointer px-6 py-2 rounded-lg font-semibold flex items-center gap-2"
             onClick={() => {}}
           >
             Review answers <span role="img" aria-label="eye">👁️</span>
-          </button>
+          </button> */}
         </div>
         {/* Gauge/Performance meter here */}
         <div className="flex justify-center mb-8">
@@ -93,11 +93,11 @@ export default function ExamReportPage() {
         </div>
         {/* Show questions and student answers */}
         <div className="mt-8">
-          <h3 className="text-xl font-bold text-white mb-4">Your Answers</h3>
+          <h3 className="text-xl font-bold text-black mb-4">Your Answers</h3>
           {result.exam.questions.map((q, idx) => (
             <div key={idx} className="mb-6">
-              <div className="text-white font-semibold mb-1">Q{idx + 1}. {q.questionText}</div>
-              <div className="bg-[#232c2a] text-gray-200 rounded p-4">{q.studentAnswer || <span className="italic text-gray-400">No answer</span>}</div>
+              <div className="text-black font-semibold mb-1">Q{idx + 1}. {q.questionText}</div>
+              <div className="bg-[#FFB12133] text-gray-200 rounded p-4">{q.studentAnswer || <span className="italic text-gray-400">No answer</span>}</div>
             </div>
           ))}
         </div>
