@@ -125,6 +125,20 @@ const examSubRoutes = [
     bg: 'point-ask-gradient border-t border-white/30',
   },
 ];
+const projectSubRoutes = [
+  {
+    label: 'Create Projects',
+    href: '/projects',
+    icon: projectsWhite,
+    bg: 'bg-[#5B5E6D] border-t border-white/30',
+  },
+  {
+    label: 'Projects',
+    href: '/projects/teacherproject',
+    icon: projectsWhite,
+    bg: 'point-ask-gradient border-t border-white/30',
+  },
+];
 
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
@@ -178,8 +192,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
         icon: quizWhite,
       },
       {
-        title: 'Projects',
-        url: '/projects',
+        title: 'Personalised learning',
+        url: '/personalisedLearning',
         icon: projectsWhite,
       },
       {
@@ -203,6 +217,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const [pointOpen, setPointOpen] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
   const [examOpen, setExamOpen] = useState(false);
+  const [projectsOpen, setProjectOpen] = useState(false);
 
   // Close dropdowns when route changes
   useEffect(() => {
@@ -210,6 +225,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
     setPointOpen(false);
     setQuizOpen(false);
     setExamOpen(false);
+    setProjectOpen(false);
   }, [pathname]);
 
   // Close dropdowns when sidebar collapses
@@ -219,6 +235,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       setPointOpen(false);
       setQuizOpen(false);
       setExamOpen(false);
+      setProjectOpen(false);
     }
   }, [collapsed]);
 
@@ -229,6 +246,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       setPointOpen(false);
       setQuizOpen(false);
       setExamOpen(false);
+      setProjectOpen(false);
     }
   }, [collapsed]);
 
@@ -237,6 +255,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const isPointAskActive = pointAskSubRoutes.some((r) => pathname === r.href);
   const isQuizActive = quizSubRoutes.some((r) => pathname === r.href);
   const isExamActive = examSubRoutes.some((r) => pathname === r.href);
+  const isProjectsActive = projectSubRoutes.some((r) => pathname === r.href);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   console.log(mobileOpen);
@@ -489,6 +508,61 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                 </div>
                 {/* Exam Dropdown */}
+                <div className='mb-2'>
+                  <div className='relative'>
+                    {isExamActive && (
+                      <div className='sidebar-indicator sidebar-indicator-quiz'></div>
+                    )}
+                    <button
+                      onClick={() => setExamOpen(!examOpen)}
+                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
+                        isExamActive
+                          ? 'point-ask-gradient text-white shadow-sm'
+                          : 'text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <span className='flex items-center gap-3'>
+                        <Image
+                          src={examsWhite}
+                          alt='Exams'
+                          width={20}
+                          height={20}
+                          className={`h-5 w-5 flex-shrink-0 ${isExamActive ? '' : 'brightness-0'}`}
+                        />
+                        <span className='text-sm'>Exams</span>
+                      </span>
+                      <ChevronUpDownIcon open={examOpen || isExamActive} />
+                    </button>
+                  </div>
+                  {(examOpen || isExamActive) && (
+                    <div className='ml-6 mt-3 flex flex-col gap-2'>
+                      {examSubRoutes.map((sub) => {
+                        const isSubActive = pathname === sub.href;
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
+                              isSubActive
+                                ? 'bg-[#FFB12133] text-[#FF4949]'
+                                : 'text-[#222] hover:bg-[#FFB12133]'
+                            }`}
+                          >
+                            <Image
+                              src={sub.icon}
+                              alt={sub.label}
+                              width={20}
+                              height={20}
+                              className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
+                            />
+                            <span>{sub.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                 
+                </div>
                 <div className='mb-2'>
                   <div className='relative'>
                     {isExamActive && (
@@ -924,6 +998,70 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 {!collapsed && (examOpen || isExamActive) && (
                   <div className='ml-6 mt-3 flex flex-col gap-2'>
                     {examSubRoutes.map((sub) => {
+                      const isSubActive = pathname === sub.href;
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
+                            isSubActive
+                              ? 'bg-[#FFB12133] text-[#FF4949]'
+                              : 'text-[#222] hover:bg-[#FFB12133]'
+                          }`}
+                        >
+                          <Image
+                            src={sub.icon}
+                            alt={sub.label}
+                            width={20}
+                            height={20}
+                            className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
+                          />
+                          <span>{sub.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              {/* Projects Dropdown */}
+              <div className='mb-2'>
+                <div className='relative'>
+                  {isProjectsActive && (
+                    <div className='sidebar-indicator sidebar-indicator-projects'></div>
+                  )}
+                  <button
+                    onClick={() => !collapsed && setProjectOpen(!projectsOpen)}
+                    className={`w-full flex items-center ${
+                      collapsed ? 'justify-center px-2' : 'justify-between px-4'
+                    } py-3 rounded-md font-medium transition-all duration-200 ${
+                      isProjectsActive
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-black hover:bg-white/10'
+                    } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
+                    disabled={collapsed}
+                  >
+                    <span
+                      className={`flex items-center ${
+                        collapsed ? '' : 'gap-3'
+                      }`}
+                    >
+                      <Image
+                        src={projectsWhite}
+                        alt='projects'
+                        width={20}
+                        height={20}
+                        className={`h-5 w-5 flex-shrink-0 ${isProjectsActive ? '' : 'brightness-0'}`}
+                      />
+                      {!collapsed && <span className='text-sm'>Projects</span>}
+                    </span>
+                    {!collapsed && (
+                      <ChevronUpDownIcon open={projectsOpen || isProjectsActive} />
+                    )}
+                  </button>
+                </div>
+                {!collapsed && (projectsOpen || isProjectsActive) && (
+                  <div className='ml-6 mt-3 flex flex-col gap-2'>
+                    {projectSubRoutes.map((sub) => {
                       const isSubActive = pathname === sub.href;
                       return (
                         <Link

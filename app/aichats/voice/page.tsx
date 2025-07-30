@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { ArrowRight } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
+import VoiceOverlay from "@/components/VoiceOverlay";
 
 const grades = [
   "1st grade",
@@ -118,6 +119,10 @@ export default function AiChatsVoicePage() {
       chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatHistory, thinking, isStreaming, displayedText]);
+
+  const handleStopListening = () => {
+    SpeechRecognition.stopListening();
+  }
 
   // Typewriter effect for streaming chat messages
   useEffect(() => {
@@ -582,8 +587,8 @@ export default function AiChatsVoicePage() {
                 <span role="img" aria-label="wave">
                   👋
                 </span>{" "}
-                Got it! I&apos;ll teach you like a friend for Grade{" "}
-                {selectedGrade ? selectedGrade.replace(/\D/g, "") : "6"}.
+                Got it! I&apos;ll teach you {selectedStyle ? "like a " + selectedStyle : ""} 
+                {selectedGrade ? " for Grade " + selectedGrade.replace(/\D/g, "") : ""}
               </div>
               <div className="text-lg text-black mb-8">
                 Ask me anything when you&apos;re ready.
@@ -646,6 +651,7 @@ export default function AiChatsVoicePage() {
 
       {/* Only show input bar if both selectors are chosen */}
       {selectedGrade && selectedStyle && <MicInputBar />}
+      <VoiceOverlay isListening={listening} onStop={handleStopListening}/>
     </div>
   );
 }
