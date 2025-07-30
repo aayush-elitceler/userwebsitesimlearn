@@ -213,7 +213,7 @@ export default function AiChatsChatPage() {
 
   const FloatingSelectors = (
     <div
-      className="fixed z-40 flex flex-row gap-[10px] right-4 sm:right-8 lg:right-20"
+       className="fixed z-40 flex flex-row gap-[10px] right-4 sm:right-8 lg:right-40"
       style={{ top: "40px" }}
     >
       {/* Grade selector */}
@@ -480,8 +480,8 @@ export default function AiChatsChatPage() {
                 <span role="img" aria-label="wave">
                   👋
                 </span>{" "}
-                Got it! I&apos;ll teach you like a friend for Grade{" "}
-                {selectedGrade ? selectedGrade.replace(/\D/g, "") : "6"}.
+                Got it! I&apos;ll teach you {selectedStyle ? "like a " + selectedStyle : ""} 
+                {selectedGrade ? " for Grade " + selectedGrade.replace(/\D/g, "") : ""}
               </div>
               <div className="text-lg text-black mb-8">
                 Ask me anything when you&apos;re ready.

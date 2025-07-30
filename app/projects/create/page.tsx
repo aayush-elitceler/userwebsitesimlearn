@@ -43,7 +43,7 @@ export default function CreateProjectPage() {
       if (res.ok) {
         const data = await res.json();
         const projectId = data.data?.id || data.project?.id;
-        router.push(`/projects`);
+        router.push(`/projects/${projectId}`);
       } else {
         alert("Failed to create project");
       }

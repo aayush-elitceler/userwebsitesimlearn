@@ -97,51 +97,38 @@ export default function ProjectsPage() {
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-black mb-2">Projects</h2>
-        <button
-          className="fixed top-6 right-6 cursor-pointer z-50 flex items-center gap-2 point-ask-gradient hover:bg-green-700 text-white font-semibold px-5 py-3 rounded-lg shadow transition"
-          onClick={() => router.push("/projects/create")}
-        >
-          <Plus size={20} />
-          Create Project
-        </button>
+       
         <div className="text-lg text-black mb-8">
           Complete Fun Projects and Earn Feedback{" "}
           <span className="align-middle">🏅✨</span>
         </div>
 
-       
-
-        {/* User Projects */}
+        {/* Assigned Projects */}
         <div className="flex items-center justify-between mb-4 mt-8">
           <h3 className="text-xl font-bold text-black">
-            Your Created Projects
+            Teacher Assigned Projects
           </h3>
         </div>
-        <div className="overflow-x-auto scrollbar-hide mb-10 pb-4 w-full">
-          <div className="flex flex-row flex-nowrap gap-8 w-max ">
-            {loading ? (
-              <div className="text-black">Loading previous quizzes...</div>
-            ) : userProjects.length === 0 ? (
-              <div className="text-black">No previous quizzes.</div>
-            ) : (
-              userProjects.map((project) => {
-                return (
-                  <ProjectCard
-                    key={project.id}
-                    title={project.title}
-                    subject={project.subject}
-                    description={
-                      project.description ||
-                      `Class ${project.class} - ${project.persona}`
-                    }
-                    deadline={null}
-                    downloadUrl={project.pdfUrl}
-                  />
-                );
-              })
-            )}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          {loading ? (
+            <div className="text-black">Loading...</div>
+          ) : teacherProjects.length === 0 ? (
+            <div className="text-black">No assigned projects.</div>
+          ) : (
+            teacherProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                title={project.title}
+                subject={project.subject}
+                description={project.description}
+                deadline={project.deadline}
+                downloadUrl={project.projectUrl}
+              />
+            ))
+          )}
         </div>
+
+       
         {/* <div className="overflow-x-auto ">
           <div className="flex gap-6 pb-2 pr-4 w-max min-w-full">
             {loading ? (
