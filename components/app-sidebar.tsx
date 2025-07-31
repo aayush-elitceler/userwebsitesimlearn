@@ -10,8 +10,7 @@ import Logo from '@/public/images/logoAiDash.svg';
 import book from '@/public/images/book.png';
 import quizWhite from '@/public/images/quiz.svg';
 import { LayoutDashboard } from 'lucide-react';
-import { Pointer } from 'lucide-react';
-
+import PointerBlack from '@/public/images/pointerBlack.svg'
 import projectsWhite from '@/public/images/project.svg';
 import progressWhite from '@/public/images/progress.svg';
 import examsWhite from '@/public/images/exams.svg';
@@ -811,7 +810,13 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         collapsed ? '' : 'gap-3'
                       }`}
                     >
-                      <MicIcon style={{ color: isAiTutorActive ? '#fff' : '#222' }} />
+                      <Image
+                          src="/images/aiicon.svg"
+                          alt='Quiz'
+                          width={20}
+                          height={20}
+                          className={`h-5 w-5 flex-shrink-0 ${isAiTutorActive ? '' : 'brightness-0'}`}
+                        />
                       {!collapsed && <span className='text-sm'>AI Tutor</span>}
                     </span>
                     {!collapsed && (
@@ -863,7 +868,13 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         collapsed ? '' : 'gap-3'
                       }`}
                     >
-                      <Pointer style={{ color: isPointAskActive ? '#fff' : '#222' }} />
+                       <Image
+                          src={PointerBlack}
+                          alt='pointer'
+                          width={20}
+                          height={20}
+                          className={`h-5 w-5 flex-shrink-0 ${isPointAskActive ? '' : 'brightness-0'}`}
+                        />
                       {!collapsed && (
                         <span className='text-sm'>Point & Ask</span>
                       )}

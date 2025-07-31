@@ -1,7 +1,7 @@
 
 "use client";
 import React from "react";
-import VoiceWave from "./VoiceWave";
+import ListeningUI from "./VoiceWave";
 
 interface VoiceOverlayProps {
   isListening: boolean;
@@ -87,7 +87,7 @@ export default function VoiceOverlay({ isListening, onStop }: VoiceOverlayProps)
             <div className="absolute inset-0 rounded-full animate-ping opacity-30 bg-gradient-to-r from-orange-400 to-pink-400"></div>
             <div className="absolute inset-2 rounded-full animate-ping opacity-20 bg-gradient-to-r from-pink-400 to-yellow-400" style={{ animationDelay: "0.5s" }}></div>
             
-            <VoiceWave isListening={isListening} className="w-40 h-20 relative z-10" />
+            <ListeningUI isListening={isListening} className="w-40 h-20 relative z-10" />
           </div>
         </div>
 

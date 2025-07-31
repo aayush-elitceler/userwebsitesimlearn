@@ -8,6 +8,7 @@ import { ArrowRight } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import VoiceOverlay from "@/components/VoiceOverlay";
+import { encode } from "gpt-tokenizer";
 
 const grades = [
   "1st grade",
@@ -158,16 +159,16 @@ export default function AiChatsVoicePage() {
   // Floating selectors (always visible)
   const FloatingSelectors = (
     <div
-      className="fixed z-40 flex flex-row gap-[10px] right-4 sm:right-8 lg:right-40"
+       className="fixed z-40 flex flex-row gap-[10px] bg-gray-200 p-4 rounded-md right-4 sm:right-8 lg:right-40"
       style={{ top: "40px" }}
     >
       {/* Grade selector */}
       <div className="relative">
         <button
-          className={`hover:bg-[#005f2e] text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-600 text-white flex items-center shadow-lg ${
             selectedGrade || selectedStyle
               ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "point-ask-gradient border border-white/20 justify-center"
+              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedGrade && !selectedStyle
@@ -187,14 +188,10 @@ export default function AiChatsVoicePage() {
             setShowStyleDropdown(false);
           }}
         >
-          {selectedGrade || selectedStyle ? (
+         
             <>
               <div className="flex items-center gap-2">
-                <img
-                  src="/images/classIcon.svg"
-                  alt=""
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                />
+               
                 <span className="text-xs sm:text-sm font-medium">
                   Class :{" "}
                   {selectedGrade
@@ -202,23 +199,9 @@ export default function AiChatsVoicePage() {
                     : "Select Grade"}
                 </span>
               </div>
-              <svg
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                className={`transition-transform ${
-                  showGradeDropdown ? "rotate-180" : ""
-                }`}
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+         
             </>
-          ) : (
-            <img src="/images/classIcon.svg" alt="" className="w-5 h-5" />
-          )}
+          
         </button>
 
         {showGradeDropdown && (
@@ -265,10 +248,10 @@ export default function AiChatsVoicePage() {
       {/* Style selector */}
       <div className="relative">
         <button
-          className={`hover:bg-[#005f2e] text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-500 text-white flex items-center shadow-lg ${
             selectedStyle
               ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "point-ask-gradient border border-white/20 justify-center"
+              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedStyle
@@ -288,35 +271,17 @@ export default function AiChatsVoicePage() {
             setShowGradeDropdown(false);
           }}
         >
-          {selectedStyle ? (
+         
             <>
               <div className="flex items-center gap-2">
-                <img
-                  src="/images/professor.svg"
-                  alt=""
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                />
+               
                 <span className="text-xs sm:text-sm font-medium">
                   Style : {selectedStyle || "Select Style"}
                 </span>
               </div>
-              <svg
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                className={`transition-transform ${
-                  showStyleDropdown ? "rotate-180" : ""
-                }`}
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+              
             </>
-          ) : (
-            <img src="/images/professor.svg" alt="" className="w-5 h-5" />
-          )}
+           
         </button>
         {showStyleDropdown && (
           <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50">
@@ -404,7 +369,6 @@ export default function AiChatsVoicePage() {
       </div>
     </div>
   );
-
   // Send message to API
   const handleSend = async () => {
     if (!selectedGrade || !selectedStyle || !inputValue.trim()) return;
@@ -440,6 +404,23 @@ export default function AiChatsVoicePage() {
       if (!res.ok) throw new Error("Failed to get response");
       const data = await res.json();
       const responseText = data?.data.response || JSON.stringify(data);
+      // --- Token/Model Logging ---
+      const model = "gpt-3.5-turbo"; // or your actual model name
+      const inputTokens = encode(inputValue.trim()).length - 1;
+      const outputTokens = encode(responseText).length;
+      // Example pricing (OpenAI, update as needed)
+      const inputPricePer1K = 0.0005;
+      const outputPricePer1K = 0.0015;
+      const inputCost = (inputTokens / 1000) * inputPricePer1K;
+      const outputCost = (outputTokens / 1000) * outputPricePer1K;
+      const totalCost = inputCost + outputCost;
+      console.log("--- AI Chat Log ---");
+      console.log("Model:", model);
+      console.log("Input tokens:", inputTokens);
+      console.log("Output tokens:", outputTokens);
+      console.log("Input cost:", inputCost.toFixed(6));
+      console.log("Output cost:", outputCost.toFixed(6));
+      console.log("Total cost:", totalCost.toFixed(6));
 
       // Add AI message and trigger streaming
       setChatHistory((prev) => {

@@ -26,6 +26,7 @@
     "chart.js": "^4.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "gpt-tokenizer": "^3.0.1",
     "jose": "^6.0.11",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
