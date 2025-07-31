@@ -165,16 +165,16 @@ export default function PointAskChatPage() {
   // Floating selectors (always visible)
   const FloatingSelectors = (
     <div
-      className="fixed z-40 flex flex-row gap-[10px] right-4 sm:right-8 lg:right-40"
+       className="fixed z-40 flex flex-row gap-[10px] bg-gray-200 p-4 rounded-md right-4 sm:right-8 lg:right-40"
       style={{ top: "40px" }}
     >
       {/* Grade selector */}
       <div className="relative">
         <button
-          className={`hover:bg-[#005f2e] text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-600 text-white flex items-center shadow-lg ${
             selectedGrade || selectedStyle
               ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "point-ask-gradient border border-white/20 justify-center"
+              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedGrade && !selectedStyle
@@ -194,14 +194,10 @@ export default function PointAskChatPage() {
             setShowStyleDropdown(false);
           }}
         >
-          {selectedGrade || selectedStyle ? (
+         
             <>
               <div className="flex items-center gap-2">
-                <img
-                  src="/images/classIcon.svg"
-                  alt=""
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                />
+               
                 <span className="text-xs sm:text-sm font-medium">
                   Class :{" "}
                   {selectedGrade
@@ -209,23 +205,9 @@ export default function PointAskChatPage() {
                     : "Select Grade"}
                 </span>
               </div>
-              <svg
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                className={`transition-transform ${
-                  showGradeDropdown ? "rotate-180" : ""
-                }`}
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+         
             </>
-          ) : (
-            <img src="/images/classIcon.svg" alt="" className="w-5 h-5" />
-          )}
+          
         </button>
 
         {showGradeDropdown && (
@@ -272,10 +254,10 @@ export default function PointAskChatPage() {
       {/* Style selector */}
       <div className="relative">
         <button
-          className={`hover:bg-[#005f2e] text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-500 text-white flex items-center shadow-lg ${
             selectedStyle
               ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "point-ask-gradient border border-white/20 justify-center"
+              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedStyle
@@ -295,35 +277,17 @@ export default function PointAskChatPage() {
             setShowGradeDropdown(false);
           }}
         >
-          {selectedStyle ? (
+         
             <>
               <div className="flex items-center gap-2">
-                <img
-                  src="/images/professor.svg"
-                  alt=""
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                />
+               
                 <span className="text-xs sm:text-sm font-medium">
                   Style : {selectedStyle || "Select Style"}
                 </span>
               </div>
-              <svg
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                className={`transition-transform ${
-                  showStyleDropdown ? "rotate-180" : ""
-                }`}
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+              
             </>
-          ) : (
-            <img src="/images/professor.svg" alt="" className="w-5 h-5" />
-          )}
+           
         </button>
         {showStyleDropdown && (
           <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50">
@@ -411,7 +375,6 @@ export default function PointAskChatPage() {
       </div>
     </div>
   );
-
   // Image upload/capture logic
   const handleImageUpload = (file: File) => {
     setImageFile(file);
