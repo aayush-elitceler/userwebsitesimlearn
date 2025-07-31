@@ -291,7 +291,7 @@ export default function ImprovedAiChatsVoicePage() {
 
       // Token/Model Logging
       const model = "gpt-3.5-turbo";
-      const inputTokens = encode(inputValue.trim()).length - 1;
+      const inputTokens = encode(inputValue.trim()).length ;
       const outputTokens = encode(responseText).length;
       const inputPricePer1K = 0.0005;
       const outputPricePer1K = 0.0015;

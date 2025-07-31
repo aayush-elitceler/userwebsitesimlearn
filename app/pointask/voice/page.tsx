@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -7,6 +7,8 @@ import Cookies from "js-cookie";
 import { ArrowRight } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
+import VoiceOverlay from "@/components/VoiceOverlay";
+import { encode } from "gpt-tokenizer";
 
 const grades = [
   "1st grade",
@@ -22,6 +24,7 @@ const grades = [
   "11th grade",
   "12th grade",
 ];
+
 const styles = [
   {
     label: "Professor",
@@ -102,16 +105,24 @@ export default function PointAskVoicePage() {
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [apiResponse, setApiResponse] = useState<string | null>(null);
   const [displayedResponse, setDisplayedResponse] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [thinking, setThinking] = useState(false);
-  const [pendingTranscript, setPendingTranscript] = useState<string | null>(
-    null
-  );
+  const [pendingTranscript, setPendingTranscript] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [microphonePermission, setMicrophonePermission] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown');
+
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+  } = useSpeechRecognition();
+
   const [chatHistory, setChatHistory] = useState<
     Array<{
       type: "user" | "assistant" | "thinking";
@@ -123,11 +134,95 @@ export default function PointAskVoicePage() {
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const streamingResponseRef = useRef<string | null>(null);
 
+  // Check browser support and microphone permission on mount
+  useEffect(() => {
+    const checkPermissions = async () => {
+      // Check if HTTPS is being used
+      if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        setSpeechError('Voice recognition requires HTTPS connection');
+        return;
+      }
+
+      // Check browser support
+      if (!browserSupportsSpeechRecognition) {
+        setSpeechError('Your browser does not support speech recognition');
+        return;
+      }
+
+      // Check microphone permission
+      try {
+        const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        setMicrophonePermission(permission.state);
+
+        permission.addEventListener('change', () => {
+          setMicrophonePermission(permission.state);
+        });
+      } catch (error) {
+        console.error('Error checking microphone permission:', error);
+        // Fallback for browsers that don't support permissions API
+        setMicrophonePermission('unknown');
+      }
+    };
+
+    checkPermissions();
+  }, [browserSupportsSpeechRecognition]);
+
+  useEffect(() => {
+    if (transcript) {
+      setInputValue(transcript);
+    }
+  }, [transcript]);
+
   useEffect(() => {
     if (chatBottomRef.current) {
       chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [apiResponse, apiLoading, thinking, displayedResponse, chatHistory]);
+
+  // Enhanced stop listening with error handling
+  const handleStopListening = useCallback(() => {
+    try {
+      SpeechRecognition.stopListening();
+      setSpeechError(null);
+    } catch (error) {
+      console.error('Error stopping speech recognition:', error);
+      setSpeechError('Failed to stop listening');
+    }
+  }, []);
+
+  // Enhanced start listening with permission and error handling
+  const handleStartListening = useCallback(async () => {
+    try {
+      setSpeechError(null);
+
+      // Check microphone permission first
+      if (microphonePermission === 'denied') {
+        setSpeechError('Microphone access denied. Please enable microphone permissions in your browser settings.');
+        return;
+      }
+
+      // Request microphone access explicitly
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (permissionError) {
+        console.error('Microphone permission error:', permissionError);
+        setSpeechError('Please allow microphone access to use voice input');
+        return;
+      }
+
+      resetTranscript();
+
+      // Start listening with enhanced options
+      await SpeechRecognition.startListening({
+        continuous: false,
+        language: 'en-US',
+      });
+
+    } catch (error) {
+      console.error('Error starting speech recognition:', error);
+      setSpeechError('Failed to start voice recognition. Please try again.');
+    }
+  }, [microphonePermission, resetTranscript]);
 
   // Typewriter effect for streaming response
   useEffect(() => {
@@ -181,6 +276,156 @@ export default function PointAskVoicePage() {
     }
   }, [apiResponse]); // Only depend on apiResponse to prevent re-runs
 
+  // Image upload/capture logic
+  const handleImageUpload = (file: File) => {
+    setImageFile(file);
+    setImage(URL.createObjectURL(file));
+  };
+
+  // Send message to API
+  const handleSend = async () => {
+    if (!selectedGrade || !selectedStyle || !inputValue.trim() || !imageFile)
+      return;
+
+    // Store the transcript before clearing it
+    const currentTranscript = inputValue.trim();
+    const isFirstMessage = chatHistory.length === 0;
+
+    // Add user message to chat history
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        type: "user",
+        content: currentTranscript,
+        image: isFirstMessage ? image || undefined : undefined,
+        timestamp: Date.now(),
+      },
+    ]);
+
+    // Add thinking state to chat history
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        type: "thinking",
+        content: "Thinking...",
+        timestamp: Date.now(),
+      },
+    ]);
+
+    setApiLoading(true);
+    setApiError(null);
+    setApiResponse(null);
+    setDisplayedResponse("");
+    setIsStreaming(false);
+    setThinking(true);
+    setPendingTranscript(currentTranscript);
+
+    // Clear transcript immediately after storing it
+    resetTranscript();
+
+    try {
+      // Get auth token
+      const authCookie = Cookies.get("auth");
+      let token: string | undefined;
+      if (authCookie) {
+        try {
+          token = JSON.parse(authCookie).token;
+        } catch (e) {
+          console.error("Error parsing auth cookie:", e);
+        }
+      }
+
+      // Create FormData for the API request
+      const formData = new FormData();
+      formData.append("image", imageFile);
+      formData.append("prompt", currentTranscript);
+      formData.append("class", selectedGrade.replace(/\D/g, ""));
+      formData.append("style", selectedStyle.toLowerCase());
+
+      // Make API request
+      const headers: HeadersInit = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      console.log("Sending request with:", {
+        prompt: currentTranscript,
+        class: selectedGrade.replace(/\D/g, ""),
+        style: selectedStyle.toLowerCase(),
+        imageFile: imageFile.name,
+      });
+
+      const res = await fetch(
+        "https://apisimplylearn.selflearnai.in/api/v1/ai/image-chat",
+        {
+          method: "POST",
+          headers,
+          body: formData,
+        }
+      );
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("API Error:", res.status, errorText);
+        throw new Error(`API Error: ${res.status} - ${errorText}`);
+      }
+
+      const data = await res.json();
+      console.log("API Response:", data);
+
+      const responseText = data?.data?.response || "Sorry, I couldn't process your request.";
+
+      // Token/Model Logging
+      const model = "gpt-3.5-turbo";
+      const inputTokens = encode(inputValue.trim()).length;
+      const outputTokens = encode(responseText).length;
+      const inputPricePer1K = 0.0005;
+      const outputPricePer1K = 0.0015;
+      const inputCost = (inputTokens / 1000) * inputPricePer1K;
+      const outputCost = (outputTokens / 1000) * outputPricePer1K;
+      const totalCost = inputCost + outputCost;
+
+      console.log("--- AI Chat Log ---");
+      console.log("Model:", model);
+      console.log("Input tokens:", inputTokens);
+      console.log("Output tokens:", outputTokens);
+      console.log("Input cost:", inputCost.toFixed(6));
+      console.log("Output cost:", outputCost.toFixed(6));
+      console.log("Total cost:", totalCost.toFixed(6));
+
+      // Remove thinking state from chat history
+      setChatHistory((prev) => prev.filter((msg) => msg.type !== "thinking"));
+
+      // Reset streaming states before setting new response
+      setDisplayedResponse("");
+      setIsStreaming(false);
+      setApiResponse(responseText);
+    } catch (err) {
+      console.error("Error in handleSend:", err);
+      setApiError(
+        err instanceof Error ? err.message : "Failed to get response"
+      );
+      // Remove thinking state even on error
+      setChatHistory((prev) => prev.filter((msg) => msg.type !== "thinking"));
+    } finally {
+      setApiLoading(false);
+      setThinking(false);
+      setInputValue("");
+      // Keep pendingTranscript visible until streaming is complete
+      // setPendingTranscript(null); // Removed this line
+    }
+  };
+
+  // Suggestion click handler
+  const handleSuggestion = (s: string) => {
+    if (!selectedGrade || !selectedStyle) {
+      setInputValue(s);
+    } else {
+      setInputValue(s);
+      setTimeout(() => handleSend(), 100);
+    }
+  };
+
   // Floating selectors (always visible)
   const FloatingSelectors = (
     <div
@@ -213,20 +458,14 @@ export default function PointAskVoicePage() {
             setShowStyleDropdown(false);
           }}
         >
-         
-            <>
-              <div className="flex items-center gap-2">
-               
-                <span className="text-xs sm:text-sm font-medium">
-                  Class :{" "}
-                  {selectedGrade
-                    ? selectedGrade.replace(" grade", "")
-                    : "Select Grade"}
-                </span>
-              </div>
-         
-            </>
-          
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-medium">
+              Class :{" "}
+              {selectedGrade
+                ? selectedGrade.replace(" grade", "")
+                : "Select Grade"}
+            </span>
+          </div>
         </button>
 
         {showGradeDropdown && (
@@ -296,17 +535,11 @@ export default function PointAskVoicePage() {
             setShowGradeDropdown(false);
           }}
         >
-         
-            <>
-              <div className="flex items-center gap-2">
-               
-                <span className="text-xs sm:text-sm font-medium">
-                  Style : {selectedStyle || "Select Style"}
-                </span>
-              </div>
-              
-            </>
-           
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-medium">
+              Style : {selectedStyle || "Select Style"}
+            </span>
+          </div>
         </button>
         {showStyleDropdown && (
           <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50">
@@ -395,135 +628,7 @@ export default function PointAskVoicePage() {
     </div>
   );
 
-  // Image upload/capture logic
-  const handleImageUpload = (file: File) => {
-    setImageFile(file);
-    setImage(URL.createObjectURL(file));
-  };
-
-  // Send message to API
-  const handleSend = async () => {
-    if (!selectedGrade || !selectedStyle || !transcript.trim() || !imageFile)
-      return;
-
-    // Store the transcript before clearing it
-    const currentTranscript = transcript.trim();
-    const isFirstMessage = chatHistory.length === 0;
-
-    // Add user message to chat history
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        type: "user",
-        content: currentTranscript,
-        image: isFirstMessage ? image || undefined : undefined,
-        timestamp: Date.now(),
-      },
-    ]);
-
-    // Add thinking state to chat history
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        type: "thinking",
-        content: "Thinking...",
-        timestamp: Date.now(),
-      },
-    ]);
-
-    setApiLoading(true);
-    setApiError(null);
-    setApiResponse(null);
-    setDisplayedResponse("");
-    setIsStreaming(false);
-    setThinking(true);
-    setPendingTranscript(currentTranscript);
-
-    // Clear transcript immediately after storing it
-    resetTranscript();
-
-    try {
-      const formData = new FormData();
-      formData.append("image", imageFile);
-      formData.append("prompt", currentTranscript);
-      formData.append("class", selectedGrade.replace(/\D/g, ""));
-      formData.append("style", selectedStyle.toLowerCase());
-
-      // Get auth token
-      const authCookie = Cookies.get("auth");
-      let token: string | undefined;
-      if (authCookie) {
-        try {
-          token = JSON.parse(authCookie).token;
-        } catch (e) {
-          console.error("Error parsing auth cookie:", e);
-        }
-      }
-
-      // Make API request
-      const headers: HeadersInit = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      console.log("Sending request with:", {
-        prompt: currentTranscript,
-        class: selectedGrade.replace(/\D/g, ""),
-        style: selectedStyle.toLowerCase(),
-        imageFile: imageFile.name,
-      });
-
-      const res = await fetch(
-        "https://apisimplylearn.selflearnai.in/api/v1/ai/image-chat",
-        {
-          method: "POST",
-          headers,
-          body: formData,
-        }
-      );
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("API Error:", res.status, errorText);
-        throw new Error(`API Error: ${res.status} - ${errorText}`);
-      }
-
-      const data = await res.json();
-      console.log("API Response:", data);
-
-      const responseText =
-        data?.data?.response || data?.response || "No response received";
-      console.log("Setting API response:", responseText);
-
-      // Remove thinking state from chat history
-      setChatHistory((prev) => prev.filter((msg) => msg.type !== "thinking"));
-
-      // Reset streaming states before setting new response
-      setDisplayedResponse("");
-      setIsStreaming(false);
-      setApiResponse(responseText);
-    } catch (err) {
-      console.error("Error in handleSend:", err);
-      setApiError(
-        err instanceof Error ? err.message : "Failed to get response"
-      );
-      // Remove thinking state even on error
-      setChatHistory((prev) => prev.filter((msg) => msg.type !== "thinking"));
-    } finally {
-      setApiLoading(false);
-      setThinking(false);
-      // Keep pendingTranscript visible until streaming is complete
-      // setPendingTranscript(null); // Removed this line
-    }
-  };
-
-  // Suggestion click handler
-  const handleSuggestion = () => {
-    resetTranscript();
-    SpeechRecognition.stopListening();
-    // Optionally, you could auto-fill transcript or start listening
-  };
-
+  // Enhanced MicInputBar with error display
   function MicInputBar() {
     const hideSidebar =
       pathname === "/login" ||
@@ -534,72 +639,112 @@ export default function PointAskVoicePage() {
       hideSidebar ? "" : sidebarCollapsed ? "sidebar-collapsed" : ""
     }`;
 
+    const canUseMicrophone = browserSupportsSpeechRecognition && 
+      microphonePermission !== 'denied' && 
+      !speechError &&
+      selectedGrade && 
+      selectedStyle &&
+      image;
+
     return (
-      <div
-        className={inputBarClass}
-        style={{
-          backdropFilter: "blur(10px)",
-          borderRadius: "12px",
-          border: "0.96px solid rgba(255,255,255,0.2)",
-          height: "55px",
-        }}
-      >
-        <input
-          className="flex-1 bg-transparent text-black placeholder-gray-300 border border-black p-3 rounded-md focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
-          type="text"
-          placeholder="Tap the mic and ask anything"
-          value={thinking ? transcript : transcript}
-          readOnly
-        />
-        <button
-          className={`rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl sm:text-2xl ${
-            listening
-              ? "point-ask-gradient text-black"
-              : "bg-[#4A4A4A] text-white"
-          } transition min-w-[40px] sm:min-w-[48px]`}
-          onClick={() => {
-            resetTranscript();
-            SpeechRecognition.startListening({ continuous: false });
+      <>
+        {/* Error message display */}
+        {speechError && (
+          <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 max-w-md text-center">
+            {speechError}
+          </div>
+        )}
+
+        <div
+          className={inputBarClass}
+          style={{
+            backdropFilter: "blur(10px)",
+            borderRadius: "12px",
+            border: "0.96px solid rgba(255,255,255,0.2)",
+            height: "55px",
           }}
-          disabled={listening || thinking || apiLoading || !image}
-          aria-label="Start voice recording"
         >
-          <svg
-            width="20"
-            height="20"
-            className="sm:hidden"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
+          <input
+            className="flex-1 bg-transparent text-black placeholder-gray-300 border border-black p-3 rounded-md focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
+            type="text"
+            placeholder={canUseMicrophone ? "Tap the mic and ask anything" : "Voice input unavailable"}
+            value={thinking ? transcript : inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            readOnly={thinking}
+          />
+          <button
+            className={`rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl sm:text-2xl ${
+              listening
+                ? "point-ask-gradient text-black"
+                : canUseMicrophone
+                ? "bg-[#4A4A4A] text-white hover:bg-[#5A5A5A]"
+                : "bg-gray-400 text-gray-600 cursor-not-allowed"
+            } transition min-w-[40px] sm:min-w-[48px]`}
+            onClick={handleStartListening}
+            disabled={
+              listening ||
+              thinking ||
+              apiLoading ||
+              !canUseMicrophone
+            }
+            title={
+              !browserSupportsSpeechRecognition
+                ? "Speech recognition not supported"
+                : microphonePermission === 'denied'
+                ? "Microphone access denied"
+                : speechError
+                ? speechError
+                : !selectedGrade || !selectedStyle
+                ? "Please select grade and style first"
+                : !image
+                ? "Please upload an image first"
+                : "Click to start voice input"
+            }
           >
-            <rect x="9" y="2" width="6" height="12" rx="3" />
-            <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-            <path d="M12 19v3m-4 0h8" />
-          </svg>
-          <svg
-            width="28"
-            height="28"
-            className="hidden sm:block"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
+            <svg
+              width="20"
+              height="20"
+              className="sm:hidden"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <rect x="9" y="2" width="6" height="12" rx="3" />
+              <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+              <path d="M12 19v3m-4 0h8" />
+            </svg>
+            <svg
+              width="28"
+              height="28"
+              className="hidden sm:block"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <rect x="9" y="2" width="6" height="12" rx="3" />
+              <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+              <path d="M12 19v3m-4 0h8" />
+            </svg>
+          </button>
+          <button
+            className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+            onClick={handleSend}
+            disabled={
+              !inputValue.trim() ||
+              apiLoading ||
+              thinking ||
+              !image ||
+              !selectedGrade ||
+              !selectedStyle
+            }
           >
-            <rect x="9" y="2" width="6" height="12" rx="3" />
-            <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-            <path d="M12 19v3m-4 0h8" />
-          </svg>
-        </button>
-        <button
-          className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
-          onClick={handleSend}
-          disabled={!transcript.trim() || apiLoading || thinking || !image}
-        >
-          <ArrowRight size={16} className="sm:hidden" />
-          <ArrowRight size={20} className="hidden sm:block" />
-        </button>
-      </div>
+            <ArrowRight size={16} className="sm:hidden" />
+            <ArrowRight size={20} className="hidden sm:block" />
+          </button>
+        </div>
+      </>
     );
   }
 
@@ -633,7 +778,7 @@ export default function PointAskVoicePage() {
                 <button
                   key={i}
                   className="border border-black rounded-xl py-8 px-6 text-lg text-black bg-transparent hover:bg-[#FFB12133] transition font-medium w-full"
-                  onClick={() => handleSuggestion()}
+                  onClick={() => handleSuggestion(s)}
                 >
                   {s}
                 </button>
@@ -678,8 +823,8 @@ export default function PointAskVoicePage() {
         {/* After image is uploaded - show smaller preview and chat area */}
         {image && (
           <div className="pt-24 pb-32">
-            {/* Compact image preview when image is uploaded but no response yet */}
-            {!apiResponse && !thinking && !pendingTranscript && (
+            {/* Compact image preview when image is uploaded but no chat history yet */}
+            {chatHistory.length === 0 && !apiResponse && !thinking && !pendingTranscript && (
               <div className="w-full flex flex-col items-center mb-6">
                 <div className="rounded-2xl overflow-hidden bg-black w-full sm:w-[300px] max-w-full h-[100px] sm:h-[120px] flex items-center justify-center mb-4">
                   <img
@@ -708,7 +853,7 @@ export default function PointAskVoicePage() {
                     onClick={() => {
                       // Scroll to chat input
                       const chatInput = document.querySelector(
-                        'input[placeholder="Type your question..."]'
+                        'input[placeholder*="Tap the mic"]'
                       ) as HTMLInputElement;
                       if (chatInput) {
                         chatInput.focus();
@@ -830,7 +975,7 @@ export default function PointAskVoicePage() {
             )}
 
             {/* Chat area */}
-            <div className="w-full flex flex-col gap-3">
+            <div className="w-full flex flex-col gap-3 max-w-4xl mx-auto">
               {/* Render all messages from chat history */}
               {chatHistory.map((message, index) => (
                 <div
@@ -907,6 +1052,7 @@ export default function PointAskVoicePage() {
 
       {/* Voice input bar, only enabled after all options are selected */}
       {selectedGrade && selectedStyle && image && <MicInputBar />}
+      <VoiceOverlay isListening={listening} onStop={handleStopListening} />
       {apiError && (
         <div className="text-red-400 mb-2 fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-900/20 px-4 py-2 rounded-lg border border-red-500/30">
           {apiError}
@@ -915,20 +1061,3 @@ export default function PointAskVoicePage() {
     </div>
   );
 }
-
-// function MicBar({ micActive }: { micActive?: boolean }) {
-//   return (
-//     <div className="w-full bg-[#525252] rounded-full flex items-center px-6 py-4 text-lg text-[#fff] shadow-lg border border-[#fff]/10">
-//       <span className="flex-1 text-[#fff] opacity-80">Tap the mic and ask anything</span>
-//       <button
-//         className={`ml-4 w-12 h-12 rounded-full flex items-center justify-center ${micActive ? "point-ask-gradient text-black" : "bg-[#888888] text-white"}`}
-//       >
-//         <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-//           <rect x="9" y="2" width="6" height="12" rx="3"/>
-//           <path d="M5 10v2a7 7 0 0 0 14 0v-2"/>
-//           <path d="M12 19v3m-4 0h8"/>
-//         </svg>
-//       </button>
-//     </div>
-//   );
-// }
