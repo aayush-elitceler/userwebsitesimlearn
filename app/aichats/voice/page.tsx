@@ -1,5 +1,6 @@
+
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -24,6 +25,7 @@ const grades = [
   "11th grade",
   "12th grade",
 ];
+
 const styles = [
   {
     label: "Professor",
@@ -88,20 +90,28 @@ const styles = [
 ];
 
 const suggestions = [
-  "What is gravity and why don’t we float like astronauts?",
+  "What is gravity and why don't we float like astronauts?",
   "How do plants make their own food using sunlight and water?",
   "How do plants make their own food using sunlight and water?",
   "How do plants make their own food using sunlight and water?",
 ];
 
-export default function AiChatsVoicePage() {
+export default function ImprovedAiChatsVoicePage() {
   const { state } = useSidebar();
   const pathname = usePathname();
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
-  const { transcript, listening, resetTranscript } = useSpeechRecognition();
+  
+  // Speech recognition state
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+  } = useSpeechRecognition();
+  
   const [inputValue, setInputValue] = useState("");
   const [apiLoading, setApiLoading] = useState(false);
   const [thinking, setThinking] = useState(false);
@@ -113,7 +123,43 @@ export default function AiChatsVoicePage() {
   >(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [displayedText, setDisplayedText] = useState<string>("");
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [microphonePermission, setMicrophonePermission] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown');
+  
   const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  // Check browser support and microphone permission on mount
+  useEffect(() => {
+    const checkPermissions = async () => {
+      // Check if HTTPS is being used
+      if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        setSpeechError('Voice recognition requires HTTPS connection');
+        return;
+      }
+
+      // Check browser support
+      if (!browserSupportsSpeechRecognition) {
+        setSpeechError('Your browser does not support speech recognition');
+        return;
+      }
+
+      // Check microphone permission
+      try {
+        const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        setMicrophonePermission(permission.state);
+        
+        permission.addEventListener('change', () => {
+          setMicrophonePermission(permission.state);
+        });
+      } catch (error) {
+        console.error('Error checking microphone permission:', error);
+        // Fallback for browsers that don't support permissions API
+        setMicrophonePermission('unknown');
+      }
+    };
+
+    checkPermissions();
+  }, [browserSupportsSpeechRecognition]);
 
   useEffect(() => {
     if (chatBottomRef.current) {
@@ -121,9 +167,50 @@ export default function AiChatsVoicePage() {
     }
   }, [chatHistory, thinking, isStreaming, displayedText]);
 
-  const handleStopListening = () => {
-    SpeechRecognition.stopListening();
-  }
+  // Enhanced stop listening with error handling
+  const handleStopListening = useCallback(() => {
+    try {
+      SpeechRecognition.stopListening();
+      setSpeechError(null);
+    } catch (error) {
+      console.error('Error stopping speech recognition:', error);
+      setSpeechError('Failed to stop listening');
+    }
+  }, []);
+
+  // Enhanced start listening with permission and error handling
+  const handleStartListening = useCallback(async () => {
+    try {
+      setSpeechError(null);
+      
+      // Check microphone permission first
+      if (microphonePermission === 'denied') {
+        setSpeechError('Microphone access denied. Please enable microphone permissions in your browser settings.');
+        return;
+      }
+
+      // Request microphone access explicitly
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (permissionError) {
+        console.error('Microphone permission error:', permissionError);
+        setSpeechError('Please allow microphone access to use voice input');
+        return;
+      }
+
+      resetTranscript();
+      
+      // Start listening with enhanced options
+      await SpeechRecognition.startListening({
+        continuous: false,
+        language: 'en-US',
+      });
+      
+    } catch (error) {
+      console.error('Error starting speech recognition:', error);
+      setSpeechError('Failed to start voice recognition. Please try again.');
+    }
+  }, [microphonePermission, resetTranscript]);
 
   // Typewriter effect for streaming chat messages
   useEffect(() => {
@@ -133,7 +220,7 @@ export default function AiChatsVoicePage() {
         const words = message.text.split(" ");
         let currentIndex = 0;
         setDisplayedText("");
-
+  
         const interval = setInterval(() => {
           if (currentIndex < words.length) {
             setDisplayedText((prev) => {
@@ -143,23 +230,128 @@ export default function AiChatsVoicePage() {
                   : prev + " " + words[currentIndex];
               return newText;
             });
-            currentIndex++;
+            currentIndex++; // ✅ Fix: increment currentIndex
           } else {
             setIsStreaming(false);
             setStreamingMessageIndex(null);
             clearInterval(interval);
           }
-        }, 80); // Adjust speed here (lower = faster)
-
+        }, 80);
+  
         return () => clearInterval(interval);
       }
     }
   }, [streamingMessageIndex, isStreaming, chatHistory]);
+  
 
-  // Floating selectors (always visible)
+  // Send message to API with better error handling
+  const handleSend = async () => {
+    if (!selectedGrade || !selectedStyle || !inputValue.trim()) return;
+    
+    setApiLoading(true);
+    setThinking(true);
+    setChatHistory((prev) => [
+      ...prev,
+      { role: "user", text: inputValue.trim() },
+    ]);
+
+    try {
+      const authCookie = Cookies.get("auth");
+      let token: string | undefined;
+      if (authCookie) {
+        try {
+          token = JSON.parse(authCookie).token;
+        } catch (e) {
+          console.error('Error parsing auth cookie:', e);
+        }
+      }
+
+      const res = await fetch(
+        "https://apisimplylearn.selflearnai.in/api/v1/ai/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            class: selectedGrade.replace(/\D/g, ""),
+            style: selectedStyle.toLowerCase(),
+            message: inputValue.trim(),
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const responseText = data?.data?.response || "Sorry, I couldn't process your request.";
+
+      // Token/Model Logging
+      const model = "gpt-3.5-turbo";
+      const inputTokens = encode(inputValue.trim()).length - 1;
+      const outputTokens = encode(responseText).length;
+      const inputPricePer1K = 0.0005;
+      const outputPricePer1K = 0.0015;
+      const inputCost = (inputTokens / 1000) * inputPricePer1K;
+      const outputCost = (outputTokens / 1000) * outputPricePer1K;
+      const totalCost = inputCost + outputCost;
+
+      console.log("--- AI Chat Log ---");
+      console.log("Model:", model);
+      console.log("Input tokens:", inputTokens);
+      console.log("Output tokens:", outputTokens);
+      console.log("Input cost:", inputCost.toFixed(6));
+      console.log("Output cost:", outputCost.toFixed(6));
+      console.log("Total cost:", totalCost.toFixed(6));
+
+      // Add AI message and trigger streaming
+      setChatHistory((prev) => {
+        const newHistory = [
+          ...prev,
+          { role: "ai" as const, text: responseText },
+        ];
+        setStreamingMessageIndex(newHistory.length - 1);
+        setIsStreaming(true);
+        return newHistory;
+      });
+    } catch (err) {
+      console.error('API Error:', err);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "ai" as const, text: "Sorry, I encountered an error. Please try again." },
+      ]);
+    } finally {
+      setApiLoading(false);
+      setThinking(false);
+      setInputValue("");
+      resetTranscript();
+    }
+  };
+
+  // When transcript changes, update inputValue
+  useEffect(() => {
+    if (transcript) {
+      setInputValue(transcript);
+    }
+  }, [transcript]);
+
+  // Suggestion click handler
+  const handleSuggestion = (s: string) => {
+    if (!selectedGrade || !selectedStyle) {
+      setInputValue(s);
+    } else {
+      setInputValue(s);
+      setTimeout(() => handleSend(), 100);
+    }
+  };
+
+  // Floating selectors component
   const FloatingSelectors = (
     <div
-       className="fixed z-40 flex flex-row gap-[10px] bg-gray-200 p-4 rounded-md right-4 sm:right-8 lg:right-40"
+      className="fixed z-40 flex flex-row gap-[10px] bg-gray-200 p-4 rounded-md right-4 sm:right-8 lg:right-40"
       style={{ top: "40px" }}
     >
       {/* Grade selector */}
@@ -188,20 +380,14 @@ export default function AiChatsVoicePage() {
             setShowStyleDropdown(false);
           }}
         >
-         
-            <>
-              <div className="flex items-center gap-2">
-               
-                <span className="text-xs sm:text-sm font-medium">
-                  Class :{" "}
-                  {selectedGrade
-                    ? selectedGrade.replace(" grade", "")
-                    : "Select Grade"}
-                </span>
-              </div>
-         
-            </>
-          
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-medium">
+              Class :{" "}
+              {selectedGrade
+                ? selectedGrade.replace(" grade", "")
+                : "Select Grade"}
+            </span>
+          </div>
         </button>
 
         {showGradeDropdown && (
@@ -209,7 +395,7 @@ export default function AiChatsVoicePage() {
             <div className="px-4 py-2 text-gray-700 font-semibold text-sm sm:text-base">
               Select Grade
             </div>
-            <div className="border-t border-gray-400  mt-2">
+            <div className="border-t border-gray-400 mt-2">
               {grades.map((grade, index) => (
                 <div key={grade}>
                   <div
@@ -223,8 +409,6 @@ export default function AiChatsVoicePage() {
                         ? {
                             background:
                               "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
-                            backgroundColor:
-                              "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
                           }
                         : {}
                     }
@@ -236,7 +420,7 @@ export default function AiChatsVoicePage() {
                     {grade}
                   </div>
                   {index < grades.length - 1 && (
-                    <div className="border-t border-gray-400 "></div>
+                    <div className="border-t border-gray-400"></div>
                   )}
                 </div>
               ))}
@@ -271,18 +455,13 @@ export default function AiChatsVoicePage() {
             setShowGradeDropdown(false);
           }}
         >
-         
-            <>
-              <div className="flex items-center gap-2">
-               
-                <span className="text-xs sm:text-sm font-medium">
-                  Style : {selectedStyle || "Select Style"}
-                </span>
-              </div>
-              
-            </>
-           
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-medium">
+              Style : {selectedStyle || "Select Style"}
+            </span>
+          </div>
         </button>
+
         {showStyleDropdown && (
           <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50">
             <div className="px-4 py-1 text-gray-700 font-semibold text-sm sm:text-base">
@@ -301,8 +480,6 @@ export default function AiChatsVoicePage() {
                       selectedStyle === style.value
                         ? {
                             background:
-                              "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
-                            backgroundColor:
                               "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
                           }
                         : {}
@@ -369,96 +546,8 @@ export default function AiChatsVoicePage() {
       </div>
     </div>
   );
-  // Send message to API
-  const handleSend = async () => {
-    if (!selectedGrade || !selectedStyle || !inputValue.trim()) return;
-    setApiLoading(true);
-    setThinking(true);
-    setChatHistory((prev) => [
-      ...prev,
-      { role: "user", text: inputValue.trim() },
-    ]);
-    try {
-      const authCookie = Cookies.get("auth");
-      let token: string | undefined;
-      if (authCookie) {
-        try {
-          token = JSON.parse(authCookie).token;
-        } catch {}
-      }
-      const res = await fetch(
-        "https://apisimplylearn.selflearnai.in/api/v1/ai/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            class: selectedGrade.replace(/\D/g, ""),
-            style: selectedStyle.toLowerCase(),
-            message: inputValue.trim(),
-          }),
-        }
-      );
-      if (!res.ok) throw new Error("Failed to get response");
-      const data = await res.json();
-      const responseText = data?.data.response || JSON.stringify(data);
-      // --- Token/Model Logging ---
-      const model = "gpt-3.5-turbo"; // or your actual model name
-      const inputTokens = encode(inputValue.trim()).length - 1;
-      const outputTokens = encode(responseText).length;
-      // Example pricing (OpenAI, update as needed)
-      const inputPricePer1K = 0.0005;
-      const outputPricePer1K = 0.0015;
-      const inputCost = (inputTokens / 1000) * inputPricePer1K;
-      const outputCost = (outputTokens / 1000) * outputPricePer1K;
-      const totalCost = inputCost + outputCost;
-      console.log("--- AI Chat Log ---");
-      console.log("Model:", model);
-      console.log("Input tokens:", inputTokens);
-      console.log("Output tokens:", outputTokens);
-      console.log("Input cost:", inputCost.toFixed(6));
-      console.log("Output cost:", outputCost.toFixed(6));
-      console.log("Total cost:", totalCost.toFixed(6));
 
-      // Add AI message and trigger streaming
-      setChatHistory((prev) => {
-        const newHistory = [
-          ...prev,
-          { role: "ai" as const, text: responseText },
-        ];
-        setStreamingMessageIndex(newHistory.length - 1);
-        setIsStreaming(true);
-        return newHistory;
-      });
-    } catch (err) {
-      console.log(err);
-
-      // Optionally set error
-    } finally {
-      setApiLoading(false);
-      setThinking(false);
-      setInputValue("");
-      resetTranscript();
-    }
-  };
-
-  // When transcript changes, update inputValue
-  useEffect(() => {
-    setInputValue(transcript);
-  }, [transcript]);
-
-  // Suggestion click handler
-  const handleSuggestion = (s: string) => {
-    if (!selectedGrade || !selectedStyle) {
-      setInputValue(s);
-    } else {
-      setInputValue(s);
-      setTimeout(() => handleSend(), 100);
-    }
-  };
-
+  // Enhanced MicInputBar with error display
   function MicInputBar() {
     const hideSidebar =
       pathname === "/login" ||
@@ -469,83 +558,108 @@ export default function AiChatsVoicePage() {
       hideSidebar ? "" : sidebarCollapsed ? "sidebar-collapsed" : ""
     }`;
 
+    const canUseMicrophone = browserSupportsSpeechRecognition && 
+      microphonePermission !== 'denied' && 
+      !speechError &&
+      selectedGrade && 
+      selectedStyle;
+
     return (
-      <div
-        className={inputBarClass}
-        style={{
-          backdropFilter: "blur(10px)",
-          borderRadius: "12px",
-          border: "0.96px solid rgba(255,255,255,0.2)",
-          height: "55px",
-        }}
-      >
-        <input
-          className="flex-1 bg-transparent text-black placeholder-gray-300 border border-black p-3 rounded-md focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
-          type="text"
-          placeholder="Tap the mic and ask anything"
-          value={thinking ? transcript : inputValue}
-          readOnly
-        />
-        <button
-          className={`rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl sm:text-2xl ${
-            listening
-              ? "point-ask-gradient text-black"
-              : "bg-[#4A4A4A] text-white"
-          } transition min-w-[40px] sm:min-w-[48px]`}
-          onClick={() => {
-            resetTranscript();
-            SpeechRecognition.startListening({ continuous: false });
+      <>
+        {/* Error message display */}
+        {speechError && (
+          <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 max-w-md text-center">
+            {speechError}
+          </div>
+        )}
+        
+        <div
+          className={inputBarClass}
+          style={{
+            backdropFilter: "blur(10px)",
+            borderRadius: "12px",
+            border: "0.96px solid rgba(255,255,255,0.2)",
+            height: "55px",
           }}
-          disabled={
-            listening ||
-            thinking ||
-            apiLoading ||
-            !selectedGrade ||
-            !selectedStyle
-          }
         >
-          <svg
-            width="20"
-            height="20"
-            className="sm:hidden"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
+          <input
+            className="flex-1 bg-transparent text-black placeholder-gray-300 border border-black p-3 rounded-md focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2"
+            type="text"
+            placeholder={canUseMicrophone ? "Tap the mic and ask anything" : "Voice input unavailable"}
+            value={thinking ? transcript : inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            readOnly={thinking}
+          />
+          <button
+            className={`rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl sm:text-2xl ${
+              listening
+                ? "point-ask-gradient text-black"
+                : canUseMicrophone
+                ? "bg-[#4A4A4A] text-white hover:bg-[#5A5A5A]"
+                : "bg-gray-400 text-gray-600 cursor-not-allowed"
+            } transition min-w-[40px] sm:min-w-[48px]`}
+            onClick={handleStartListening}
+            disabled={
+              listening ||
+              thinking ||
+              apiLoading ||
+              !canUseMicrophone
+            }
+            title={
+              !browserSupportsSpeechRecognition
+                ? "Speech recognition not supported"
+                : microphonePermission === 'denied'
+                ? "Microphone access denied"
+                : speechError
+                ? speechError
+                : !selectedGrade || !selectedStyle
+                ? "Please select grade and style first"
+                : "Click to start voice input"
+            }
           >
-            <rect x="9" y="2" width="6" height="12" rx="3" />
-            <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-            <path d="M12 19v3m-4 0h8" />
-          </svg>
-          <svg
-            width="28"
-            height="28"
-            className="hidden sm:block"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
+            <svg
+              width="20"
+              height="20"
+              className="sm:hidden"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <rect x="9" y="2" width="6" height="12" rx="3" />
+              <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+              <path d="M12 19v3m-4 0h8" />
+            </svg>
+            <svg
+              width="28"
+              height="28"
+              className="hidden sm:block"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <rect x="9" y="2" width="6" height="12" rx="3" />
+              <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+              <path d="M12 19v3m-4 0h8" />
+            </svg>
+          </button>
+          <button
+            className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+            onClick={handleSend}
+            disabled={
+              !inputValue.trim() ||
+              apiLoading ||
+              thinking ||
+              !selectedGrade ||
+              !selectedStyle
+            }
           >
-            <rect x="9" y="2" width="6" height="12" rx="3" />
-            <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-            <path d="M12 19v3m-4 0h8" />
-          </svg>
-        </button>
-        <button
-          className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
-          onClick={handleSend}
-          disabled={
-            !inputValue.trim() ||
-            apiLoading ||
-            thinking ||
-            !selectedGrade ||
-            !selectedStyle
-          }
-        >
-          <ArrowRight size={16} className="sm:hidden" />
-          <ArrowRight size={20} className="hidden sm:block" />
-        </button>
-      </div>
+            <ArrowRight size={16} className="sm:hidden" />
+            <ArrowRight size={20} className="hidden sm:block" />
+          </button>
+        </div>
+      </>
     );
   }
 
@@ -553,7 +667,6 @@ export default function AiChatsVoicePage() {
     <div
       className="min-h-screen flex flex-col items-center justify-center relative"
       style={{
-        // backgroundImage: "url('/images/newBg.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -568,8 +681,11 @@ export default function AiChatsVoicePage() {
                 <span role="img" aria-label="wave">
                   👋
                 </span>{" "}
-                Got it! I&apos;ll teach you {selectedStyle ? "like a " + selectedStyle : ""} 
-                {selectedGrade ? " for Grade " + selectedGrade.replace(/\D/g, "") : ""}
+                Got it! I&apos;ll teach you{" "}
+                {selectedStyle ? "like a " + selectedStyle : ""}{" "}
+                {selectedGrade
+                  ? " for Grade " + selectedGrade.replace(/\D/g, "")
+                  : ""}
               </div>
               <div className="text-lg text-black mb-8">
                 Ask me anything when you&apos;re ready.
@@ -632,7 +748,8 @@ export default function AiChatsVoicePage() {
 
       {/* Only show input bar if both selectors are chosen */}
       {selectedGrade && selectedStyle && <MicInputBar />}
-      <VoiceOverlay isListening={listening} onStop={handleStopListening}/>
+      <VoiceOverlay isListening={listening} onStop={handleStopListening} />
     </div>
   );
 }
+
