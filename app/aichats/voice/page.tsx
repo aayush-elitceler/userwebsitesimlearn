@@ -1,14 +1,14 @@
-
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import Cookies from "js-cookie";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDownIcon } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import VoiceOverlay from "@/components/VoiceOverlay";
+import AIMessage from "@/components/VoiceWave";
 import { encode } from "gpt-tokenizer";
 
 const grades = [
@@ -290,11 +290,11 @@ export default function ImprovedAiChatsVoicePage() {
       const responseText = data?.data?.response || "Sorry, I couldn't process your request.";
 
       // Token/Model Logging
-      const model = "gpt-3.5-turbo";
+      const model = "Gemini 1.0 Pro";
       const inputTokens = encode(inputValue.trim()).length ;
       const outputTokens = encode(responseText).length;
-      const inputPricePer1K = 0.0005;
-      const outputPricePer1K = 0.0015;
+      const inputPricePer1K = 0.002;
+      const outputPricePer1K = 0.006;
       const inputCost = (inputTokens / 1000) * inputPricePer1K;
       const outputCost = (outputTokens / 1000) * outputPricePer1K;
       const totalCost = inputCost + outputCost;
@@ -351,16 +351,16 @@ export default function ImprovedAiChatsVoicePage() {
   // Floating selectors component
   const FloatingSelectors = (
     <div
-      className="fixed z-40 flex flex-row gap-[10px] bg-gray-200 p-4 rounded-md right-4 sm:right-8 lg:right-40"
-      style={{ top: "40px" }}
+       className="fixed z-40 flex flex-row gap-[10px]  p-4 rounded-md right-4 sm:right-8 lg:right-40"
+      style={{ top: "40px" , background: 'linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)' }}
     >
       {/* Grade selector */}
       <div className="relative">
         <button
-          className={`hover:bg-orange-600 text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-500 text-[#FF5146] flex items-center  ${
             selectedGrade || selectedStyle
-              ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
+              ? "point-ask-gradient text-white rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
+              : "bg-transparent hover:text-white  cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedGrade && !selectedStyle
@@ -380,14 +380,22 @@ export default function ImprovedAiChatsVoicePage() {
             setShowStyleDropdown(false);
           }}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-medium">
-              Class :{" "}
-              {selectedGrade
-                ? selectedGrade.replace(" grade", "")
-                : "Select Grade"}
-            </span>
-          </div>
+         
+            <>
+              <div className="flex items-center gap-2">
+               
+                <span className="flex gap-2 text-xs sm:text-sm font-medium">
+                  Class :{" "}
+                  {selectedGrade
+                    ? selectedGrade.replace(" grade", "")
+                    : "Select"}
+                <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+                </span>
+
+              </div>
+         
+            </>
+          
         </button>
 
         {showGradeDropdown && (
@@ -395,7 +403,7 @@ export default function ImprovedAiChatsVoicePage() {
             <div className="px-4 py-2 text-gray-700 font-semibold text-sm sm:text-base">
               Select Grade
             </div>
-            <div className="border-t border-gray-400 mt-2">
+            <div className="border-t border-gray-400  mt-2">
               {grades.map((grade, index) => (
                 <div key={grade}>
                   <div
@@ -409,6 +417,8 @@ export default function ImprovedAiChatsVoicePage() {
                         ? {
                             background:
                               "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
+                            backgroundColor:
+                              "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
                           }
                         : {}
                     }
@@ -420,7 +430,7 @@ export default function ImprovedAiChatsVoicePage() {
                     {grade}
                   </div>
                   {index < grades.length - 1 && (
-                    <div className="border-t border-gray-400"></div>
+                    <div className="border-t border-gray-400 "></div>
                   )}
                 </div>
               ))}
@@ -432,10 +442,10 @@ export default function ImprovedAiChatsVoicePage() {
       {/* Style selector */}
       <div className="relative">
         <button
-          className={`hover:bg-orange-500 text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-500 text-[#FF5146] flex items-center ${
             selectedStyle
-              ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
+              ? "point-ask-gradient text-white rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
+              : "bg-transparent  hover:text-white cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedStyle
@@ -455,13 +465,20 @@ export default function ImprovedAiChatsVoicePage() {
             setShowGradeDropdown(false);
           }}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-medium">
-              Style : {selectedStyle || "Select Style"}
-            </span>
-          </div>
-        </button>
+         
+            <>
+              <div className="flex items-center gap-2">
+               
+                <span className="flex gap-2 text-xs sm:text-sm font-medium">
+                  Persona : {selectedStyle || "Select"}
+                <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+                </span>
 
+              </div>
+              
+            </>
+           
+        </button>
         {showStyleDropdown && (
           <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50">
             <div className="px-4 py-1 text-gray-700 font-semibold text-sm sm:text-base">
@@ -480,6 +497,8 @@ export default function ImprovedAiChatsVoicePage() {
                       selectedStyle === style.value
                         ? {
                             background:
+                              "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
+                            backgroundColor:
                               "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), #FFFFFF",
                           }
                         : {}
@@ -716,21 +735,21 @@ export default function ImprovedAiChatsVoicePage() {
                     msg.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  <div
-                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 ${
-                      msg.role === "user"
-                        ? "point-ask-gradient text-white"
-                        : "bg-[rgba(34,34,34,0.9)] text-white border border-[#007437]/20"
-                    }`}
-                  >
-                    <p className="text-sm md:text-base leading-relaxed">
-                      {msg.role === "ai" &&
-                      idx === streamingMessageIndex &&
-                      isStreaming
-                        ? `${displayedText}${displayedText ? "|" : ""}`
-                        : msg.text}
-                    </p>
-                  </div>
+                  {msg.role === "user" ? (
+                    <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 point-ask-gradient text-white">
+                      <p className="text-sm md:text-base leading-relaxed">
+                        {msg.text}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="max-w-[85%] md:max-w-[75%]">
+                      <AIMessage
+                        text={msg.text}
+                        isStreaming={idx === streamingMessageIndex && isStreaming}
+                        displayedText={displayedText}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
               {thinking && (
@@ -748,8 +767,11 @@ export default function ImprovedAiChatsVoicePage() {
 
       {/* Only show input bar if both selectors are chosen */}
       {selectedGrade && selectedStyle && <MicInputBar />}
-      <VoiceOverlay isListening={listening} onStop={handleStopListening} />
+      <VoiceOverlay 
+        isListening={listening} 
+        onStop={handleStopListening} 
+        transcript={transcript}
+      />
     </div>
   );
 }
-

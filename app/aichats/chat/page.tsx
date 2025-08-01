@@ -8,7 +8,7 @@ import React, {
   ForwardedRef,
 } from "react";
 import Cookies from "js-cookie";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDownIcon } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 
@@ -213,16 +213,16 @@ export default function AiChatsChatPage() {
 
   const FloatingSelectors = (
     <div
-       className="fixed z-40 flex flex-row gap-[10px] bg-gray-200 p-4 rounded-md right-4 sm:right-8 lg:right-40"
-      style={{ top: "40px" }}
+       className="fixed z-40 flex flex-row gap-[10px]  p-4 rounded-md right-4 sm:right-8 lg:right-40"
+      style={{ top: "40px" , background: 'linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)' }}
     >
       {/* Grade selector */}
       <div className="relative">
         <button
-          className={`hover:bg-orange-600 text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-500 text-[#FF5146] flex items-center  ${
             selectedGrade || selectedStyle
-              ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
+              ? "point-ask-gradient text-white rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
+              : "bg-transparent hover:text-white  cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedGrade && !selectedStyle
@@ -246,12 +246,14 @@ export default function AiChatsChatPage() {
             <>
               <div className="flex items-center gap-2">
                
-                <span className="text-xs sm:text-sm font-medium">
+                <span className="flex gap-2 text-xs sm:text-sm font-medium">
                   Class :{" "}
                   {selectedGrade
                     ? selectedGrade.replace(" grade", "")
-                    : "Select Grade"}
+                    : "Select"}
+                <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
                 </span>
+
               </div>
          
             </>
@@ -302,10 +304,10 @@ export default function AiChatsChatPage() {
       {/* Style selector */}
       <div className="relative">
         <button
-          className={`hover:bg-orange-500 text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-500 text-[#FF5146] flex items-center ${
             selectedStyle
-              ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
+              ? "point-ask-gradient text-white rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
+              : "bg-transparent  hover:text-white cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedStyle
@@ -329,9 +331,11 @@ export default function AiChatsChatPage() {
             <>
               <div className="flex items-center gap-2">
                
-                <span className="text-xs sm:text-sm font-medium">
-                  Style : {selectedStyle || "Select Style"}
+                <span className="flex gap-2 text-xs sm:text-sm font-medium">
+                  Persona : {selectedStyle || "Select "}
+                <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
                 </span>
+
               </div>
               
             </>

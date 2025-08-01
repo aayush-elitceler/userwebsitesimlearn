@@ -4,7 +4,7 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import Cookies from "js-cookie";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDownIcon } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import VoiceOverlay from "@/components/VoiceOverlay";
@@ -24,7 +24,6 @@ const grades = [
   "11th grade",
   "12th grade",
 ];
-
 const styles = [
   {
     label: "Professor",
@@ -111,10 +110,21 @@ export default function PointAskVoicePage() {
   const [displayedResponse, setDisplayedResponse] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [thinking, setThinking] = useState(false);
-  const [pendingTranscript, setPendingTranscript] = useState<string | null>(null);
+  const [pendingTranscript, setPendingTranscript] = useState<string | null>(
+    null
+  );
   const [inputValue, setInputValue] = useState("");
   const [speechError, setSpeechError] = useState<string | null>(null);
-  const [microphonePermission, setMicrophonePermission] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown');
+  const [microphonePermission, setMicrophonePermission] = useState<
+    "granted" | "denied" | "prompt" | "unknown"
+  >("unknown");
+  
+  // New state variables for enhanced speech functionality
+  const [isSpeechEnabled, setIsSpeechEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [liveTranscript, setLiveTranscript] = useState<string>("");
+  const [showTranscriptOverlay, setShowTranscriptOverlay] = useState(false);
 
   const {
     transcript,
@@ -138,40 +148,56 @@ export default function PointAskVoicePage() {
   useEffect(() => {
     const checkPermissions = async () => {
       // Check if HTTPS is being used
-      if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        setSpeechError('Voice recognition requires HTTPS connection');
+      if (
+        typeof window !== "undefined" &&
+        window.location.protocol !== "https:" &&
+        window.location.hostname !== "localhost"
+      ) {
+        setSpeechError("Voice recognition requires HTTPS connection");
         return;
       }
 
       // Check browser support
       if (!browserSupportsSpeechRecognition) {
-        setSpeechError('Your browser does not support speech recognition');
+        setSpeechError("Your browser does not support speech recognition");
         return;
       }
 
       // Check microphone permission
       try {
-        const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        const permission = await navigator.permissions.query({
+          name: "microphone" as PermissionName,
+        });
         setMicrophonePermission(permission.state);
 
-        permission.addEventListener('change', () => {
+        permission.addEventListener("change", () => {
           setMicrophonePermission(permission.state);
         });
       } catch (error) {
-        console.error('Error checking microphone permission:', error);
+        console.error("Error checking microphone permission:", error);
         // Fallback for browsers that don't support permissions API
-        setMicrophonePermission('unknown');
+        setMicrophonePermission("unknown");
       }
     };
 
     checkPermissions();
   }, [browserSupportsSpeechRecognition]);
 
+  // Update live transcript and input value when transcript changes
   useEffect(() => {
     if (transcript) {
+      setLiveTranscript(transcript);
       setInputValue(transcript);
     }
   }, [transcript]);
+
+  // Show/hide transcript overlay based on listening state
+  useEffect(() => {
+    setShowTranscriptOverlay(listening);
+    if (!listening) {
+      setLiveTranscript("");
+    }
+  }, [listening]);
 
   useEffect(() => {
     if (chatBottomRef.current) {
@@ -179,14 +205,71 @@ export default function PointAskVoicePage() {
     }
   }, [apiResponse, apiLoading, thinking, displayedResponse, chatHistory]);
 
+  // Speech synthesis functions
+  const speakText = useCallback((text: string) => {
+    if (!isSpeechEnabled || !text.trim()) return;
+
+    // Stop any ongoing speech
+    if (speechSynthesisRef.current) {
+      window.speechSynthesis.cancel();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesisRef.current = utterance;
+
+    // Configure speech synthesis
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 0.8;
+
+    // Try to use a natural voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(voice => 
+      voice.name.includes('Google') || 
+      voice.name.includes('Samantha') ||
+      voice.name.includes('Zira') ||
+      voice.lang.startsWith('en')
+    );
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      speechSynthesisRef.current = null;
+    };
+
+    utterance.onerror = (event) => {
+      console.error("Speech synthesis error:", event);
+      setIsSpeaking(false);
+      speechSynthesisRef.current = null;
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, [isSpeechEnabled]);
+
+  const stopSpeaking = useCallback(() => {
+    if (speechSynthesisRef.current || isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      speechSynthesisRef.current = null;
+    }
+  }, [isSpeaking]);
+
   // Enhanced stop listening with error handling
   const handleStopListening = useCallback(() => {
     try {
       SpeechRecognition.stopListening();
       setSpeechError(null);
+      setShowTranscriptOverlay(false);
+      setLiveTranscript("");
     } catch (error) {
-      console.error('Error stopping speech recognition:', error);
-      setSpeechError('Failed to stop listening');
+      console.error("Error stopping speech recognition:", error);
+      setSpeechError("Failed to stop listening");
     }
   }, []);
 
@@ -196,8 +279,10 @@ export default function PointAskVoicePage() {
       setSpeechError(null);
 
       // Check microphone permission first
-      if (microphonePermission === 'denied') {
-        setSpeechError('Microphone access denied. Please enable microphone permissions in your browser settings.');
+      if (microphonePermission === "denied") {
+        setSpeechError(
+          "Microphone access denied. Please enable microphone permissions in your browser settings."
+        );
         return;
       }
 
@@ -205,26 +290,27 @@ export default function PointAskVoicePage() {
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (permissionError) {
-        console.error('Microphone permission error:', permissionError);
-        setSpeechError('Please allow microphone access to use voice input');
+        console.error("Microphone permission error:", permissionError);
+        setSpeechError("Please allow microphone access to use voice input");
         return;
       }
 
       resetTranscript();
+      setLiveTranscript("");
+      setShowTranscriptOverlay(true);
 
       // Start listening with enhanced options
       await SpeechRecognition.startListening({
         continuous: false,
-        language: 'en-US',
+        language: "en-US",
       });
-
     } catch (error) {
-      console.error('Error starting speech recognition:', error);
-      setSpeechError('Failed to start voice recognition. Please try again.');
+      console.error("Error starting speech recognition:", error);
+      setSpeechError("Failed to start voice recognition. Please try again.");
     }
   }, [microphonePermission, resetTranscript]);
 
-  // Typewriter effect for streaming response
+  // Typewriter effect for streaming response with speech synthesis
   useEffect(() => {
     if (apiResponse && streamingResponseRef.current !== apiResponse) {
       streamingResponseRef.current = apiResponse;
@@ -261,6 +347,11 @@ export default function PointAskVoicePage() {
             },
           ]);
 
+          // Start speech synthesis for the complete response
+          if (isSpeechEnabled) {
+            speakText(apiResponse);
+          }
+
           // Clear the temporary response states
           setApiResponse(null);
           setDisplayedResponse("");
@@ -274,171 +365,25 @@ export default function PointAskVoicePage() {
         clearInterval(interval);
       };
     }
-  }, [apiResponse]); // Only depend on apiResponse to prevent re-runs
-
-  // Image upload/capture logic
-  const handleImageUpload = (file: File) => {
-    setImageFile(file);
-    setImage(URL.createObjectURL(file));
-  };
-
-  // Send message to API
-  const handleSend = async () => {
-    if (!selectedGrade || !selectedStyle || !inputValue.trim() || !imageFile)
-      return;
-
-    // Store the transcript before clearing it
-    const currentTranscript = inputValue.trim();
-    const isFirstMessage = chatHistory.length === 0;
-
-    // Add user message to chat history
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        type: "user",
-        content: currentTranscript,
-        image: isFirstMessage ? image || undefined : undefined,
-        timestamp: Date.now(),
-      },
-    ]);
-
-    // Add thinking state to chat history
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        type: "thinking",
-        content: "Thinking...",
-        timestamp: Date.now(),
-      },
-    ]);
-
-    setApiLoading(true);
-    setApiError(null);
-    setApiResponse(null);
-    setDisplayedResponse("");
-    setIsStreaming(false);
-    setThinking(true);
-    setPendingTranscript(currentTranscript);
-
-    // Clear transcript immediately after storing it
-    resetTranscript();
-
-    try {
-      // Get auth token
-      const authCookie = Cookies.get("auth");
-      let token: string | undefined;
-      if (authCookie) {
-        try {
-          token = JSON.parse(authCookie).token;
-        } catch (e) {
-          console.error("Error parsing auth cookie:", e);
-        }
-      }
-
-      // Create FormData for the API request
-      const formData = new FormData();
-      formData.append("image", imageFile);
-      formData.append("prompt", currentTranscript);
-      formData.append("class", selectedGrade.replace(/\D/g, ""));
-      formData.append("style", selectedStyle.toLowerCase());
-
-      // Make API request
-      const headers: HeadersInit = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      console.log("Sending request with:", {
-        prompt: currentTranscript,
-        class: selectedGrade.replace(/\D/g, ""),
-        style: selectedStyle.toLowerCase(),
-        imageFile: imageFile.name,
-      });
-
-      const res = await fetch(
-        "https://apisimplylearn.selflearnai.in/api/v1/ai/image-chat",
-        {
-          method: "POST",
-          headers,
-          body: formData,
-        }
-      );
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("API Error:", res.status, errorText);
-        throw new Error(`API Error: ${res.status} - ${errorText}`);
-      }
-
-      const data = await res.json();
-      console.log("API Response:", data);
-
-      const responseText = data?.data?.response || "Sorry, I couldn't process your request.";
-
-      // Token/Model Logging
-      const model = "gpt-3.5-turbo";
-      const inputTokens = encode(inputValue.trim()).length;
-      const outputTokens = encode(responseText).length;
-      const inputPricePer1K = 0.0005;
-      const outputPricePer1K = 0.0015;
-      const inputCost = (inputTokens / 1000) * inputPricePer1K;
-      const outputCost = (outputTokens / 1000) * outputPricePer1K;
-      const totalCost = inputCost + outputCost;
-
-      console.log("--- AI Chat Log ---");
-      console.log("Model:", model);
-      console.log("Input tokens:", inputTokens);
-      console.log("Output tokens:", outputTokens);
-      console.log("Input cost:", inputCost.toFixed(6));
-      console.log("Output cost:", outputCost.toFixed(6));
-      console.log("Total cost:", totalCost.toFixed(6));
-
-      // Remove thinking state from chat history
-      setChatHistory((prev) => prev.filter((msg) => msg.type !== "thinking"));
-
-      // Reset streaming states before setting new response
-      setDisplayedResponse("");
-      setIsStreaming(false);
-      setApiResponse(responseText);
-    } catch (err) {
-      console.error("Error in handleSend:", err);
-      setApiError(
-        err instanceof Error ? err.message : "Failed to get response"
-      );
-      // Remove thinking state even on error
-      setChatHistory((prev) => prev.filter((msg) => msg.type !== "thinking"));
-    } finally {
-      setApiLoading(false);
-      setThinking(false);
-      setInputValue("");
-      // Keep pendingTranscript visible until streaming is complete
-      // setPendingTranscript(null); // Removed this line
-    }
-  };
-
-  // Suggestion click handler
-  const handleSuggestion = (s: string) => {
-    if (!selectedGrade || !selectedStyle) {
-      setInputValue(s);
-    } else {
-      setInputValue(s);
-      setTimeout(() => handleSend(), 100);
-    }
-  };
+  }, [apiResponse, isSpeechEnabled, speakText]); // Added dependencies for speech
 
   // Floating selectors (always visible)
   const FloatingSelectors = (
     <div
-       className="fixed z-40 flex flex-row gap-[10px] bg-gray-200 p-4 rounded-md right-4 sm:right-8 lg:right-40"
-      style={{ top: "40px" }}
+      className="fixed z-40 flex flex-row gap-[10px]  p-4 rounded-md right-4 sm:right-8 lg:right-40"
+      style={{
+        top: "40px",
+        background:
+          "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)",
+      }}
     >
       {/* Grade selector */}
       <div className="relative">
         <button
-          className={`hover:bg-orange-600 text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-500 text-[#FF5146] flex items-center  ${
             selectedGrade || selectedStyle
-              ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
+              ? "point-ask-gradient text-white rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
+              : "bg-transparent hover:text-white  cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedGrade && !selectedStyle
@@ -458,16 +403,16 @@ export default function PointAskVoicePage() {
             setShowStyleDropdown(false);
           }}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-medium">
-              Class :{" "}
-              {selectedGrade
-                ? selectedGrade.replace(" grade", "")
-                : "Select Grade"}
-            </span>
-          </div>
+          <>
+            <div className="flex items-center gap-2">
+              <span className="flex gap-2 text-xs sm:text-sm font-medium">
+                Class :{" "}
+                {selectedGrade ? selectedGrade.replace(" grade", "") : "Select"}
+                <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+              </span>
+            </div>
+          </>
         </button>
-
         {showGradeDropdown && (
           <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-lg w-48 sm:w-56 py-3 z-50 border border-gray-200">
             <div className="px-4 py-2 text-gray-700 font-semibold text-sm sm:text-base">
@@ -512,10 +457,10 @@ export default function PointAskVoicePage() {
       {/* Style selector */}
       <div className="relative">
         <button
-          className={`hover:bg-orange-500 text-white flex items-center shadow-lg ${
+          className={`hover:bg-orange-500 text-[#FF5146] flex items-center ${
             selectedStyle
-              ? "point-ask-gradient rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
-              : "bg-[#FFB31F]/40 cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
+              ? "point-ask-gradient text-white rounded-lg px-3 py-2 sm:px-4 sm:py-3 min-w-[120px] sm:min-w-[140px] justify-between"
+              : "bg-transparent  hover:text-white cursor-pointer border border-white/20 min-w-[120px] sm:min-w-[170px] justify-center"
           }`}
           style={
             !selectedStyle
@@ -535,14 +480,18 @@ export default function PointAskVoicePage() {
             setShowGradeDropdown(false);
           }}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-medium">
-              Style : {selectedStyle || "Select Style"}
-            </span>
-          </div>
+          <>
+            <div className="flex items-center gap-2">
+              <span className="flex gap-2 text-xs sm:text-sm font-medium">
+                Persona : {selectedStyle || "Select"}
+                <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+              </span>
+            </div>
+          </>
         </button>
+
         {showStyleDropdown && (
-          <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50">
+          <div className="absolute top-full left-0 mt-2.5 bg-[white] rounded-lg shadow-lg w-35 sm:w-40 py-2 z-50 ">
             <div className="px-4 py-1 text-gray-700 font-semibold text-sm sm:text-base">
               Select Style
             </div>
@@ -628,6 +577,158 @@ export default function PointAskVoicePage() {
     </div>
   );
 
+  // Image upload/capture logic
+  const handleImageUpload = (file: File) => {
+    setImageFile(file);
+    setImage(URL.createObjectURL(file));
+  };
+
+  // Send message to API
+  const handleSend = async () => {
+    if (!selectedGrade || !selectedStyle || !inputValue.trim() || !imageFile)
+      return;
+
+    // Store the transcript before clearing it
+    const currentTranscript = inputValue.trim();
+    const isFirstMessage = chatHistory.length === 0;
+
+    // Add user message to chat history
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        type: "user",
+        content: currentTranscript,
+        image: isFirstMessage ? image || undefined : undefined,
+        timestamp: Date.now(),
+      },
+    ]);
+
+    // Add thinking state to chat history
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        type: "thinking",
+        content: "Thinking...",
+        timestamp: Date.now(),
+      },
+    ]);
+
+    setApiLoading(true);
+    setApiError(null);
+    setApiResponse(null);
+    setDisplayedResponse("");
+    setIsStreaming(false);
+    setThinking(true);
+    setPendingTranscript(currentTranscript);
+
+    // Clear transcript and input immediately after storing it
+    resetTranscript();
+    setInputValue("");
+    setLiveTranscript("");
+
+    try {
+      // Get auth token
+      const authCookie = Cookies.get("auth");
+      let token: string | undefined;
+      if (authCookie) {
+        try {
+          token = JSON.parse(authCookie).token;
+        } catch (e) {
+          console.error("Error parsing auth cookie:", e);
+        }
+      }
+
+      // Create FormData for the API request
+      const formData = new FormData();
+      formData.append("image", imageFile);
+      formData.append("prompt", currentTranscript);
+      formData.append("class", selectedGrade.replace(/\D/g, ""));
+      formData.append("style", selectedStyle.toLowerCase());
+
+      // Make API request
+      const headers: HeadersInit = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      console.log("Sending request with:", {
+        prompt: currentTranscript,
+        class: selectedGrade.replace(/\D/g, ""),
+        style: selectedStyle.toLowerCase(),
+        imageFile: imageFile.name,
+      });
+
+      const res = await fetch(
+        "https://apisimplylearn.selflearnai.in/api/v1/ai/image-chat",
+        {
+          method: "POST",
+          headers,
+          body: formData,
+        }
+      );
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("API Error:", res.status, errorText);
+        throw new Error(`API Error: ${res.status} - ${errorText}`);
+      }
+
+      const data = await res.json();
+      console.log("API Response:", data);
+
+      const responseText =
+        data?.data?.response || "Sorry, I couldn't process your request.";
+
+      // Token/Model Logging
+      const model = "gpt-3.5-turbo";
+      const inputTokens = encode(inputValue.trim()).length;
+      const outputTokens = encode(responseText).length;
+      const inputPricePer1K = 0.0005;
+      const outputPricePer1K = 0.0015;
+      const inputCost = (inputTokens / 1000) * inputPricePer1K;
+      const outputCost = (outputTokens / 1000) * outputPricePer1K;
+      const totalCost = inputCost + outputCost;
+
+      console.log("--- AI Chat Log ---");
+      console.log("Model:", model);
+      console.log("Input tokens:", inputTokens);
+      console.log("Output tokens:", outputTokens);
+      console.log("Input cost:", inputCost.toFixed(6));
+      console.log("Output cost:", outputCost.toFixed(6));
+      console.log("Total cost:", totalCost.toFixed(6));
+
+      // Remove thinking state from chat history
+      setChatHistory((prev) => prev.filter((msg) => msg.type !== "thinking"));
+
+      // Reset streaming states before setting new response
+      setDisplayedResponse("");
+      setIsStreaming(false);
+      setApiResponse(responseText);
+    } catch (err) {
+      console.error("Error in handleSend:", err);
+      setApiError(
+        err instanceof Error ? err.message : "Failed to get response"
+      );
+      // Remove thinking state even on error
+      setChatHistory((prev) => prev.filter((msg) => msg.type !== "thinking"));
+    } finally {
+      setApiLoading(false);
+      setThinking(false);
+      // Keep pendingTranscript visible until streaming is complete
+      // setPendingTranscript(null); // Removed this line
+    }
+  };
+
+  // Suggestion click handler
+  const handleSuggestion = (s: string) => {
+    if (!selectedGrade || !selectedStyle) {
+      setInputValue(s);
+    } else {
+      setInputValue(s);
+      setTimeout(() => handleSend(), 100);
+    }
+  };
+
   // Enhanced MicInputBar with error display
   function MicInputBar() {
     const hideSidebar =
@@ -643,8 +744,7 @@ export default function PointAskVoicePage() {
       microphonePermission !== 'denied' && 
       !speechError &&
       selectedGrade && 
-      selectedStyle &&
-      image;
+      selectedStyle;
 
     return (
       <>
@@ -654,7 +754,7 @@ export default function PointAskVoicePage() {
             {speechError}
           </div>
         )}
-
+        
         <div
           className={inputBarClass}
           style={{
@@ -696,8 +796,6 @@ export default function PointAskVoicePage() {
                 ? speechError
                 : !selectedGrade || !selectedStyle
                 ? "Please select grade and style first"
-                : !image
-                ? "Please upload an image first"
                 : "Click to start voice input"
             }
           >
@@ -735,7 +833,6 @@ export default function PointAskVoicePage() {
               !inputValue.trim() ||
               apiLoading ||
               thinking ||
-              !image ||
               !selectedGrade ||
               !selectedStyle
             }
@@ -747,6 +844,7 @@ export default function PointAskVoicePage() {
       </>
     );
   }
+
 
   return (
     <div
@@ -823,8 +921,8 @@ export default function PointAskVoicePage() {
         {/* After image is uploaded - show smaller preview and chat area */}
         {image && (
           <div className="pt-24 pb-32">
-            {/* Compact image preview when image is uploaded but no chat history yet */}
-            {chatHistory.length === 0 && !apiResponse && !thinking && !pendingTranscript && (
+            {/* Compact image preview when image is uploaded but no response yet */}
+            {!apiResponse && !thinking && !pendingTranscript && (
               <div className="w-full flex flex-col items-center mb-6">
                 <div className="rounded-2xl overflow-hidden bg-black w-full sm:w-[300px] max-w-full h-[100px] sm:h-[120px] flex items-center justify-center mb-4">
                   <img
@@ -853,7 +951,7 @@ export default function PointAskVoicePage() {
                     onClick={() => {
                       // Scroll to chat input
                       const chatInput = document.querySelector(
-                        'input[placeholder*="Tap the mic"]'
+                        'input[placeholder="Type your question..."]'
                       ) as HTMLInputElement;
                       if (chatInput) {
                         chatInput.focus();
@@ -975,7 +1073,7 @@ export default function PointAskVoicePage() {
             )}
 
             {/* Chat area */}
-            <div className="w-full flex flex-col gap-3 max-w-4xl mx-auto">
+            <div className="w-full flex flex-col gap-3">
               {/* Render all messages from chat history */}
               {chatHistory.map((message, index) => (
                 <div
@@ -1052,7 +1150,73 @@ export default function PointAskVoicePage() {
 
       {/* Voice input bar, only enabled after all options are selected */}
       {selectedGrade && selectedStyle && image && <MicInputBar />}
-      <VoiceOverlay isListening={listening} onStop={handleStopListening} />
+
+      {/* Speech Controls */}
+      {selectedGrade && selectedStyle && image && (
+        <div className="fixed top-4 right-4 z-40 flex flex-col gap-2">
+          {/* Speech Enable/Disable Toggle */}
+          <button
+            onClick={() => setIsSpeechEnabled(!isSpeechEnabled)}
+            className={`p-2 rounded-lg shadow-lg transition-colors ${
+              isSpeechEnabled
+                ? "bg-green-500 hover:bg-green-600 text-white"
+                : "bg-gray-500 hover:bg-gray-600 text-white"
+            }`}
+            title={isSpeechEnabled ? "Disable AI Speech" : "Enable AI Speech"}
+          >
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              {isSpeechEnabled ? (
+                <>
+                  <path d="M11 5l6 6-6 6V5z" />
+                  <path d="M4 16V8l3 3-3 5z" />
+                </>
+              ) : (
+                <>
+                  <path d="M11 5l6 6-6 6V5z" />
+                  <path d="M4 16V8l3 3-3 5z" />
+                  <path d="M23 9l-7 7" />
+                  <path d="M16 9l7 7" />
+                </>
+              )}
+            </svg>
+          </button>
+
+          {/* Stop Speaking Button (only when speaking) */}
+          {isSpeaking && (
+            <button
+              onClick={stopSpeaking}
+              className="p-2 rounded-lg shadow-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
+              title="Stop AI Speech"
+            >
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Voice Overlay */}
+      <VoiceOverlay 
+        isListening={listening} 
+        transcript={liveTranscript}
+        onStop={handleStopListening} 
+      />
+
       {apiError && (
         <div className="text-red-400 mb-2 fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-900/20 px-4 py-2 rounded-lg border border-red-500/30">
           {apiError}
@@ -1061,3 +1225,20 @@ export default function PointAskVoicePage() {
     </div>
   );
 }
+
+// function MicBar({ micActive }: { micActive?: boolean }) {
+//   return (
+//     <div className="w-full bg-[#525252] rounded-full flex items-center px-6 py-4 text-lg text-[#fff] shadow-lg border border-[#fff]/10">
+//       <span className="flex-1 text-[#fff] opacity-80">Tap the mic and ask anything</span>
+//       <button
+//         className={`ml-4 w-12 h-12 rounded-full flex items-center justify-center ${micActive ? "point-ask-gradient text-black" : "bg-[#888888] text-white"}`}
+//       >
+//         <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+//           <rect x="9" y="2" width="6" height="12" rx="3"/>
+//           <path d="M5 10v2a7 7 0 0 0 14 0v-2"/>
+//           <path d="M12 19v3m-4 0h8"/>
+//         </svg>
+//       </button>
+//     </div>
+//   );
+// }

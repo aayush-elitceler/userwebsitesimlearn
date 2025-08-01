@@ -194,12 +194,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
         title: 'Personalised learning',
         url: '/personalisedLearning',
         icon: projectsWhite,
-      },
-      {
-        title: 'Progress',
-        url: '/progress',
-        icon: progressWhite,
-      },
+      }
       
     ],
     navMain2: [
