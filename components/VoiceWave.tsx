@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -27,6 +28,18 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
     }
   }, [text]);
 
+  // Auto-start speaking when streaming is complete
+  useEffect(() => {
+    if (!isStreaming && text && speechSupported && !isSpeaking) {
+      // Small delay to ensure the text is fully rendered
+      const timer = setTimeout(() => {
+        startSpeaking();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isStreaming, text, speechSupported]);
+
   const startSpeaking = () => {
     if (!speechSupported || !text || isSpeaking) return;
 
@@ -53,15 +66,14 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
     }
 
     // Track word highlighting
-    let wordIndex = 0;
-    const words = text.split(' ');
+    const wordIndex = 0;
     
     utterance.onboundary = (event) => {
       if (event.name === 'word') {
         setCurrentWordIndex(wordIndex);
-        wordIndex++;
       }
     };
+    
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -138,69 +150,54 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
         </p>
       </div>
 
-      {/* Speech controls - only show when not streaming */}
-      {!isStreaming && speechSupported && text && (
+      {/* Minimal speech controls - only show pause/stop when speaking */}
+      {!isStreaming && speechSupported && text && isSpeaking && (
         <div className="flex items-center gap-2 pt-2 border-t border-gray-600">
-          {!isSpeaking ? (
-            <button
-              onClick={startSpeaking}
-              className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-colors bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full"
-              title="Read aloud"
-            >
-              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-              <span>Play</span>
-            </button>
-          ) : (
-            <div className="flex items-center gap-2">
-              {!isPaused ? (
-                <button
-                  onClick={pauseSpeaking}
-                  className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-colors bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full"
-                  title="Pause"
-                >
-                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                  </svg>
-                  <span>Pause</span>
-                </button>
-              ) : (
-                <button
-                  onClick={resumeSpeaking}
-                  className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-colors bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full"
-                  title="Resume"
-                >
-                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                  <span>Resume</span>
-                </button>
-              )}
+          <div className="flex items-center gap-2">
+            {!isPaused ? (
               <button
-                onClick={stopSpeaking}
-                className="flex items-center gap-2 text-xs text-gray-300 hover:text-red-300 transition-colors bg-gray-700 hover:bg-red-600 px-3 py-1.5 rounded-full"
-                title="Stop"
+                onClick={pauseSpeaking}
+                className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-colors bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full"
+                title="Pause"
               >
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 6h12v12H6z"/>
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
                 </svg>
-                <span>Stop</span>
+                <span>Pause</span>
               </button>
-            </div>
-          )}
+            ) : (
+              <button
+                onClick={resumeSpeaking}
+                className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-colors bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full"
+                title="Resume"
+              >
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span>Resume</span>
+              </button>
+            )}
+            <button
+              onClick={stopSpeaking}
+              className="flex items-center gap-2 text-xs text-gray-300 hover:text-red-300 transition-colors bg-gray-700 hover:bg-red-600 px-3 py-1.5 rounded-full"
+              title="Stop"
+            >
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 6h12v12H6z"/>
+              </svg>
+              <span>Stop</span>
+            </button>
+          </div>
           
           {/* Speaking indicator */}
-          {isSpeaking && (
-            <div className="flex items-center gap-2 text-xs text-orange-400">
-              <div className="flex gap-1">
-                <div className="w-1 h-3 bg-orange-400 rounded animate-pulse"></div>
-                <div className="w-1 h-3 bg-orange-400 rounded animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-1 h-3 bg-orange-400 rounded animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-              </div>
-              <span>Speaking...</span>
+          <div className="flex items-center gap-2 text-xs text-orange-400">
+            <div className="flex gap-1">
+              <div className="w-1 h-3 bg-orange-400 rounded animate-pulse"></div>
+              <div className="w-1 h-3 bg-orange-400 rounded animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-1 h-3 bg-orange-400 rounded animate-pulse" style={{ animationDelay: '0.4s' }}></div>
             </div>
-          )}
+            <span>Speaking...</span>
+          </div>
         </div>
       )}
     </div>

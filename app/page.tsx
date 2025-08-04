@@ -275,7 +275,7 @@ export default function Home() {
             <p className="text-gray-600 text-sm mb-4">
               {dashboardData.activities.continueLearning.title}
             </p>
-            <button className="cursor-pointer bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               Resume Learning
             </button>
           </div>
@@ -291,7 +291,7 @@ export default function Home() {
                 </span>
               ))}
             </p>
-            <button className="cursor-pointer bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               Track Progress
             </button>
           </div>
@@ -302,7 +302,7 @@ export default function Home() {
             <p className="text-gray-600 text-sm mb-4">
               {dashboardData.activities.projects.pending} Project{dashboardData.activities.projects.pending !== 1 ? 's' : ''} Pending – &apos;{dashboardData.activities.projects.nextProject}&apos;
             </p>
-            <button className="cursor-pointer bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               Open Projects
             </button>
           </div>
@@ -310,12 +310,12 @@ export default function Home() {
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
         {/* Left Column */}
-        <div className="space-y-8">
+        <div className="flex flex-col h-full">
           {/* Today's Missions */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 min-h-[280px]">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">
               Today&apos;s Missions
             </h2>
             <div className="space-y-4">
@@ -331,7 +331,7 @@ export default function Home() {
                       Completed
                     </span>
                   ) : (
-                    <button className="cursor-pointer bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-1 rounded-lg font-medium text-sm shadow hover:from-orange-600 hover:to-orange-700 transition-colors">
+                    <button className="cursor-pointer point-ask-gradient text-white px-4 py-1 rounded-lg font-medium text-sm shadow hover:from-orange-600 hover:to-orange-700 transition-colors">
                       Complete now
                     </button>
                   )}
@@ -341,8 +341,8 @@ export default function Home() {
           </div>
           
           {/* Learning Growth */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
+          <div className="bg-white rounded-2xl p-6 mt-6 shadow-sm border border-gray-100 h-full flex flex-col">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">
               Learning growth
             </h2>
             <div className="h-46">
@@ -369,10 +369,10 @@ export default function Home() {
         </div>
         
         {/* Right Column */}
-        <div className="space-y-8">
+        <div className="flex flex-col h-full">
           {/* Quick Links */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 min-h-[280px]">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">
               Quick Links
             </h2>
             <div className="space-y-4">
@@ -386,7 +386,7 @@ export default function Home() {
                     className={`cursor-pointer text-white px-4 py-1 rounded-lg font-medium text-sm shadow transition-colors ${
                       link.status === "Completed"
                         ? "bg-[#009B41] hover:bg-[#008a3a]"
-                        : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                        : "point-ask-gradient hover:from-orange-600 hover:to-orange-700"
                     }`}
                   >
                     {link.status}
@@ -397,8 +397,8 @@ export default function Home() {
           </div>
           
           {/* Progress from last week */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
+          <div className="bg-white rounded-2xl p-6 mt-6 shadow-sm border border-gray-100 h-full flex flex-col">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">
               Progress from last week
             </h2>
             <div className="space-y-6">
@@ -414,7 +414,7 @@ export default function Home() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
-                      className="h-3 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
+                      className="h-3 rounded-full point-ask-gradient transition-all duration-500"
                       style={{ width: `${item.percentage}%` }}
                     ></div>
                   </div>
