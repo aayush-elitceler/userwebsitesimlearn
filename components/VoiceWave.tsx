@@ -1,14 +1,11 @@
-
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
 interface AIMessageProps {
   text: string;
-  isStreaming?: boolean;
-  displayedText?: string;
 }
 
-export default function AIMessage({ text, isStreaming = false, displayedText = "" }: AIMessageProps) {
+export default function AIMessage({ text }: AIMessageProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
   const [isPaused, setIsPaused] = useState(false);
@@ -16,64 +13,70 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const wordsRef = useRef<string[]>([]);
 
-  // Check if speech synthesis is supported
+  // Check for browser speech synthesis support
   useEffect(() => {
-    setSpeechSupported('speechSynthesis' in window);
+    setSpeechSupported("speechSynthesis" in window);
   }, []);
 
-  // Prepare words array when text changes
+  // Split text into words for highlighting
   useEffect(() => {
     if (text) {
-      wordsRef.current = text.split(' ');
+      wordsRef.current = text.split(" ");
     }
   }, [text]);
 
-  // Auto-start speaking when streaming is complete
+  // Auto-start speaking once text is available and supported
   useEffect(() => {
-    if (!isStreaming && text && speechSupported && !isSpeaking) {
-      // Small delay to ensure the text is fully rendered
+    if (text && speechSupported && !isSpeaking) {
       const timer = setTimeout(() => {
         startSpeaking();
-      }, 500);
-      
+      }, 300); // slight delay to ensure text is rendered
+
       return () => clearTimeout(timer);
     }
-  }, [isStreaming, text, speechSupported]);
+  }, [text, speechSupported]);
 
   const startSpeaking = () => {
     if (!speechSupported || !text || isSpeaking) return;
 
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utteranceRef.current = utterance;
 
-    // Configure voice settings
     utterance.rate = 0.9;
     utterance.pitch = 1;
     utterance.volume = 1;
 
-    // Find a good voice (prefer female voices for friendlier tone)
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(voice => 
-      voice.lang.startsWith('en') && 
-      (voice.name.includes('Female') || voice.name.includes('Samantha') || voice.name.includes('Ava'))
-    ) || voices.find(voice => voice.lang.startsWith('en'));
-    
+    const preferredVoice =
+      voices.find(
+        (voice) =>
+          voice.lang.startsWith("en") &&
+          (voice.name.includes("Female") ||
+            voice.name.includes("Samantha") ||
+            voice.name.includes("Ava"))
+      ) || voices.find((voice) => voice.lang.startsWith("en"));
+
     if (preferredVoice) {
       utterance.voice = preferredVoice;
     }
 
-    // Track word highlighting
-    const wordIndex = 0;
-    
+    // Optional: highlight words during speech
     utterance.onboundary = (event) => {
-      if (event.name === 'word') {
-        setCurrentWordIndex(wordIndex);
+      if (event.name === "word") {
+        const charIndex = event.charIndex;
+        const words = wordsRef.current;
+        let count = 0;
+        for (let i = 0; i < words.length; i++) {
+          count += words[i].length + 1; // +1 for space
+          if (count > charIndex) {
+            setCurrentWordIndex(i);
+            break;
+          }
+        }
       }
     };
-    
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -118,7 +121,7 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
   };
 
   const renderTextWithHighlight = (textToRender: string) => {
-    const words = textToRender.split(' ');
+    const words = textToRender.split(" ");
     return (
       <span>
         {words.map((word, index) => (
@@ -126,12 +129,12 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
             key={index}
             className={`${
               isSpeaking && currentWordIndex === index
-                ? 'bg-orange-200 text-orange-800 rounded px-1'
-                : ''
+                ? "bg-orange-200 text-orange-800 rounded px-1"
+                : ""
             } transition-all duration-150`}
           >
             {word}
-            {index < words.length - 1 ? ' ' : ''}
+            {index < words.length - 1 ? " " : ""}
           </span>
         ))}
       </span>
@@ -143,15 +146,12 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
       {/* Message content */}
       <div className="mb-3">
         <p className="text-sm md:text-base leading-relaxed">
-          {isStreaming 
-            ? `${displayedText}${displayedText ? "|" : ""}`
-            : renderTextWithHighlight(text)
-          }
+          {renderTextWithHighlight(text)}
         </p>
       </div>
 
-      {/* Minimal speech controls - only show pause/stop when speaking */}
-      {!isStreaming && speechSupported && text && isSpeaking && (
+      {/* Speech controls */}
+      {speechSupported && text && isSpeaking && (
         <div className="flex items-center gap-2 pt-2 border-t border-gray-600">
           <div className="flex items-center gap-2">
             {!isPaused ? (
@@ -161,7 +161,7 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
                 title="Pause"
               >
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                 </svg>
                 <span>Pause</span>
               </button>
@@ -172,7 +172,7 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
                 title="Resume"
               >
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
+                  <path d="M8 5v14l11-7z" />
                 </svg>
                 <span>Resume</span>
               </button>
@@ -183,18 +183,24 @@ export default function AIMessage({ text, isStreaming = false, displayedText = "
               title="Stop"
             >
               <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 6h12v12H6z"/>
+                <path d="M6 6h12v12H6z" />
               </svg>
               <span>Stop</span>
             </button>
           </div>
-          
+
           {/* Speaking indicator */}
           <div className="flex items-center gap-2 text-xs text-orange-400">
             <div className="flex gap-1">
               <div className="w-1 h-3 bg-orange-400 rounded animate-pulse"></div>
-              <div className="w-1 h-3 bg-orange-400 rounded animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-1 h-3 bg-orange-400 rounded animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              <div
+                className="w-1 h-3 bg-orange-400 rounded animate-pulse"
+                style={{ animationDelay: "0.2s" }}
+              ></div>
+              <div
+                className="w-1 h-3 bg-orange-400 rounded animate-pulse"
+                style={{ animationDelay: "0.4s" }}
+              ></div>
             </div>
             <span>Speaking...</span>
           </div>

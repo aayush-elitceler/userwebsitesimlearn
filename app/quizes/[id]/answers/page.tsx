@@ -91,8 +91,8 @@ export default function QuizAnswersPage() {
                     `}
                   >
                     {opt.optionText}
-                    {opt.isCorrect && <span className="ml-2">✔️</span>}
-                    {isUserSelected && <span className="ml-2">🟢 Your answer</span>}
+                    {opt.isCorrect }
+                    {isUserSelected && <span className="ml-2"> (Your answer)</span>}
                   </div>
                 );
               })}

@@ -354,8 +354,8 @@ export default function QuizesPage() {
                     dueDate: quiz.assignmentDetails?.endTime || quiz.createdAt,
                   }}
                   key={quiz.id}
-                  onStart={() => {/* handle retake logic here */}}
-                  buttonText="Retake practice exam"
+                  onStart={() => router.push(`/exams/take/${quiz.id}`)}
+                  buttonText="Take exam"
                 />
               ))
             )}

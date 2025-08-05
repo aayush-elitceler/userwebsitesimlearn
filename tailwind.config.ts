@@ -17,6 +17,7 @@ const config: Config = {
             lg: '2rem'
         }
     },
+    
     fontSize: {
       h1: ['2.25rem', { lineHeight: '2.5rem' }], // 36px
       h2: ['1.875rem', { lineHeight: '2.25rem' }], // 30px
@@ -50,6 +51,15 @@ const config: Config = {
             '0 45px 65px #64249E'
         ]
       },
+      animation: {
+        float: "float 5s ease-in-out infinite",
+      },
+      keyframes: {
+        float: {
+            "0%, 100%": { transform: "translateY(0)" },
+            "50%": { transform: "translateY(-6px)" },
+          },
+        },
       height: {
         "88vh": "88vh"
       },
