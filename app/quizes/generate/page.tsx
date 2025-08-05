@@ -258,12 +258,7 @@ export default function GenerateQuizPage() {
           </button>
         </div>
         {error && <div className="text-red-400 font-semibold mt-4">{error}</div>}
-        {result && (
-          <div className="mt-8 bg-[#FFB12133] rounded-lg p-4 text-black">
-            <h3 className="text-lg font-bold mb-2">Generated Quiz</h3>
-            <pre className="whitespace-pre-wrap break-words text-sm">{JSON.stringify(result, null, 2)}</pre>
-          </div>
-        )}
+       
       </div>
     </div>
   );

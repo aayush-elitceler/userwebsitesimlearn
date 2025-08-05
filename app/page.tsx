@@ -15,6 +15,7 @@ import { Line } from "react-chartjs-2";
 import { Poppins } from "next/font/google";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
 const poppins = Poppins({ weight: ["400", "600", "700"], subsets: ["latin"] });
 ChartJS.register(
@@ -117,6 +118,7 @@ export default function Home() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -275,7 +277,7 @@ export default function Home() {
             <p className="text-gray-600 text-sm mb-4">
               {dashboardData.activities.continueLearning.title}
             </p>
-            <button className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button onClick={() => router.push('/quizes')} className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               Resume Learning
             </button>
           </div>
@@ -291,7 +293,7 @@ export default function Home() {
                 </span>
               ))}
             </p>
-            <button className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button onClick={() => router.push('/quizes')} className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               Track Progress
             </button>
           </div>
@@ -302,7 +304,7 @@ export default function Home() {
             <p className="text-gray-600 text-sm mb-4">
               {dashboardData.activities.projects.pending} Project{dashboardData.activities.projects.pending !== 1 ? 's' : ''} Pending – &apos;{dashboardData.activities.projects.nextProject}&apos;
             </p>
-            <button className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button onClick={() => router.push('/projects/teacherproject')} className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               Open Projects
             </button>
           </div>
@@ -326,12 +328,12 @@ export default function Home() {
                     <p className="text-gray-500 text-sm">{mission.description}</p>
                   </div>
                   {mission.completed ? (
-                    <span className="text-green-600 flex items-center gap-1">
-                      <CheckCircle2 size={16} />
+                    // #009B41
+                    <button className=" bg-[#009B41] text-white px-7 py-2 rounded-lg font-medium transition-colors">
                       Completed
-                    </span>
+                    </button>
                   ) : (
-                    <button className="cursor-pointer point-ask-gradient text-white px-4 py-1 rounded-lg font-medium text-sm shadow hover:from-orange-600 hover:to-orange-700 transition-colors">
+                    <button className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                       Complete now
                     </button>
                   )}
@@ -383,7 +385,7 @@ export default function Home() {
                     <p className="text-gray-500 text-sm">{link.description}</p>
                   </div>
                   <span
-                    className={`cursor-pointer text-white px-4 py-1 rounded-lg font-medium text-sm shadow transition-colors ${
+                   className={`cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors ${
                       link.status === "Completed"
                         ? "bg-[#009B41] hover:bg-[#008a3a]"
                         : "point-ask-gradient hover:from-orange-600 hover:to-orange-700"
