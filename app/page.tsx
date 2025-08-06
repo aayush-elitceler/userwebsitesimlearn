@@ -333,7 +333,7 @@ export default function Home() {
                       Completed
                     </button>
                   ) : (
-                    <button className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    <button onClick={() => router.push('/quizes')} className="cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                       Complete now
                     </button>
                   )}
@@ -385,6 +385,7 @@ export default function Home() {
                     <p className="text-gray-500 text-sm">{link.description}</p>
                   </div>
                   <span
+                  onClick={() => router.push('/projects/teacherproject')}
                    className={`cursor-pointer point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors ${
                       link.status === "Completed"
                         ? "bg-[#009B41] hover:bg-[#008a3a]"
