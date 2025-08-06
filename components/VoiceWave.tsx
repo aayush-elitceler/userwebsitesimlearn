@@ -11,6 +11,7 @@ export default function AIMessage({ text }: AIMessageProps) {
   const [isPaused, setIsPaused] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [showMessage, setShowMessage] = useState(false);
   const wordsRef = useRef<string[]>([]);
 
   // Check for browser speech synthesis support
@@ -88,6 +89,7 @@ export default function AIMessage({ text }: AIMessageProps) {
       setIsSpeaking(false);
       setIsPaused(false);
       setCurrentWordIndex(-1);
+      setShowMessage(true); // Show message after speech ends
     };
 
     utterance.onerror = () => {
@@ -117,6 +119,7 @@ export default function AIMessage({ text }: AIMessageProps) {
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
     setIsPaused(false);
+    setShowMessage(true);
     setCurrentWordIndex(-1);
   };
 
@@ -144,11 +147,13 @@ export default function AIMessage({ text }: AIMessageProps) {
   return (
     <div className="bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20">
       {/* Message content */}
-      <div className="mb-3">
-        <p className="text-sm md:text-base leading-relaxed">
-          {renderTextWithHighlight(text)}
-        </p>
-      </div>
+      {showMessage && (
+        <div className="mb-3">
+          <p className="text-sm md:text-base leading-relaxed">
+            {renderTextWithHighlight(text)}
+          </p>
+        </div>
+      )}
 
       {/* Speech controls */}
       {speechSupported && text && isSpeaking && (
@@ -160,7 +165,12 @@ export default function AIMessage({ text }: AIMessageProps) {
                 className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-colors bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full"
                 title="Pause"
               >
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  width="14"
+                  height="14"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                 </svg>
                 <span>Pause</span>
@@ -171,7 +181,12 @@ export default function AIMessage({ text }: AIMessageProps) {
                 className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-colors bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-full"
                 title="Resume"
               >
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  width="14"
+                  height="14"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M8 5v14l11-7z" />
                 </svg>
                 <span>Resume</span>
@@ -182,7 +197,12 @@ export default function AIMessage({ text }: AIMessageProps) {
               className="flex items-center gap-2 text-xs text-gray-300 hover:text-red-300 transition-colors bg-gray-700 hover:bg-red-600 px-3 py-1.5 rounded-full"
               title="Stop"
             >
-              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <svg
+                width="14"
+                height="14"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path d="M6 6h12v12H6z" />
               </svg>
               <span>Stop</span>
