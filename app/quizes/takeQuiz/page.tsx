@@ -238,6 +238,7 @@ export default function QuizesPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+
   // Add state for submissions and loading
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
@@ -339,13 +340,21 @@ export default function QuizesPage() {
             ) : userQuizzes.length === 0 ? (
               <div className="text-black">No institution-generated quizzes.</div>
             ) : (
-              userQuizzes.map((quiz) => (
-                <QuizCard
-                  quiz={quiz}
-                  key={quiz.id}
-                  previous={quiz.completed}
-                />
-              ))
+              userQuizzes.map((quiz) => {
+                const submission = submissions.find(
+                  (s) => s.quizId === quiz.id
+                );
+                return (
+                  <QuizCard
+                    key={quiz.id}
+                    quiz={quiz}
+                    previous={quiz.completed}
+                    score={submission?.score}
+                    date={submission?.submittedAt}
+                    submissionId={submission?.id}
+                  />
+                );
+              })
             )}
           </div>
         </div>
