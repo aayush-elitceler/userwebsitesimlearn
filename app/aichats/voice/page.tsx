@@ -4,11 +4,9 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import Cookies from "js-cookie";
-import { ArrowRight, ChevronDownIcon } from "lucide-react";
+import { ArrowRight, ChevronDownIcon, X } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import VoiceOverlay from "@/components/VoiceOverlay";
-import AIMessage from "@/components/VoiceWave";
 import { encode } from "gpt-tokenizer";
 import SpruceBall from "@/components/SpruceBall";
 
@@ -135,10 +133,7 @@ export default function ImprovedAiChatsVoicePage() {
   const [chatHistory, setChatHistory] = useState<
     { role: "user" | "ai"; text: string }[]
   >([]);
-  const [streamingMessageIndex, setStreamingMessageIndex] = useState<
-    number | null
-  >(null);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [aiSpeaking, setAiSpeaking] = useState(false);
   const [displayedText, setDisplayedText] = useState<string>("");
   const [speechError, setSpeechError] = useState<string | null>(null);
   const [microphonePermission, setMicrophonePermission] = useState<
@@ -204,18 +199,16 @@ export default function ImprovedAiChatsVoicePage() {
     if (chatBottomRef.current) {
       chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chatHistory, thinking, isStreaming, displayedText]);
+  }, [chatHistory, thinking, aiSpeaking, displayedText]);
 
-  // Send message to API with better error handling
+  // Send message to API with better error handling and speech synthesis integration
   const handleSend = useCallback(async () => {
     if (!selectedGrade || !selectedStyle || !inputValue.trim()) return;
 
     setApiLoading(true);
     setThinking(true);
-    setChatHistory((prev) => [
-      ...prev,
-      { role: "user", text: inputValue.trim() },
-    ]);
+    // Store user message temporarily but don't add to chat history yet
+    const userMessage = inputValue.trim();
 
     try {
       const authCookie = Cookies.get("auth");
@@ -239,7 +232,7 @@ export default function ImprovedAiChatsVoicePage() {
           body: JSON.stringify({
             class: selectedGrade.replace(/\D/g, ""),
             style: selectedStyle.toLowerCase(),
-            message: inputValue.trim(),
+            message: userMessage,
           }),
         }
       );
@@ -254,7 +247,7 @@ export default function ImprovedAiChatsVoicePage() {
 
       // Token/Model Logging
       const model = "Gemini 1.0 Pro";
-      const inputTokens = encode(inputValue.trim()).length;
+      const inputTokens = encode(userMessage).length;
       const outputTokens = encode(responseText).length;
       const inputPricePer1K = 0.002;
       const outputPricePer1K = 0.006;
@@ -270,20 +263,68 @@ export default function ImprovedAiChatsVoicePage() {
       console.log("Output cost:", outputCost.toFixed(6));
       console.log("Total cost:", totalCost.toFixed(6));
 
-      // Add AI message and trigger streaming
-      setChatHistory((prev) => {
-        const newHistory = [
+      // Start speech synthesis immediately - this implements the ChatGPT-like behavior
+      // where the assistant starts speaking immediately after the user stops
+      setAiSpeaking(true);
+      
+      // Create and configure speech synthesis
+      const utterance = new SpeechSynthesisUtterance(responseText);
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+
+      // Try to get a good voice
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice =
+        voices.find(
+          (voice) =>
+            voice.lang.startsWith("en") &&
+            (voice.name.includes("Female") ||
+              voice.name.includes("Samantha") ||
+              voice.name.includes("Ava"))
+        ) || voices.find((voice) => voice.lang.startsWith("en"));
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+
+      // When speech ends, add both messages to chat history
+      // This implements the ChatGPT-like behavior where user messages appear only after AI responds
+      utterance.onend = () => {
+        setAiSpeaking(false);
+        // Now add both messages to chat history
+        setChatHistory((prev) => [
           ...prev,
-          { role: "ai" as const, text: responseText },
-        ];
-        setStreamingMessageIndex(newHistory.length - 1);
-        setIsStreaming(true);
-        return newHistory;
-      });
+          { role: "user", text: userMessage },
+          { role: "ai", text: responseText }
+        ]);
+        setDisplayedText(""); // Clear the displayed text since it's now in chat history
+      };
+
+      // If speech fails, still add messages to chat history
+      utterance.onerror = () => {
+        setAiSpeaking(false);
+        setChatHistory((prev) => [
+          ...prev,
+          { role: "user", text: userMessage },
+          { role: "ai", text: responseText }
+        ]);
+        setDisplayedText(""); // Clear the displayed text
+      };
+
+      // Start speaking
+      window.speechSynthesis.speak(utterance);
+      
+      // Store the response text for display during speech
+      setDisplayedText(responseText);
+      
     } catch (err) {
       console.error("API Error:", err);
+      setAiSpeaking(false);
+      // In case of error, add both messages
       setChatHistory((prev) => [
         ...prev,
+        { role: "user", text: userMessage },
         {
           role: "ai" as const,
           text: "Sorry, I encountered an error. Please try again.",
@@ -297,6 +338,8 @@ export default function ImprovedAiChatsVoicePage() {
     }
   }, [selectedGrade, selectedStyle, inputValue, resetTranscript]);
 
+  
+
   // Enhanced stop listening with error handling and auto-submit
   const handleStopListening = useCallback(() => {
     try {
@@ -305,7 +348,8 @@ export default function ImprovedAiChatsVoicePage() {
 
       // Auto-submit if we have transcript and required selections
       if (transcript.trim() && selectedGrade && selectedStyle) {
-        setInputValue(transcript.trim());
+        // Don't add user message to chat history yet - will be added after AI response
+        // This implements the ChatGPT-like behavior where user messages appear only after AI responds
         // Small delay to ensure state is updated, then auto-submit
         setTimeout(() => {
           handleSend();
@@ -359,36 +403,14 @@ export default function ImprovedAiChatsVoicePage() {
     }
   }, [microphonePermission, resetTranscript]);
 
-  // Typewriter effect for streaming chat messages
+  // Clean up speech synthesis when component unmounts
   useEffect(() => {
-    if (streamingMessageIndex !== null && isStreaming) {
-      const message = chatHistory[streamingMessageIndex];
-      if (message && message.role === "ai") {
-        const words = message.text.split(" ");
-        let currentIndex = 0;
-        setDisplayedText("");
-
-        const interval = setInterval(() => {
-          if (currentIndex < words.length) {
-            setDisplayedText((prev) => {
-              const newText =
-                currentIndex === 0
-                  ? words[0]
-                  : prev + " " + words[currentIndex];
-              return newText;
-            });
-            currentIndex++; // ✅ Corrected line
-          } else {
-            setIsStreaming(false);
-            setStreamingMessageIndex(null);
-            clearInterval(interval);
-          }
-        }, 80);
-
-        return () => clearInterval(interval);
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
       }
-    }
-  }, [streamingMessageIndex, isStreaming, chatHistory]);
+    };
+  }, []);
 
   // When transcript changes, update inputValue
   useEffect(() => {
@@ -634,8 +656,8 @@ export default function ImprovedAiChatsVoicePage() {
     >
       {FloatingSelectors}
       <div className="w-full px-4 lg:px-8 mt-6">
-        {/* Welcome message and suggestions - only show before chat starts */}
-        {chatHistory.length === 0 && (
+        {/* Welcome message and suggestions - only show before chat starts and when not speaking */}
+        {chatHistory.length === 0 && !aiSpeaking && !listening && (
           <div className=" flex flex-col mt-12 items-center max-w-4xl mx-auto">
             <div className="mt-24 mb-4 text-center w-full">
               <div className="text-2xl md:text-3xl font-bold text-black mb-2">
@@ -673,11 +695,10 @@ export default function ImprovedAiChatsVoicePage() {
                       </p>
                     </div>
                   ) : (
-                    <div className="">
-                      <AIMessage
-                        text={msg.text}
-                      
-                      />
+                    <div className="max-w-[85%] md:max-w-[75%] bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20">
+                      <p className="text-sm md:text-base leading-relaxed">
+                        {msg.text}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -689,29 +710,76 @@ export default function ImprovedAiChatsVoicePage() {
                   </div>
                 </div>
               )}
+              {/* AI Speaking - Show the current response while speaking */}
+              {aiSpeaking && displayedText && (
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] md:max-w-[75%] bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20">
+                    <p className="text-sm md:text-base leading-relaxed">
+                      {displayedText}
+                    </p>
+                  </div>
+                </div>
+              )}
               <div ref={chatBottomRef} />
             </div>
           </div>
         )}
       </div>
 
-      {/* Only show input bar if both selectors are chosen */}
-      {/* {selectedGrade && selectedStyle && <MicInputBar />} */}
+      {/* Voice visualization */}
       <div className="flex items-center justify-center mb-8">
-        {listening && <SpruceBall listening={listening} />}
+        {/* Show SpruceBall when listening or when AI is speaking */}
+        {(listening || aiSpeaking) && (
+          <SpruceBall listening={listening || aiSpeaking} />
+        )}
       </div>
 
-    
-
-      {/* Stop button */}
-      {selectedGrade && selectedStyle && (
+      {/* Voice control buttons */}
+      {selectedGrade && selectedStyle && !listening && !aiSpeaking && (
         <div className="flex gap-3 justify-center mb-8">
           <button
             onClick={handleStartListening}
             className="point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full ..."
+            disabled={thinking || apiLoading}
           >
             {/* mic icon SVG */}
-            Start Speaking
+            <span className="flex items-center gap-2">
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <rect x="9" y="2" width="6" height="12" rx="3" />
+                <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+                <path d="M12 19v3m-4 0h8" />
+              </svg>
+              Start Speaking
+            </span>
+          </button>
+        </div>
+      )}
+      
+      {/* Stop button while listening */}
+      {listening && (
+        <div className="flex gap-3 justify-center mb-8">
+          <button
+            onClick={handleStopListening}
+            className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full transition-all duration-300"
+          >
+            <span className="flex items-center gap-2">
+              <svg
+                width="20"
+                height="20"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+              Stop
+            </span>
           </button>
         </div>
       )}

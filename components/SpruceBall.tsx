@@ -4,12 +4,17 @@ import React, { useEffect, useRef, useState } from "react";
 
 export default function SpruceBall({ listening }: { listening: boolean }) {
   const [volume, setVolume] = useState(0);
+  const [pulse, setPulse] = useState(0);
 
   useEffect(() => {
     let audioContext: AudioContext | null = null;
     let analyser: AnalyserNode | null = null;
     let mic: MediaStreamAudioSourceNode | null = null;
     let rafId: number;
+    
+    // For pulse animation
+    let pulseTime = 0;
+    const pulseSpeed = 0.05;
 
     const updateVolume = () => {
       if (!analyser) return;
@@ -24,6 +29,10 @@ export default function SpruceBall({ listening }: { listening: boolean }) {
       }
       const rms = Math.sqrt(sum / data.length);
       setVolume(rms); // ~0 to 1
+      
+      // Update pulse for subtle animation
+      pulseTime += pulseSpeed;
+      setPulse(Math.sin(pulseTime) * 0.1);
 
       rafId = requestAnimationFrame(updateVolume);
     };
@@ -52,43 +61,28 @@ export default function SpruceBall({ listening }: { listening: boolean }) {
     };
   }, [listening]);
 
-  const scale = 1 + volume * 0.4;
-  const glow = 0.4 + volume * 1.5;
+  // Calculate smooth transitions
+  const scale = 1 + volume * 0.5 + pulse * 0.2;
+  const glow = 0.5 + volume * 1.2;
+  
+  // Colors for different states
+  const baseColors = listening
+    ? "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(100, 200, 255, 0.9), rgba(0, 120, 255, 0.9), rgba(0, 80, 200, 1))"
+    : "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 204, 128, 0.9), rgba(255, 112, 67, 0.9), rgba(255, 87, 34, 1))";
 
   return (
     <div className="flex justify-center items-center py-10">
       <div
-        className="rounded-full w-40 h-40 transition-all duration-75"
+        className="rounded-full w-40 h-40 transition-all duration-150 ease-out"
         style={{
           transform: `scale(${scale})`,
-          background: `
-            radial-gradient(circle at 30% 30%, 
-              rgba(255, 255, 255, 0.9),
-              rgba(255, 204, 128, 0.9),
-              rgba(255, 112, 67, 0.9),
-              rgba(255, 87, 34, 1)
-            )
-          `,
+          background: baseColors,
           boxShadow: `
-            0 0 40px rgba(255, 145, 0, ${glow}),
-            0 0 80px rgba(255, 87, 34, ${glow * 0.5})
+            0 0 40px rgba(0, 150, 255, ${glow}),
+            0 0 80px rgba(0, 100, 255, ${glow * 0.5})
           `,
-          animation: "float 5s ease-in-out infinite",
         }}
       />
-      <style jsx>{`
-        @keyframes float {
-          0% {
-            transform: translateY(0px) scale(${scale});
-          }
-          50% {
-            transform: translateY(-4px) scale(${scale * 1.01});
-          }
-          100% {
-            transform: translateY(0px) scale(${scale});
-          }
-        }
-      `}</style>
     </div>
   );
 }
