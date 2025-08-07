@@ -140,6 +140,7 @@ export default function ImprovedAiChatsVoicePage() {
     "granted" | "denied" | "prompt" | "unknown"
   >("unknown");
   const [isConversationActive, setIsConversationActive] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const lastSentTranscriptRef = useRef("");
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -215,7 +216,8 @@ export default function ImprovedAiChatsVoicePage() {
       console.log('[DEBUG] handleSend API call payload:', {
         class: selectedGrade.replace(/\D/g, ""),
         style: selectedStyle.toLowerCase(),
-        message: transcript.trim(),
+        message: userMessage,
+        ...(sessionId && { sessionId }), // Include sessionId if it exists
       });
 
       const res = await fetch(
@@ -230,6 +232,7 @@ export default function ImprovedAiChatsVoicePage() {
             class: selectedGrade.replace(/\D/g, ""),
             style: selectedStyle.toLowerCase(),
             message: userMessage,
+            ...(sessionId && { sessionId }), // session id
           }),
         }
       );
@@ -241,6 +244,11 @@ export default function ImprovedAiChatsVoicePage() {
       const data = await res.json();
       const responseText =
         data?.data?.response || "Sorry, I couldn't process your request.";
+      
+      // Extract and store sessionId from response if it exists
+      if (data?.data?.sessionId) {
+        setSessionId(data.data.sessionId);
+      }
 
       // Token/Model Logging
       const model = "Gemini 1.0 Pro";
@@ -465,6 +473,8 @@ export default function ImprovedAiChatsVoicePage() {
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel(); // Immediately stop any ongoing TTS
       }
+      // Reset sessionId when conversation ends
+      setSessionId(null);
       // Do NOT trigger handleSend or TTS for any remaining transcript
       // Only show chat bubbles for chatHistory
     } catch (error) {
