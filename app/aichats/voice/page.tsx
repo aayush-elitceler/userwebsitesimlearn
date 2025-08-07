@@ -139,6 +139,8 @@ export default function ImprovedAiChatsVoicePage() {
   const [microphonePermission, setMicrophonePermission] = useState<
     "granted" | "denied" | "prompt" | "unknown"
   >("unknown");
+  const [isConversationActive, setIsConversationActive] = useState(false);
+  const lastSentTranscriptRef = useRef("");
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
@@ -184,18 +186,6 @@ export default function ImprovedAiChatsVoicePage() {
   const hasMountedRef = useRef(false);
 
   useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      return;
-    }
-
-    if (!listening) {
-      console.log(true, "stopListening");
-      handleStopListening();
-    }
-  }, [listening]);
-
-  useEffect(() => {
     if (chatBottomRef.current) {
       chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
@@ -203,12 +193,13 @@ export default function ImprovedAiChatsVoicePage() {
 
   // Send message to API with better error handling and speech synthesis integration
   const handleSend = useCallback(async () => {
-    if (!selectedGrade || !selectedStyle || !inputValue.trim()) return;
+    console.log('[DEBUG] handleSend called with transcript:', transcript.trim());
+    if (!selectedGrade || !selectedStyle || !transcript.trim()) return;
 
     setApiLoading(true);
     setThinking(true);
     // Store user message temporarily but don't add to chat history yet
-    const userMessage = inputValue.trim();
+    const userMessage = transcript.trim();
 
     try {
       const authCookie = Cookies.get("auth");
@@ -220,6 +211,12 @@ export default function ImprovedAiChatsVoicePage() {
           console.error("Error parsing auth cookie:", e);
         }
       }
+
+      console.log('[DEBUG] handleSend API call payload:', {
+        class: selectedGrade.replace(/\D/g, ""),
+        style: selectedStyle.toLowerCase(),
+        message: transcript.trim(),
+      });
 
       const res = await fetch(
         "https://apisimplylearn.selflearnai.in/api/v1/ai/chat",
@@ -266,6 +263,7 @@ export default function ImprovedAiChatsVoicePage() {
       // Start speech synthesis immediately - this implements the ChatGPT-like behavior
       // where the assistant starts speaking immediately after the user stops
       setAiSpeaking(true);
+      console.log('[DEBUG] TTS utterance will start:', responseText);
       
       // Create and configure speech synthesis
       const utterance = new SpeechSynthesisUtterance(responseText);
@@ -291,6 +289,7 @@ export default function ImprovedAiChatsVoicePage() {
       // When speech ends, add both messages to chat history
       // This implements the ChatGPT-like behavior where user messages appear only after AI responds
       utterance.onend = () => {
+        console.log('[DEBUG] TTS utterance ended. Resetting transcript and lastSentTranscriptRef.');
         setAiSpeaking(false);
         // Now add both messages to chat history
         setChatHistory((prev) => [
@@ -299,10 +298,13 @@ export default function ImprovedAiChatsVoicePage() {
           { role: "ai", text: responseText }
         ]);
         setDisplayedText(""); // Clear the displayed text since it's now in chat history
+        resetTranscript(); // clear transcript for next turn
+        lastSentTranscriptRef.current = "";
       };
 
       // If speech fails, still add messages to chat history
       utterance.onerror = () => {
+        console.log('[DEBUG] TTS utterance error. Resetting transcript and lastSentTranscriptRef.');
         setAiSpeaking(false);
         setChatHistory((prev) => [
           ...prev,
@@ -310,6 +312,8 @@ export default function ImprovedAiChatsVoicePage() {
           { role: "ai", text: responseText }
         ]);
         setDisplayedText(""); // Clear the displayed text
+        resetTranscript(); // clear transcript for next turn
+        lastSentTranscriptRef.current = "";
       };
 
       // Start speaking
@@ -336,37 +340,54 @@ export default function ImprovedAiChatsVoicePage() {
       setInputValue("");
       resetTranscript();
     }
-  }, [selectedGrade, selectedStyle, inputValue, resetTranscript]);
+  }, [selectedGrade, selectedStyle, transcript, resetTranscript]);
 
-  
-
-  // Enhanced stop listening with error handling and auto-submit
-  const handleStopListening = useCallback(() => {
-    try {
-      SpeechRecognition.stopListening();
-      setSpeechError(null);
-
-      // Auto-submit if we have transcript and required selections
-      if (transcript.trim() && selectedGrade && selectedStyle) {
-        // Don't add user message to chat history yet - will be added after AI response
-        // This implements the ChatGPT-like behavior where user messages appear only after AI responds
-        // Small delay to ensure state is updated, then auto-submit
-        setTimeout(() => {
-          handleSend();
-        }, 100);
-      }
-    } catch (error) {
-      console.error("Error stopping speech recognition:", error);
-      setSpeechError("Failed to stop listening");
+  // Auto-detect end of user speech and trigger assistant reply
+  useEffect(() => {
+    console.log('[DEBUG] useEffect check:', {
+      isConversationActive,
+      listening,
+      transcript,
+      aiSpeaking,
+      thinking,
+      apiLoading,
+      lastSentTranscript: lastSentTranscriptRef.current
+    });
+    if (
+      isConversationActive &&
+      !listening &&
+      transcript.trim() &&
+      !aiSpeaking &&
+      !thinking &&
+      !apiLoading &&
+      transcript.trim() !== lastSentTranscriptRef.current
+    ) {
+      console.log('[DEBUG] useEffect will call handleSend for transcript:', transcript.trim());
+      lastSentTranscriptRef.current = transcript.trim();
+      handleSend();
     }
-  }, [transcript, selectedGrade, selectedStyle, handleSend]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConversationActive, listening, transcript, aiSpeaking, thinking, apiLoading]);
 
-  // useEffect(() => {
-  //   if (!listening) {
-  //     handleSend();
-  //     setThinking(false); // reset thinking after sending
-  //   }
-  // }, [listening, transcript, thinking]);
+  // After assistant finishes, auto-restart listening for next user input
+  useEffect(() => {
+    if (
+      isConversationActive &&
+      !aiSpeaking &&
+      !thinking &&
+      !apiLoading &&
+      transcript.trim() === ""
+    ) {
+      // Only restart listening if not already listening
+      if (!listening) {
+        SpeechRecognition.startListening({
+          continuous: false,
+          language: "en-US",
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConversationActive, aiSpeaking, thinking, apiLoading, transcript, listening]);
 
   // Enhanced start listening with permission and error handling
   const handleStartListening = useCallback(async () => {
@@ -402,6 +423,55 @@ export default function ImprovedAiChatsVoicePage() {
       setSpeechError("Failed to start voice recognition. Please try again.");
     }
   }, [microphonePermission, resetTranscript]);
+
+  // Start continuous conversation
+  const startConversation = useCallback(async () => {
+    try {
+      setSpeechError(null);
+      setIsConversationActive(true);
+      if (microphonePermission === "denied") {
+        setSpeechError(
+          "Microphone access denied. Please enable microphone permissions in your browser settings."
+        );
+        setIsConversationActive(false);
+        return;
+      }
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (permissionError) {
+        console.error("Microphone permission error:", permissionError);
+        setSpeechError("Please allow microphone access to use voice input");
+        setIsConversationActive(false);
+        return;
+      }
+      resetTranscript();
+      await SpeechRecognition.startListening({
+        continuous: false, // single utterance
+        language: "en-US",
+      });
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+      setSpeechError("Failed to start conversation. Please try again.");
+      setIsConversationActive(false);
+    }
+  }, [microphonePermission, resetTranscript]);
+
+  // Stop conversation
+  const stopConversation = useCallback(() => {
+    try {
+      SpeechRecognition.stopListening();
+      setIsConversationActive(false);
+      setSpeechError(null);
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel(); // Immediately stop any ongoing TTS
+      }
+      // Do NOT trigger handleSend or TTS for any remaining transcript
+      // Only show chat bubbles for chatHistory
+    } catch (error) {
+      console.error("Error stopping conversation:", error);
+      setSpeechError("Failed to stop conversation");
+    }
+  }, [setIsConversationActive, setSpeechError]);
 
   // Clean up speech synthesis when component unmounts
   useEffect(() => {
@@ -657,7 +727,7 @@ export default function ImprovedAiChatsVoicePage() {
       {FloatingSelectors}
       <div className="w-full px-4 lg:px-8 mt-6">
         {/* Welcome message and suggestions - only show before chat starts and when not speaking */}
-        {chatHistory.length === 0 && !aiSpeaking && !listening && (
+        {chatHistory.length === 0 && !isConversationActive && (
           <div className=" flex flex-col mt-12 items-center max-w-4xl mx-auto">
             <div className="mt-24 mb-4 text-center w-full">
               <div className="text-2xl md:text-3xl font-bold text-black mb-2">
@@ -677,68 +747,57 @@ export default function ImprovedAiChatsVoicePage() {
           </div>
         )}
 
-        {/* Chat area - only show after chat starts */}
-        {chatHistory.length > 0 && (
-          <div className="pt-24 pb-32 max-w-4xl mx-auto">
-            <div className="w-full flex flex-col gap-3">
-              {chatHistory.map((msg, idx) => (
+        {/* Chat area - always show during conversation */}
+        <div className="pt-24 pb-32 max-w-4xl mx-auto">
+          <div className="w-full flex flex-col gap-3">
+            {/* During conversation: show only SpruceBall/circle with current spoken text */}
+            {isConversationActive ? (
+              <div className="flex justify-center">
+                <div className="flex flex-col items-center">
+                  <SpruceBall listening={listening || aiSpeaking || isConversationActive} />
+                </div>
+              </div>
+            ) : (
+              // After conversation ends, show chat bubbles for both user and assistant
+              chatHistory.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.role === "user" ? (
                     <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 point-ask-gradient text-white">
-                      <p className="text-sm md:text-base leading-relaxed">
-                        {msg.text}
-                      </p>
+                      <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
                     </div>
                   ) : (
                     <div className="max-w-[85%] md:max-w-[75%] bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20">
-                      <p className="text-sm md:text-base leading-relaxed">
-                        {msg.text}
-                      </p>
+                      <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
                     </div>
                   )}
                 </div>
-              ))}
-              {thinking && (
-                <div className="flex justify-start">
-                  <div className="bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20 opacity-70">
-                    <p className="text-sm md:text-base">Thinking...</p>
-                  </div>
+              ))
+            )}
+            {thinking && !isConversationActive && (
+              <div className="flex justify-start">
+                <div className="bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20 opacity-70">
+                  <p className="text-sm md:text-base">Thinking...</p>
                 </div>
-              )}
-              {/* AI Speaking - Show the current response while speaking */}
-              {aiSpeaking && displayedText && (
-                <div className="flex justify-start">
-                  <div className="max-w-[85%] md:max-w-[75%] bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20">
-                    <p className="text-sm md:text-base leading-relaxed">
-                      {displayedText}
-                    </p>
-                  </div>
-                </div>
-              )}
-              <div ref={chatBottomRef} />
-            </div>
+              </div>
+            )}
+            <div ref={chatBottomRef} />
           </div>
-        )}
+        </div>
       </div>
 
       {/* Voice visualization */}
       <div className="flex items-center justify-center mb-8">
-        {/* Show SpruceBall when listening or when AI is speaking */}
-        {(listening || aiSpeaking) && (
-          <SpruceBall listening={listening || aiSpeaking} />
-        )}
+        {/* Remove duplicate SpruceBall here, as it is now handled in the chat area above */}
       </div>
 
       {/* Voice control buttons */}
-      {selectedGrade && selectedStyle && !listening && !aiSpeaking && (
+      {selectedGrade && selectedStyle && !isConversationActive && (
         <div className="flex gap-3 justify-center mb-8">
           <button
-            onClick={handleStartListening}
+            onClick={startConversation}
             className="point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full ..."
             disabled={thinking || apiLoading}
           >
@@ -756,17 +815,17 @@ export default function ImprovedAiChatsVoicePage() {
                 <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
                 <path d="M12 19v3m-4 0h8" />
               </svg>
-              Start Speaking
+              Start Conversation
             </span>
           </button>
         </div>
       )}
       
-      {/* Stop button while listening */}
-      {listening && (
+      {/* Stop button during conversation */}
+      {isConversationActive && (
         <div className="flex gap-3 justify-center mb-8">
           <button
-            onClick={handleStopListening}
+            onClick={stopConversation}
             className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full transition-all duration-300"
           >
             <span className="flex items-center gap-2">
@@ -778,7 +837,7 @@ export default function ImprovedAiChatsVoicePage() {
               >
                 <rect x="6" y="6" width="12" height="12" rx="2" />
               </svg>
-              Stop
+              Stop Conversation
             </span>
           </button>
         </div>
