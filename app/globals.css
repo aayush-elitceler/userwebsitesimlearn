@@ -101,6 +101,13 @@ body {
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* Subject-specific background colors */
+.quiz-subject-maths { background-color: #4A90E2; }
+.quiz-subject-math { background-color: #4A90E2; }
+.quiz-subject-science { background-color: #8F5AFF; }
+.quiz-subject-english { background-color: #F44336; }
+.quiz-subject-evs { background-color: #E6AF3F; }
+.quiz-subject-default { background-color: #8F5AFF; }
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -119,7 +126,6 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Safari and Chrome */
 }
-
 /* Ensure body doesn't have unnecessary scrollbars */
 html, body {
   overflow-x: hidden;
@@ -152,8 +158,6 @@ body {
     right: 1rem;
   }
 }
-
-/* Hide scrollbars for horizontal scrolling */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* Internet Explorer 10+ */
   scrollbar-width: none;  /* Firefox */
