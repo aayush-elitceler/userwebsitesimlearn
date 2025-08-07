@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 // Update the Quiz type to match API
 interface Teacher {
@@ -36,6 +36,7 @@ interface Quiz {
     endTime: string;
   };
 }
+
 type Submission = {
   id: string;
   quizId: string;
@@ -47,73 +48,6 @@ type Submission = {
   submittedAt: string;
   quiz: Quiz;
 };
-
-const subjectColors: Record<string, string> = {
-  Maths: "#4A90E2",
-  Math: "#4A90E2",
-  Science: "#8F5AFF",
-  English: "#F44336",
-  EVS: "#E6AF3F",
-  Default: "#E6AF3F",
-};
-
-function ExamCard({
-  exam,
-  onStart,
-  buttonText = "Take exam",
-}: {
-  exam: {
-    title: string;
-    subject?: string;
-    instructions?: string;
-    dueDate?: string; // ISO string
-    description?: string;
-  };
-  onStart?: () => void;
-  buttonText?: string;
-}) {
-  return (
-    <div className="flex flex-row bg-white rounded-2xl p-8 mb-6 shadow-lg max-w-3xl w-full items-center">
-      <div className="flex-1">
-        <div className="text-black font-semibold mb-1">
-          Subject: {exam.subject || "N/A"}
-        </div>
-        <div className="text-2xl font-bold text-black mb-2">{exam.title}</div>
-        <div className="text-black mb-3">
-          {exam.description || exam.instructions}
-        </div>
-        <div className="text-black mb-4 flex items-center gap-2">
-          <span role="img" aria-label="clock">🕒</span>
-          Due date:{" "}
-          {exam.dueDate
-            ? new Date(exam.dueDate).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })
-            : "-"}
-        </div>
-        <button
-          className="point-ask-gradient text-white cursor-pointer rounded-lg px-6 py-2 font-semibold shadow hover:bg-green-700 transition"
-          onClick={onStart}
-        >
-          {buttonText}
-        </button>
-      </div>
-      <div className="ml-8 flex-shrink-0">
-        <div
-          className="rounded-xl flex items-center justify-center w-56 h-36 text-white text-2xl font-bold shadow-lg"
-          style={{
-            background: subjectColors[exam.subject || "Default"],
-            minWidth: 180,
-          }}
-        >
-          {exam.subject || "Subject"}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function QuizCard({
   quiz,
@@ -148,15 +82,10 @@ function QuizCard({
         return 'quiz-subject-default';
     }
   };
-
+  
   return (
     <div className="flex flex-row bg-white border border-[#DEDEDE] items-center 
-                    w-[480px] h-[220px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
-                    sm:w-[500px] sm:h-[230px] sm:p-5
-                    md:w-[420px] md:h-[200px] md:p-4
-                    lg:w-[480px] lg:h-[220px] lg:p-5
-                    xl:w-[520px] xl:h-[240px] xl:p-6
-                    2xl:w-[588px] 2xl:h-[260px] 2xl:p-6">
+                    w-full h-[220px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5">
       <div className="flex-1 min-w-0 flex flex-col justify-between h-full overflow-hidden">
         <div className="flex-1 min-h-0">
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
@@ -223,9 +152,9 @@ function QuizCard({
           ) : (
             <button
               className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={() => router.push(`/exams/${quiz.id}/start`)}
+              onClick={() => router.push(`/quizes/${quiz.id}/start`)}
             >
-              Take Exam
+              Start Quiz
             </button>
           )}
         </div>
@@ -282,32 +211,18 @@ function getTokenFromCookie() {
   }
 }
 
-// Helper to guess subject from topic
-function guessSubjectFromTopic(topic?: string): string {
-  if (!topic) return "Default";
-  const t = topic.toLowerCase();
-  if (t.includes("math")) return "Maths";
-  if (t.includes("science")) return "Science";
-  if (t.includes("english") || t.includes("grammar")) return "English";
-  if (t.includes("evs")) return "EVS";
-  if (t.includes("bio") || t.includes("plant") || t.includes("food")) return "Science";
-  if (t.includes("motion") || t.includes("law")) return "Science";
-  // Add more rules as needed
-  return "Default";
-}
-
-export default function QuizesPage() {
-  // Remove old quizzes/submissions state
-  // const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  // const [submissions, setSubmissions] = useState<Submission[]>([]);
-  // const [submissionsLoading, setSubmissionsLoading] = useState(true);
-  const [userExams, setUserExams] = useState<Quiz[]>([]);
-  const [teacherExams, setTeacherExams] = useState<Quiz[]>([]);
+export default function AllQuizzesPage() {
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const type = searchParams.get('type') || 'your';
+
+  const pageTitle = type === 'your' ? 'Your Quizzes' : 'All Quizzes';
 
   useEffect(() => {
-    async function fetchExams() {
+    async function fetchQuizzes() {
       setLoading(true);
       try {
         const token = getTokenFromCookie();
@@ -316,7 +231,7 @@ export default function QuizesPage() {
           return;
         }
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams`,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -325,10 +240,12 @@ export default function QuizesPage() {
         );
         const data = await res.json();
         if (data.success && data.data) {
-          const userGen = data.data.userGeneratedExams || {};
-          const teacherGen = data.data.teacherAssignedExams || {};
-          setUserExams([...(userGen.upcoming || []), ...(userGen.previous || [])]);
-          setTeacherExams([...(teacherGen.upcoming || []), ...(teacherGen.previous || [])]);
+          const userObj = data.data.userGeneratedQuizzes || {};
+          const userCombined = [
+            ...(Array.isArray(userObj.upcoming) ? userObj.upcoming : []),
+            ...(Array.isArray(userObj.previous) ? userObj.previous : []),
+          ];
+          setQuizzes(userCombined);
         }
       } catch (e) {
         // handle error
@@ -336,64 +253,79 @@ export default function QuizesPage() {
         setLoading(false);
       }
     }
-    fetchExams();
+    fetchQuizzes();
+  }, []);
+
+  useEffect(() => {
+    async function fetchSubmissions() {
+      try {
+        const token = getTokenFromCookie();
+        if (!token) return;
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/submissions`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await res.json();
+        if (data.success && data.data && data.data.submissions) {
+          setSubmissions(data.data.submissions);
+        }
+      } catch (e) {
+        // handle error
+      }
+    }
+    fetchSubmissions();
   }, []);
 
   return (
     <div className="min-h-screen w-full px-4 md:px-8 lg:px-12 py-8 bg-gray-100">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-2xl md:text-3xl font-bold text-black">Exams</h2>
-        </div>
-        <div className="text-base md:text-lg text-black mb-8">
-        AI-powered exams to help you perform your best.{' '}
-          <span className="align-middle">🏅✨</span>
-        </div>
-       
-        {/* Teacher Assigned Exams Section */}
-        <div className="flex items-center justify-between mb-4 mt-8 gap-4">
-          <h3 className="text-xl font-bold text-black">Teacher Assigned Exams</h3>
+        {/* Header with back button */}
+        <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              router.push('/exams/generate/all');
-            }}
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0 bg-transparent border-none cursor-pointer"
+            onClick={() => router.back()}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow"
           >
-            View all 
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.627 8.75H0.5V7.25H12.627L6.93075 1.55375L8 0.5L15.5 8L8 15.5L6.93075 14.4462L12.627 8.75Z" fill="url(#paint0_linear_1309_2561)"/>
-              <defs>
-                <linearGradient id="paint0_linear_1309_2561" x1="0.5" y1="8" x2="15.5" y2="8" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF8015"/>
-                  <stop offset="1" stopColor="#FF9D07"/>
-                </linearGradient>
-              </defs>
-            </svg>
+            <ArrowLeft size={20} className="text-gray-600" />
           </button>
+          <h1 className="text-2xl md:text-3xl font-bold text-black">{pageTitle}</h1>
         </div>
-        <div className="mb-10 py-4">
-          <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 overflow-x-clip">
-            {loading ? (
-              <div className="text-black">Loading...</div>
-            ) : teacherExams.length === 0 ? (
-              <div className="text-black">No teacher-assigned exams found.</div>
-            ) : (
-              teacherExams.slice(0, 2).map((quiz) => (
-                <ExamCard
-                  exam={{
-                    ...quiz,
-                    subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
-                    dueDate: quiz.assignmentDetails?.endTime || quiz.createdAt,
-                  }}
-                  key={quiz.id}
-                  onStart={() => router.push(`/exams/take/${quiz.id}`)}
-                  buttonText={quiz.assignmentDetails && 'completed' in quiz.assignmentDetails && quiz.assignmentDetails.completed ? 'Retake exam' : 'Take exam'}
-                />
-              ))
-            )}
+
+        <div className="text-base md:text-lg text-black mb-8">
+          AI-powered quizzes to help you perform your best. <span className="align-middle">🏅✨</span>
+        </div>
+
+        {/* Grid layout for all cards */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-black">Loading...</div>
           </div>
-        </div>
+        ) : quizzes.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-black">No quizzes available.</div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {quizzes.map((quiz) => {
+              const submission = submissions.find(
+                (s) => s.quizId === quiz.id
+              );
+              return (
+                <QuizCard
+                  key={quiz.id}
+                  quiz={quiz}
+                  previous={quiz.completed}
+                  score={submission?.score}
+                  date={submission?.submittedAt}
+                  submissionId={submission?.id}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
