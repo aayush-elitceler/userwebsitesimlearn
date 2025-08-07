@@ -73,7 +73,7 @@ export default function SpruceBall({ listening }: { listening: boolean }) {
   return (
     <div className="flex justify-center items-center py-10">
       <div
-        className="rounded-full w-40 h-40 transition-all duration-150 ease-out"
+        className="rounded-full w-40 h-40 transition-all duration-150 ease-out flex items-center justify-center relative"
         style={{
           transform: `scale(${scale})`,
           background: baseColors,
@@ -82,7 +82,9 @@ export default function SpruceBall({ listening }: { listening: boolean }) {
             0 0 80px rgba(0, 100, 255, ${glow * 0.5})
           `,
         }}
-      />
+      >
+        {/* No text inside the circle */}
+      </div>
     </div>
   );
 }
