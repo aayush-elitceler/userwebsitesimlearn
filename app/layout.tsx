@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import LayoutWrapper from "@/components/LayoutWrapper"; // Import client wrapper
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
 import { Nunito_Sans } from "next/font/google";
+import Script from "next/script"; // ✅ Added
 
 const nunitoSans = Nunito_Sans({ 
   weight: ["300", "400", "500", "600", "700", "800"], 
@@ -11,7 +12,6 @@ const nunitoSans = Nunito_Sans({
   display: "swap",
   variable: "--font-nunito-sans"
 });
-
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -25,7 +25,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={nunitoSans.variable}>
-      
+      <head>
+        {/* ✅ Google Identity Services Script */}
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className={nunitoSans.className}>
         <SidebarProvider>
           <LayoutWrapper>{children}</LayoutWrapper>

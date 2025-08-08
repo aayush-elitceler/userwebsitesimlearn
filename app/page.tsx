@@ -53,7 +53,8 @@ interface BadgeChallenge {
   deadline: string;
 }
 interface Subject {
-  name: string;
+  subject: string;
+  name?: string;
   percentage: number;
 }
 interface Activities {
@@ -124,6 +125,11 @@ export default function Home() {
           }
         }
 
+        if(!authCookie || !token) {
+          router.push("/login");
+          return;
+        }
+
         const response = await fetch(
           `https://apisimplylearn.selflearnai.in/api/v1/users/dashboard`,
           {
@@ -150,6 +156,8 @@ export default function Home() {
 
     fetchDashboardData();
   }, []);
+
+  console.log("Dashboard Data:", dashboardData);
 
   const createLearningGrowthData = () => {
     if (!dashboardData?.learningGrowth) return null;
@@ -227,15 +235,16 @@ export default function Home() {
           }}
         >
           {dashboardData.dailyStreak.days.map((day, idx) => (
-            <div key={idx} className={`flex-1 flex flex-col items-center py-2 rounded-xl ${day.isActive ? "text-orange-500" : "text-gray-400"}`}>
-              <span className="text-xl mb-1">⚡</span>
+            <div key={idx} className={`flex-1 flex flex-col items-center py-2 rounded-xl ${day.isActive ? "text-orange-800" : "text-gray-400"}`}>
+              {/* <span className="text-xl mb-1">⚡</span> */}
+              <img src={`${day.isActive ? "/images/Thunder.svg" : "/images/Frame.svg"}`} alt="" className={`w-[18px] h-[24px] `}/>
               <span className="text-sm font-semibold">{day.day}</span>
             </div>
           ))}
         </div>
 
         <div className="flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-orange-200 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm">
-          <img src="/images/medal.svg" alt="" className="w-8 h-8" />
+          <img src="/images/medal.svg" alt="" className="w-[50px] h-[50px]" />
           <div className="flex-1 text-orange-500 font-semibold">{dashboardData.badgeChallenge.title}</div>
           <div className="text-sm text-gray-600">
             {dashboardData.badgeChallenge.current}/{dashboardData.badgeChallenge.target}
@@ -257,7 +266,7 @@ export default function Home() {
             title: "View Progress:",
             description: dashboardData.activities.progress.subjects
               .slice(0, 2)
-              .map((subject) => `${subject.name.substring(0, 20)} ${subject.percentage}%`)
+              .map((subject) => `${subject.name!.substring(0, 20)} ${subject.percentage}%`)
               .join(" • "),
             buttonText: "Track Progress",
             link: "/quizes",
@@ -287,7 +296,7 @@ export default function Home() {
         {/* Left Column */}
         <div className="space-y-6">
           {/* Today's Missions */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-5">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Today&apos;s Missions</h2>
             <div className="space-y-4">
               {dashboardData.todaysMissions.map((mission, idx) => (
@@ -371,7 +380,7 @@ export default function Home() {
               {dashboardData.weeklyProgress.map((item, idx) => (
                 <div key={idx}>
                   <div className="flex justify-between mb-1 text-sm font-medium text-gray-700">
-                    <span>{item.name}</span>
+                    <span className="">{item.subject.toUpperCase()}</span>
                     <span>{item.percentage}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">

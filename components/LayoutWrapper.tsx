@@ -32,7 +32,8 @@ export default function LayoutWrapper({
   const hideSidebar =
     pathname === '/login' ||
     pathname === '/login/otp' ||
-    pathname === '/register';
+    pathname === '/register' ||
+    pathname === '/forgot-password' 
 
   if (!isClient) {
     return null; // Prevent hydration mismatch

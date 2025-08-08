@@ -5,74 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import Cookies from "js-cookie";
 import { Poppins } from "next/font/google";
-import Link from "next/link";
 
 const poppins = Poppins({ weight: ["400", "600", "700"], subsets: ["latin"] });
 
-// At the top of your page file
-declare const google: any;
-
-
-export default function Login() {
+export default function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
-
-const handleGoogleSignIn = () => {
-  /* global google */
-  google.accounts.id.initialize({
-    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-    callback: async (response: any) => {
-      try {
-        const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/google/login`,
-          { idToken: response.credential }
-        );
-
-        // Assuming backend returns token directly:
-        if (res.data?.data?.token) {
-          Cookies.set("auth", JSON.stringify({ token: res.data.data.token }), {
-            expires: 1,
-          });
-          router.push("/");
-        }
-      } catch (err) {
-        console.error("Google login failed", err);
-      }
-    }
-  });
-
-  google.accounts.id.prompt(); // Opens Google login popup
-};
-
-
-
-
-  const handleLogin = async () => {
+  const handleForgotPassword = async () => {
     setLoading(true);
+    setError("");
+    setSuccess("");
     try {
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/login`,
-        { email, password }
+        `${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/forgot-password`,
+        { email }
       );
-      Cookies.set("auth", JSON.stringify({ token: res.data.data.token }), {
-        expires: 1,
-      });
-      router.push("/");
+      setSuccess("Reset link sent to your email!");
     } catch (err) {
       console.error(err);
-      setError("Invalid Credentials");
+      setError("Failed to send reset link. Please check your email.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleSignIn = () => {
+    // Implement Google sign-in logic
+  };
 
   return (
     <div
@@ -82,65 +47,53 @@ const handleGoogleSignIn = () => {
       }}
     >
       {/* Left Illustration Panel */}
-      <div className="w-full md:w-1/2  flex items-center justify-center p-10">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-10">
         <img
-          src="/images/login_new_image.svg" // Replace with the correct image shown in the design
-          alt="Login Illustration"
+          src="/images/login_new_image.svg" // Replace with your forgot-password illustration
+          alt="Forgot Password Illustration"
           className="max-w-[723px] w-full h-auto"
         />
       </div>
 
-      {/* Right Login Form Panel */}
+      {/* Right Form Panel */}
       <div className="w-full md:w-1/2 flex items-center justify-center px-6 py-16">
         <Card className="w-full max-w-md border-none shadow-none">
           <CardHeader className="text-left mb-4">
-            <h1 className="text-[45px] font-bold text-black leading-tight font-">
-              SIGN IN TO YOUR <span className="text-[#FFA902]">ADVENTURE!</span>
+            <h1 className="text-[45px] font-bold text-black leading-tight">
+              FORGOT YOUR <span className="text-[#FFA902]">PASSWORD?</span>
             </h1>
           </CardHeader>
           <CardContent className="space-y-5">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleLogin();
+                handleForgotPassword();
               }}
             >
               <div className="mb-3">
                 <Input
                   type="email"
+                  required
                   placeholder="Enter your E - mail Id"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-[#E5E5E5]  rounded-lg py-6 bg-white text-gray-700"
-                />
-              </div>
-              <div className="mb-3">
-                <Input
-                  type="password"
-                  placeholder="Enter your Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white text-gray-700"
                 />
               </div>
 
-              <Link href={"/forgot-password"}  className="flex justify-end text-[#000000] text-sm mb-3 cursor-pointer">
-                Forgot Password
-              </Link >
-
               {error && (
                 <p className="text-red-500 text-sm text-center">{error}</p>
               )}
-
-              
+              {success && (
+                <p className="text-green-500 text-sm text-center">{success}</p>
+              )}
 
               <Button
                 type="submit"
                 disabled={loading}
                 className="w-full text-lg point-ask-gradient cursor-pointer hover:bg-yellow-600 text-white font-normal py-6 rounded-lg transition"
               >
-                {loading ? "Signing in..." : "Sign in"}
+                {loading ? "Sending..." : "Send reset link"}
               </Button>
             </form>
 
@@ -153,7 +106,7 @@ const handleGoogleSignIn = () => {
             <Button
               variant="outline"
               type="button"
-              // onClick={handleGoogleSignIn}
+              onClick={handleGoogleSignIn}
               className="w-full bg-white cursor-pointer hover:bg-[#f7dfb3] border border-gray-200 text-gray-700 flex items-center justify-center gap-2 rounded-lg py-3"
             >
               <img
@@ -164,14 +117,15 @@ const handleGoogleSignIn = () => {
               Google
             </Button>
 
-            <Link href="/register" className="text-center text-sm text-black">
-            
             <div className="text-center text-sm text-black">
               Don’t have an account?{" "}
-              {/* <a href="/register" className="text-[#FFA903] font-normal underline">
-                Sign up
-              </a> */}
-            </div></Link>
+              <span
+                onClick={() => router.push("/register")}
+                className="text-[#FF6B6B] cursor-pointer"
+              >
+                Sign Up
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
