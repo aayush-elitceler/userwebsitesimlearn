@@ -296,18 +296,18 @@ export default function Home() {
         {/* Left Column */}
         <div className="space-y-6">
           {/* Today's Missions */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-5">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 ">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Today&apos;s Missions</h2>
-            <div className="space-y-4">
+            <div className="space-y-4 ">
               {dashboardData.todaysMissions.map((mission, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-1 border-gray-200 pb-3 last:border-b-0">
                   <div>
                     <h4 className="font-medium text-gray-800">{mission.title}</h4>
                     <p className="text-gray-500 text-sm">{mission.description}</p>
                   </div>
                   <button
                     onClick={() => !mission.completed && router.push("/quizes")}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors text-white ${
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors text-white w-[150px] h-[40px]  ${
                       mission.completed
                         ? "bg-[#009B41] hover:bg-[#008a3a] cursor-default"
                         : "point-ask-gradient hover:from-orange-600 hover:to-orange-700"
@@ -321,29 +321,38 @@ export default function Home() {
           </div>
 
           {/* Learning Growth */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Learning Growth</h2>
-            <div className="relative w-full min-h-[250px]">
-              {learningGrowthData && (
-                <Line
-                  data={learningGrowthData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                      x: { grid: { display: false }, border: { display: false } },
-                      y: {
-                        grid: { color: "#f3f4f6" },
-                        border: { display: false },
-                        ticks: { display: false },
-                      },
+          {/* Learning Growth */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Learning Growth</h2>
+        <div className="relative w-full min-h-[250px]">
+          {learningGrowthData && (
+            <Line
+              data={learningGrowthData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: {
+                    title: {
+                      display: false,
+                      text: "Month",
                     },
-                  }}
-                />
-              )}
-            </div>
-          </div>
+                    grid: { display: false },
+                  },
+                  y: {
+                    title: {
+                      display: false,
+                      text: "Percentage",
+                    },
+                    grid: { color: "#f3f4f6" },
+                  },
+                },
+              }}
+            />
+          )}
+        </div>
+      </div>
         </div>
 
         {/* Right Column */}
@@ -353,14 +362,14 @@ export default function Home() {
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Links</h2>
             <div className="space-y-4">
               {dashboardData.quickLinks.map((link, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-1 border-gray-200 pb-3 last:border-b-0">
                   <div>
                     <h4 className="font-medium text-gray-800">{link.title}</h4>
                     <p className="text-gray-500 text-sm">{link.description}</p>
                   </div>
                   <button
                     onClick={() => router.push("/projects/teacherproject")}
-                    className={`px-4 py-2 rounded-lg font-medium text-white ${
+                    className={`px-4 py-2 rounded-lg font-medium text-white w-[150px] h-[40px] ${
                       link.status === "Completed"
                         ? "bg-[#009B41] hover:bg-[#008a3a]"
                         : "point-ask-gradient hover:from-orange-600 hover:to-orange-700"
