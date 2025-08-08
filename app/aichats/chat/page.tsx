@@ -486,7 +486,7 @@ const ChatInputBar = forwardRef(
           onKeyDown={(e) => e.key === "Enter" && onSend()}
           disabled={disabled}
           autoFocus={autoFocus}
-          className="flex-1 bg-transparent rounded-md p-3 text-black placeholder-gray-300 border-black focus:outline-none text-sm sm:text-base border border-black font-medium px-1 sm:px-2"
+          className="flex-1 bg-transparent p-3 text-black placeholder-gray-300 border-black focus:outline-none text-sm sm:text-base border border-black font-medium px-1 sm:px-2 rounded-full"
         />
         <button
           onClick={onSend}
