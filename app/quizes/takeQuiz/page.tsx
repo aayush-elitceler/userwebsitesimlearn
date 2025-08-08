@@ -153,12 +153,12 @@ function QuizCard({
     <div className="flex flex-row bg-white border border-[#DEDEDE] items-center 
                     w-[480px] h-[220px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
                     sm:w-[500px] sm:h-[230px] sm:p-5
-                    md:w-[420px] md:h-[200px] md:p-4
-                    lg:w-[480px] lg:h-[220px] lg:p-5
-                    xl:w-[520px] xl:h-[240px] xl:p-6
-                    2xl:w-[588px] 2xl:h-[260px] 2xl:p-6">
+                    md:w-[420px] md:h-[240px] md:p-4
+                    lg:w-[480px] lg:h-[260px] lg:p-5
+                    xl:w-[520px] xl:h-[280px] xl:p-6
+                    2xl:w-[588px] 2xl:h-[300px] 2xl:p-6">
       <div className="flex-1 min-w-0 flex flex-col justify-between h-full overflow-hidden">
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 pb-3">
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
             Difficulty: {quiz.difficulty?.charAt(0).toUpperCase() + quiz.difficulty?.slice(1)}
           </div>
@@ -169,7 +169,7 @@ function QuizCard({
             {quiz.instructions || "Learn with AI Tutor the core of grammar with help of new age solutions in your test"}
           </div>
           {previous ? (
-            <div className="flex flex-col gap-1 text-xs sm:text-sm mb-3">
+            <div className="flex flex-col gap-1 text-xs sm:text-sm mb-2">
               <div className="flex items-center gap-2 text-black">
                 <span className="text-green-400">✔️</span>
                 <span className="break-words">Score: {score || "-"}</span>
