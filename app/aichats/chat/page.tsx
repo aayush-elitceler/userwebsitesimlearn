@@ -8,7 +8,7 @@ import React, {
   ForwardedRef,
 } from "react";
 import Cookies from "js-cookie";
-import { ArrowRight, ChevronDownIcon } from "lucide-react";
+import { ArrowRight, ChevronDownIcon, X } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 
@@ -28,6 +28,16 @@ type OptionType = string | OptionWithIcon;
 
 const isOptionWithIcon = (opt: OptionType): opt is OptionWithIcon =>
   typeof opt === "object" && "label" in opt && "value" in opt;
+
+// === START: History Types ===
+interface HistoryItem {
+  id?: number;
+  type: "Image" | "Chat" | "Voice";
+  query: string;
+  date: string;
+  answeredBy: string;
+}
+// === END: History Types ===
 
 const grades = [
   "1st grade",
@@ -137,6 +147,13 @@ export default function AiChatsChatPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(1); // 1: grade/persona, 2: input bar
 
+  // === START: History Slider State ===
+  const [showHistorySlider, setShowHistorySlider] = useState(false);
+  const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  // === END: History Slider State ===
+
   useEffect(() => {
     // Always show onboarding on page refresh, regardless of cookie
     setShowOnboarding(true);
@@ -160,7 +177,6 @@ export default function AiChatsChatPage() {
       }
     }
   }, [showOnboarding, onboardingStep]);
-  // === END: New Onboarding Code ===
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -231,7 +247,7 @@ export default function AiChatsChatPage() {
       if (!res.ok) throw new Error("Failed to get response");
       const data = await res.json();
       const responseText = data?.data?.response || data?.response || "";
-
+      console.log("🔍 [CHAT] Response text:", data);
       // Add AI message and trigger streaming
       setChatHistory((prev) => {
         const newHistory = [
@@ -256,6 +272,118 @@ export default function AiChatsChatPage() {
       setTimeout(() => handleSend(s), 50);
     }
   };
+
+  // === START: History Functions ===
+  const fetchHistory = async () => {
+    console.log("🔍 [HISTORY] Starting to fetch history data...");
+    setHistoryLoading(true);
+    
+    try {
+      const authCookie = Cookies.get("auth");
+      let token: string | undefined;
+      
+      if (authCookie) {
+        try {
+          token = JSON.parse(authCookie).token;
+          console.log("🔍 [HISTORY] Auth token found:", token ? "Yes" : "No");
+        } catch (error) {
+          console.log("🔍 [HISTORY] Error parsing auth cookie:", error);
+        }
+      } else {
+        console.log("🔍 [HISTORY] No auth cookie found");
+      }
+
+      // Log the API endpoint being called
+      const apiUrl = "https://apisimplylearn.selflearnai.in/api/v1/ai/chat/history";
+      console.log("🔍 [HISTORY] Calling API endpoint:", apiUrl);
+      console.log("🔍 [HISTORY] Request headers:", {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      });
+
+      const res = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      console.log("🔍 [HISTORY] API response status:", res.status);
+      console.log("🔍 [HISTORY] API response headers:", Object.fromEntries(res.headers.entries()));
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.log("🔍 [HISTORY] API error response:", errorText);
+        throw new Error(`Failed to fetch history: ${res.status} ${errorText}`);
+      }
+
+      const data = await res.json();
+      console.log("🔍 [HISTORY] API response data:", data);
+      console.log("🔍 [HISTORY] API response data type:", typeof data);
+      console.log("🔍 [HISTORY] API response data keys:", Object.keys(data || {}));
+      
+      // Extract history from response
+      const history = data?.data?.history || data?.history || [];
+      console.log("🔍 [HISTORY] Extracted history data:", history);
+      console.log("🔍 [HISTORY] History data length:", history.length);
+      console.log("🔍 [HISTORY] History data structure:", history);
+      
+      setHistoryData(history);
+    } catch (err) {
+      console.error("🔍 [HISTORY] Error fetching history:", err);
+      // Set mock data for demonstration
+      setHistoryData([
+        {
+          id: 1,
+          type: "Image" as const,
+          query: "Trapezium Area Formula",
+          date: "July 26, 2025",
+          answeredBy: "AI tutor"
+        },
+        {
+          id: 2,
+          type: "Chat" as const,
+          query: "What is Ohm's Law?",
+          date: "July 25, 2025",
+          answeredBy: "AI tutor"
+        },
+        {
+          id: 3,
+          type: "Voice" as const,
+          query: "What is Cyber law?",
+          date: "July 25, 2025",
+          answeredBy: "AI tutor"
+        },
+        {
+          id: 4,
+          type: "Chat" as const,
+          query: "What is Ohm's Law?",
+          date: "July 24, 2025",
+          answeredBy: "AI tutor"
+        }
+      ] as HistoryItem[]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleHistoryClick = () => {
+    console.log("🔍 [HISTORY] View history button clicked");
+    setShowHistorySlider(true);
+    setIsClosing(false);
+    fetchHistory();
+  };
+
+  const handleCloseHistory = () => {
+    console.log("🔍 [HISTORY] Closing history slider");
+    setIsClosing(true);
+    setTimeout(() => {
+      setShowHistorySlider(false);
+      setIsClosing(false);
+    }, 300);
+  };
+  // === END: History Functions ===
 
   const FloatingSelectors = (
     <div
@@ -368,6 +496,21 @@ export default function AiChatsChatPage() {
           </div>
         )
       )}
+
+      {/* View History Button */}
+      <div className="relative">
+        <button
+          onClick={handleHistoryClick}
+          className="rounded-md px-3 py-2 bg-[#FFE4B5] border border-[#FF5146] text-[#FF5146] hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center"
+        >
+          <img 
+            src="/images/history.svg" 
+            alt="history" 
+            className="w-4 h-4"
+          />
+          <span className="text-sm font-medium">View history</span>
+        </button>
+      </div>
     </div>
   );
 
@@ -415,10 +558,140 @@ export default function AiChatsChatPage() {
 
       {FloatingSelectors}
 
+      {/* History Slider */}
+      {showHistorySlider && (
+        <div 
+          className={`fixed inset-0 z-[70] transition-opacity duration-300 ${
+            isClosing ? 'bg-black/0' : 'bg-black/50'
+          }`} 
+          onClick={handleCloseHistory}
+        >
+          <div 
+            className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
+              isClosing ? 'translate-x-full' : 'translate-x-0'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#FF5146] flex items-center justify-center">
+                  <svg width="20" height="20" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-black">Your history</h2>
+              </div>
+              <button
+                onClick={handleCloseHistory}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="p-6 space-y-3">
+              <button 
+                onClick={() => {
+                  console.log("🔍 [HISTORY] New chat button clicked");
+                  handleCloseHistory();
+                  // Clear current chat and start fresh
+                  setChatHistory([]);
+                  setInputValue("");
+                }}
+                className="w-full rounded-md px-4 py-3 bg-[#FFE4B5] border border-[#FF5146] text-black hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-3 justify-center"
+              >
+                <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span className="font-medium">New chat</span>
+              </button>
+              <button 
+                onClick={() => {
+                  console.log("🔍 [HISTORY] Search chats button clicked");
+                  // TODO: Implement search functionality
+                  alert("Search functionality coming soon!");
+                }}
+                className="w-full rounded-md px-4 py-3 bg-[#FFE4B5] border border-[#FF5146] text-black hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-3 justify-center"
+              >
+                <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className="font-medium">Search chats</span>
+              </button>
+            </div>
+
+            {/* History Content */}
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
+              <h3 className="text-lg font-bold text-black mb-4">Chats</h3>
+              
+              {historyLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5146] mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading history...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {historyData.map((item, index) => (
+                    <div key={item.id || index} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        {/* Icon based on type */}
+                        <div className="w-6 h-6 mt-1">
+                          {item.type === "Image" && (
+                            <svg width="24" height="24" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                          {item.type === "Chat" && (
+                            <svg width="24" height="24" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                          )}
+                          {item.type === "Voice" && (
+                            <svg width="24" height="24" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                              <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                              <line x1="12" y1="19" x2="12" y2="23" />
+                              <line x1="8" y1="23" x2="16" y2="23" />
+                            </svg>
+                          )}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-black">{item.type}:</span>
+                            <span className="text-black">{item.query}</span>
+                          </div>
+                          <p className="text-sm text-gray-500">{item.answeredBy}</p>
+                        </div>
+                        
+                        {/* View chat link */}
+                        <button 
+                          onClick={() => {
+                            console.log("🔍 [HISTORY] View chat clicked for:", item);
+                            // TODO: Implement view chat functionality
+                            alert(`Viewing chat: ${item.type} - ${item.query}`);
+                          }}
+                          className="text-[#FF5146] text-sm font-medium hover:underline"
+                        >
+                          View chat
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full px-4 lg:px-8">
         {/* Welcome message and suggestions - only show before chat starts */}
         {chatHistory.length === 0 && (
-          <div className="min-h-screen flex flex-col justify-center items-center max-w-4xl mx-auto">
+          <div className="min-h-screen flex flex-col justify-center items-center max-w-4xl mx-auto ">
             <div className="mt-24 mb-4 text-center w-full">
               <div className="text-2xl md:text-3xl font-bold text-black mb-2">
                 <span role="img" aria-label="wave">
@@ -435,14 +708,22 @@ export default function AiChatsChatPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
               {suggestions.map((s, i) => (
                 <button
                   key={i}
-                  className="border border-black rounded-xl py-8 px-6 text-lg text-black bg-transparent hover:bg-[#FFB12133] transition font-medium w-full"
+                  className="rounded-xl bg-gradient-to-r from-[#FF9F2733] to-[#FF514633] 
+                 transition font-medium border-none shadow-sm 
+                 flex items-center justify-center text-center 
+                 w-full h-[110px]"
                   onClick={() => handleSuggestion(s)}
                 >
-                  {s}
+                  <span
+                    className="bg-gradient-to-r from-[#FF9F27] to-[#FF5146] 
+                       bg-clip-text text-transparent font-semibold"
+                  >
+                    {s}
+                  </span>
                 </button>
               ))}
             </div>

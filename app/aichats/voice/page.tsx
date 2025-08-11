@@ -145,6 +145,25 @@ export default function ImprovedAiChatsVoicePage() {
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
+  // === START: New Onboarding Code ===
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    // Always show onboarding on page refresh, regardless of cookie
+    setShowOnboarding(true);
+  }, []);
+
+  useEffect(() => {
+    if (showOnboarding) {
+      const timer = setTimeout(() => {
+        setShowOnboarding(false);
+        Cookies.set("hasVisited", "true", { expires: 365 });
+      }, 2000); // 2-second delay
+      return () => clearTimeout(timer);
+    }
+  }, [showOnboarding]);
+  // === END: New Onboarding Code ===
+
   // Check browser support and microphone permission on mount
   useEffect(() => {
     const checkPermissions = async () => {
@@ -512,7 +531,9 @@ export default function ImprovedAiChatsVoicePage() {
   // Floating selectors component
   const FloatingSelectors = (
     <div
-    className="absolute z-40 flex flex-row gap-[10px] p-4 rounded-md right-4 sm:right-8 lg:right-40"
+    className={`absolute z-40 flex flex-row gap-[10px] p-4 rounded-md right-4 sm:right-8 lg:right-40 transition-all duration-300 ${
+      showOnboarding ? "z-[60] shadow-2xl" : ""
+    }`}
     style={{
         top: "40px",
         background:
@@ -734,6 +755,25 @@ export default function ImprovedAiChatsVoicePage() {
         backgroundPosition: "center",
       }}
     >
+      {/* Onboarding overlay */}
+      {showOnboarding && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-50"></div>
+      )}
+
+      {/* Onboarding tooltip for FloatingSelectors */}
+      {showOnboarding && (
+        <div className="fixed top-[120px] right-4 sm:right-8 lg:right-40 z-[60]">
+          <img
+            src="/images/arrow.svg"
+            alt="onboarding"
+            className="w-[19px] h-[59px] object-cover mx-auto mb-5"
+          />
+          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+            Choose your grade and how you&apos;d like the AI to talk to you.
+          </div>
+        </div>
+      )}
+
       {FloatingSelectors}
       <div className="w-full px-4 lg:px-8 mt-6">
         {/* Welcome message and suggestions - only show before chat starts and when not speaking */}
