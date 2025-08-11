@@ -31,6 +31,13 @@ type OptionType = string | OptionWithIcon;
 const isOptionWithIcon = (opt: OptionType): opt is OptionWithIcon =>
   typeof opt === "object" && "label" in opt && "value" in opt;
 
+// Helper function to format grade for API calls
+const formatGradeForAPI = (grade: string): string => {
+  if (grade === "UG") return "UG";
+  if (grade === "PG") return "PG";
+  return grade.replace(/\D/g, ""); // Extract numbers for regular grades
+};
+
 // === START: History Types ===
 interface RawHistoryItem {
   id?: string;
@@ -252,7 +259,7 @@ export default function AiChatsChatPage() {
     setInputValue("");
     try {
       const payload = {
-        class: selectedGrade.replace(/\D/g, ""),
+        class: formatGradeForAPI(selectedGrade),
         style: selectedStyle,
         message: sendMsg.trim(),
       };
@@ -613,7 +620,9 @@ export default function AiChatsChatPage() {
                 Got it! I&apos;ll teach you{" "}
                 {selectedStyle ? "like a " + selectedStyle : ""}
                 {selectedGrade
-                  ? " for Grade " + selectedGrade.replace(/\D/g, "")
+                  ? selectedGrade === "UG" || selectedGrade === "PG"
+                    ? ` for ${selectedGrade} level`
+                    : " for Grade " + selectedGrade.replace(/\D/g, "")
                   : ""}
               </div>
               <div className="text-lg text-black mb-8">

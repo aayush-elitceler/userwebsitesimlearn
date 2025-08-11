@@ -29,6 +29,13 @@ type OptionType = string | OptionWithIcon;
 const isOptionWithIcon = (opt: OptionType): opt is OptionWithIcon =>
   typeof opt === "object" && "label" in opt && "value" in opt;
 
+// Helper function to format grade for API calls
+const formatGradeForAPI = (grade: string): string => {
+  if (grade === "UG") return "UG";
+  if (grade === "PG") return "PG";
+  return grade.replace(/\D/g, ""); // Extract numbers for regular grades
+};
+
 const grades = [
   "1st grade",
   "2nd grade",
@@ -230,7 +237,7 @@ export default function ImprovedAiChatsVoicePage() {
       }
 
       const formData = new FormData();
-      formData.append("class", selectedGrade.replace(/\D/g, ""));
+              formData.append("class", formatGradeForAPI(selectedGrade));
       formData.append("style", selectedStyle.toLowerCase());
       formData.append("prompt", inputValue.trim());
       formData.append("image", imageFile); // ✅ File will now be sent properly
@@ -670,7 +677,9 @@ export default function ImprovedAiChatsVoicePage() {
                 Upload a question image to get started!
                 {selectedStyle ? "like a " + selectedStyle : ""}{" "}
                 {selectedGrade
-                  ? " for Grade " + selectedGrade.replace(/\D/g, "")
+                  ? selectedGrade === "UG" || selectedGrade === "PG"
+                    ? ` for ${selectedGrade} level`
+                    : " for Grade " + selectedGrade.replace(/\D/g, "")
                   : ""}
               </div>
               <div className="text-lg text-black mb-8">

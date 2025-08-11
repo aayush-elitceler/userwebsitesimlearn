@@ -45,6 +45,13 @@ type OptionType = string | OptionWithIcon;
 const isOptionWithIcon = (opt: OptionType): opt is OptionWithIcon =>
   typeof opt === "object" && "label" in opt && "value" in opt;
 
+// Helper function to format grade for API calls
+const formatGradeForAPI = (grade: string): string => {
+  if (grade === "UG") return "UG";
+  if (grade === "PG") return "PG";
+  return grade.replace(/\D/g, ""); // Extract numbers for regular grades
+};
+
 const styles = [
   {
     label: "Professor",
@@ -265,7 +272,7 @@ export default function ImprovedAiChatsVoicePage() {
       }
 
       console.log('[DEBUG] handleSend API call payload:', {
-        class: selectedGrade.replace(/\D/g, ""),
+        class: formatGradeForAPI(selectedGrade),
         style: selectedStyle.toLowerCase(),
         message: userMessage,
         ...(sessionId && { sessionId }), // Include sessionId if it exists
@@ -280,7 +287,7 @@ export default function ImprovedAiChatsVoicePage() {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
-            class: selectedGrade.replace(/\D/g, ""),
+            class: formatGradeForAPI(selectedGrade),
             style: selectedStyle.toLowerCase(),
             message: userMessage,
             ...(sessionId && { sessionId }), // session id
@@ -333,10 +340,10 @@ export default function ImprovedAiChatsVoicePage() {
         
         // Helper function to find the best available voice
         const findBestVoice = (preferredNames: string[], fallbackCriteria: (voice: SpeechSynthesisVoice) => boolean) => {
-          // First try to find voices with preferred names
+          // First try to find voices with preferred names (exact matches)
           let voice = voices.find(voice => 
             voice.lang.startsWith("en") && 
-            preferredNames.some(name => voice.name.includes(name))
+            preferredNames.some(name => voice.name.toLowerCase().includes(name.toLowerCase()))
           );
           
           // If no preferred voice found, use fallback criteria
@@ -346,9 +353,24 @@ export default function ImprovedAiChatsVoicePage() {
             );
           }
           
+          // If still no voice, try to find any voice that might be suitable
+          if (!voice) {
+            voice = voices.find(voice => 
+              voice.lang.startsWith("en") && 
+              (voice.name.toLowerCase().includes("en") || 
+               voice.name.toLowerCase().includes("us") ||
+               voice.name.toLowerCase().includes("english"))
+            );
+          }
+          
           // Last resort: any English voice
           if (!voice) {
             voice = voices.find(voice => voice.lang.startsWith("en"));
+          }
+          
+          // If still no voice, use the first available voice
+          if (!voice && voices.length > 0) {
+            voice = voices[0];
           }
           
           return voice;
@@ -361,10 +383,24 @@ export default function ImprovedAiChatsVoicePage() {
             utterance.pitch = 0.9;       // Slightly deeper pitch
             utterance.volume = 1;
             
-            // Prefer male voices for professor persona
+            // Prefer male voices for professor persona - comprehensive list
             const professorVoice = findBestVoice(
-              ["Male", "David", "Alex", "Daniel", "Tom", "James"],
-              (voice) => voice.name.toLowerCase().includes("male") || voice.name.includes("Alex")
+              ["Male", "David", "Alex", "Daniel", "Tom", "James", "Mark", "Paul", "John", "Michael", "Robert", "William"],
+              (voice) => {
+                const name = voice.name.toLowerCase();
+                return name.includes("male") || 
+                       name.includes("alex") || 
+                       name.includes("david") ||
+                       name.includes("mark") ||
+                       name.includes("paul") ||
+                       name.includes("john") ||
+                       name.includes("michael") ||
+                       name.includes("robert") ||
+                       name.includes("william") ||
+                       name.includes("thomas") ||
+                       name.includes("james") ||
+                       name.includes("daniel");
+              }
             );
             
             if (professorVoice) {
@@ -378,10 +414,26 @@ export default function ImprovedAiChatsVoicePage() {
             utterance.pitch = 1.1;       // Slightly higher, friendly pitch
             utterance.volume = 1;
             
-            // Prefer warm, friendly female voices
+            // Prefer warm, friendly female voices - comprehensive list
             const friendVoice = findBestVoice(
-              ["Female", "Samantha", "Ava", "Victoria", "Karen", "Lisa"],
-              (voice) => voice.name.toLowerCase().includes("female") || voice.name.includes("Samantha")
+              ["Female", "Samantha", "Ava", "Victoria", "Karen", "Lisa", "Sarah", "Emma", "Olivia", "Sophia", "Isabella", "Mia", "Charlotte", "Amelia"],
+              (voice) => {
+                const name = voice.name.toLowerCase();
+                return name.includes("female") || 
+                       name.includes("samantha") || 
+                       name.includes("ava") ||
+                       name.includes("victoria") ||
+                       name.includes("karen") ||
+                       name.includes("lisa") ||
+                       name.includes("sarah") ||
+                       name.includes("emma") ||
+                       name.includes("olivia") ||
+                       name.includes("sophia") ||
+                       name.includes("isabella") ||
+                       name.includes("mia") ||
+                       name.includes("charlotte") ||
+                       name.includes("amelia");
+              }
             );
             
             if (friendVoice) {
@@ -395,10 +447,24 @@ export default function ImprovedAiChatsVoicePage() {
             utterance.pitch = 0.8;       // Lower, more monotone
             utterance.volume = 0.9;      // Slightly lower volume
             
-            // Prefer neutral, clear voices for robot persona
+            // Prefer neutral, clear voices for robot persona - comprehensive list
             const robotVoice = findBestVoice(
-              ["Neutral", "Clear", "System", "Google", "Microsoft"],
-              (voice) => voice.name.toLowerCase().includes("system") || voice.name.includes("Google")
+              ["Neutral", "Clear", "System", "Google", "Microsoft", "Siri", "Cortana", "Alexa", "Assistant", "TTS", "Speech", "Voice"],
+              (voice) => {
+                const name = voice.name.toLowerCase();
+                return name.includes("system") || 
+                       name.includes("google") || 
+                       name.includes("microsoft") ||
+                       name.includes("siri") ||
+                       name.includes("cortana") ||
+                       name.includes("alexa") ||
+                       name.includes("assistant") ||
+                       name.includes("tts") ||
+                       name.includes("speech") ||
+                       name.includes("voice") ||
+                       name.includes("neutral") ||
+                       name.includes("clear");
+              }
             );
             
             if (robotVoice) {
@@ -412,10 +478,19 @@ export default function ImprovedAiChatsVoicePage() {
             utterance.pitch = 1;
             utterance.volume = 1;
             
-            // Default voice selection
+            // Default voice selection - prefer clear, natural voices
             const defaultVoice = findBestVoice(
-              ["Female", "Samantha", "Ava", "Victoria"],
-              (voice) => voice.name.toLowerCase().includes("female")
+              ["Female", "Samantha", "Ava", "Victoria", "Sarah", "Emma", "Olivia"],
+              (voice) => {
+                const name = voice.name.toLowerCase();
+                return name.includes("female") || 
+                       name.includes("samantha") || 
+                       name.includes("ava") ||
+                       name.includes("victoria") ||
+                       name.includes("sarah") ||
+                       name.includes("emma") ||
+                       name.includes("olivia");
+              }
             );
             
             if (defaultVoice) {
@@ -1033,17 +1108,19 @@ export default function ImprovedAiChatsVoicePage() {
         {/* Welcome message and suggestions - only show before chat starts and when not speaking */}
         {chatHistory.length === 0 && !isConversationActive && (
           <div className=" flex flex-col mt-12 items-center max-w-4xl mx-auto">
-            <div className="mt-24 mb-4 text-center w-full">
-              <div className="text-2xl md:text-3xl font-bold text-black mb-2">
-                <span role="img" aria-label="wave">
-                  👋
-                </span>{" "}
-                Got it! I&apos;ll teach you{" "}
-                {selectedStyle ? "like a " + selectedStyle : ""}{" "}
-                {selectedGrade
-                  ? " for Grade " + selectedGrade.replace(/\D/g, "")
-                  : ""}
-              </div>
+                          <div className="mt-24 mb-4 text-center w-full">
+                <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                  <span role="img" aria-label="wave">
+                    👋
+                  </span>{" "}
+                  Got it! I&apos;ll teach you{" "}
+                  {selectedStyle ? "like a " + selectedStyle : ""}{" "}
+                  {selectedGrade
+                    ? selectedGrade === "UG" || selectedGrade === "PG"
+                      ? ` for ${selectedGrade} level`
+                      : " for Grade " + selectedGrade.replace(/\D/g, "")
+                    : ""}
+                </div>
               <div className="text-lg text-black mb-8">
                 Ask me anything when you&apos;re ready.
               </div>

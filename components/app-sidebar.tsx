@@ -637,7 +637,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   </Link>
                 </div>
                 {/* Section Heading for Corporates */}
-                <div className='pt-6 pb-3 flex items-center gap-3'>
+                {/* <div className='pt-6 pb-3 flex items-center gap-3'>
                   <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
                     For corporate
                   </span>
@@ -645,7 +645,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 </div>
                 
                 {/* Onboard Jobs */}
-                <div className='relative'>
+                {/* <div className='relative'>
                   {pathname === '/onboard-job' && (
                     <div className='sidebar-indicator sidebar-indicator-onboard'></div>
                   )}
@@ -669,7 +669,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 </div>
                 
                 {/* Mock Interview */}
-                <div className='relative'>
+                {/* <div className='relative'>
                   {pathname === '/mock-interview' && (
                     <div className='sidebar-indicator sidebar-indicator-mock'></div>
                   )}
@@ -690,7 +690,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     />
                     <span className='text-sm'>Mock Interview</span>
                   </Link>
-                </div>
+                </div> */}
               </nav>
             </div>
           </SidebarContent>
@@ -1115,7 +1115,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 </div>
               )}
               {/* Section Heading for Corporates */}
-              {!collapsed && (
+              {/* {!collapsed && (
                
                 <div className='pt-2 pb-3 flex items-center gap-3 mt-[25px]'>
                 <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
@@ -1126,7 +1126,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               )}
 
               {/* Onboard Jobs */}
-              <div className='relative'>
+              {/* <div className='relative'>
                 {pathname === '/onboard-job' && (
                   <div className='sidebar-indicator sidebar-indicator-onboard'></div>
                 )}
@@ -1154,7 +1154,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               </div>
 
               {/* Mock Interview */}
-              <div className='relative'>
+              {/* <div className='relative'>
                 {pathname === '/mock-interview' && (
                   <div className='sidebar-indicator sidebar-indicator-mock'></div>
                 )}
@@ -1179,7 +1179,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     <span className='text-sm'>Mock Interview</span>
                   )}
                 </Link>
-              </div>
+              </div> */}
             </nav>
           </div>
         </SidebarContent>

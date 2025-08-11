@@ -24,6 +24,13 @@ type OptionType = string | OptionWithIcon;
 const isOptionWithIcon = (opt: OptionType): opt is OptionWithIcon =>
   typeof opt === "object" && "label" in opt && "value" in opt;
 
+// Helper function to format grade for API calls
+const formatGradeForAPI = (grade: string): string => {
+  if (grade === "UG") return "UG";
+  if (grade === "PG") return "PG";
+  return grade.replace(/\D/g, ""); // Extract numbers for regular grades
+};
+
 const grades = [
   "1st grade",
   "2nd grade",
@@ -458,7 +465,7 @@ export default function PointAskChatPage() {
       const formData = new FormData();
       formData.append("image", imageFile);
       formData.append("prompt", sendMsg.trim());
-      formData.append("class", selectedGrade.replace(/\D/g, ""));
+              formData.append("class", formatGradeForAPI(selectedGrade));
       formData.append("style", selectedStyle.toLowerCase());
 
       // Get auth token
@@ -480,7 +487,7 @@ export default function PointAskChatPage() {
 
       console.log("Sending request with:", {
         prompt: sendMsg.trim(),
-        class: selectedGrade.replace(/\D/g, ""),
+        class: formatGradeForAPI(selectedGrade),
         style: selectedStyle.toLowerCase(),
         imageFile: imageFile.name,
       });

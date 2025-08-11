@@ -156,7 +156,7 @@ const handleGoogleSignIn = () => {
               </Button>
             </form>
 
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-gray-200" />
               <span className="text-black text-sm">Or continue with</span>
               <div className="flex-1 h-px bg-gray-200" />
@@ -174,7 +174,7 @@ const handleGoogleSignIn = () => {
                 className="w-5 h-5"
               />
               Google
-            </Button>
+            </Button> */}
 
             <Link href="/register" className="text-center text-sm text-black">
             
