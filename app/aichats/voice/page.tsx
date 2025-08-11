@@ -268,7 +268,7 @@ export default function ImprovedAiChatsVoicePage() {
       });
 
       const res = await fetch(
-        "https://apisimplylearn.selflearnai.in/api/v1/ai/chat",
+        "https://apisimplylearn.selflearnai.in/api/v1/ai/voice-chat",
         {
           method: "POST",
           headers: {
