@@ -395,7 +395,7 @@ export default function ImprovedAiChatsVoicePage() {
       setInputValue("");
       resetTranscript();
     }
-  }, [selectedGrade, selectedStyle, transcript, resetTranscript]);
+  }, [selectedGrade, selectedStyle, transcript, resetTranscript, sessionId]);
 
   // === START: History Functions ===
   const fetchHistoryData = async () => {
@@ -440,18 +440,28 @@ export default function ImprovedAiChatsVoicePage() {
         console.log("🔍 [HISTORY] Messages found:", chatItem.messages.length);
         
         // Convert the messages to the chat format
-        const formattedMessages = chatItem.messages.map((msg: any, index: number) => {
-          console.log(`🔍 [HISTORY] Processing message ${index}:`, msg);
-          
-          const role = msg.role === 'USER' ? 'user' : 'ai';
-          const text = msg.content || '';
-          
-          console.log(`🔍 [HISTORY] Message ${index} - Role: ${role}, Text: ${text}`);
-          
-          return {
-            role: role as 'user' | 'ai',
-            text: text
-          };
+        const formattedMessages = chatItem.messages.map((msg: unknown, index: number) => {
+          // Type guard to ensure msg has the expected structure
+          if (typeof msg === 'object' && msg !== null && 'role' in msg && 'content' in msg) {
+            const typedMsg = msg as { role: string; content: string };
+            console.log(`🔍 [HISTORY] Processing message ${index}:`, typedMsg);
+            
+            const role = typedMsg.role === 'USER' ? 'user' : 'ai';
+            const text = typedMsg.content || '';
+            
+            console.log(`🔍 [HISTORY] Message ${index} - Role: ${role}, Text: ${text}`);
+            
+            return {
+              role: role as 'user' | 'ai',
+              text: text
+            };
+          } else {
+            console.warn(`🔍 [HISTORY] Invalid message format at index ${index}:`, msg);
+            return {
+              role: 'ai' as const,
+              text: 'Invalid message format'
+            };
+          }
         });
         
         console.log("🔍 [HISTORY] Final formatted messages:", formattedMessages);
@@ -517,8 +527,7 @@ export default function ImprovedAiChatsVoicePage() {
       lastSentTranscriptRef.current = transcript.trim();
       handleSend();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConversationActive, listening, transcript, aiSpeaking, thinking, apiLoading]);
+  }, [isConversationActive, listening, transcript, aiSpeaking, thinking, apiLoading, handleSend]);
 
   // After assistant finishes, auto-restart listening for next user input
   useEffect(() => {
@@ -537,7 +546,6 @@ export default function ImprovedAiChatsVoicePage() {
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConversationActive, aiSpeaking, thinking, apiLoading, transcript, listening]);
 
   // Enhanced start listening with permission and error handling
