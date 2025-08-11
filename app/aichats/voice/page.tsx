@@ -338,74 +338,111 @@ export default function ImprovedAiChatsVoicePage() {
       const configureVoiceForPersona = (style: string) => {
         const voices = window.speechSynthesis.getVoices();
         
-        // Helper function to find the best available voice
-        const findBestVoice = (preferredNames: string[], fallbackCriteria: (voice: SpeechSynthesisVoice) => boolean) => {
-          // First try to find voices with preferred names (exact matches)
-          let voice = voices.find(voice => 
-            voice.lang.startsWith("en") && 
-            preferredNames.some(name => voice.name.toLowerCase().includes(name.toLowerCase()))
-          );
+        // Smart voice selection function that analyzes available voices
+        const findBestVoiceForPersona = (persona: string) => {
+          if (!voices || voices.length === 0) return null;
           
-          // If no preferred voice found, use fallback criteria
-          if (!voice) {
-            voice = voices.find(voice => 
-              voice.lang.startsWith("en") && fallbackCriteria(voice)
-            );
+          const englishVoices = voices.filter(v => v.lang.startsWith("en"));
+          if (englishVoices.length === 0) return voices[0]; // Fallback to any voice
+          
+          switch (persona.toLowerCase()) {
+            case 'professor':
+              // Professor: Look for authoritative, mature, male-sounding voices
+              const professorCandidates = englishVoices.filter(v => {
+                const name = v.name.toLowerCase();
+                // Priority 1: Classic male names
+                if (name.includes("david") || name.includes("alex") || name.includes("mark") || 
+                    name.includes("james") || name.includes("john") || name.includes("michael") ||
+                    name.includes("robert") || name.includes("william") || name.includes("thomas") ||
+                    name.includes("daniel") || name.includes("paul") || name.includes("tom")) {
+                  return true;
+                }
+                // Priority 2: Male indicators
+                if (name.includes("male")) return true;
+                // Priority 3: Authoritative sounding names
+                if (name.includes("authority") || name.includes("professor") || name.includes("teacher")) return true;
+                return false;
+              });
+              
+              // Return the first match or fallback to a deep-sounding voice
+              if (professorCandidates.length > 0) return professorCandidates[0];
+              
+              // Fallback: Look for voices that might sound authoritative
+              const fallbackProfessor = englishVoices.find(v => 
+                v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("english")
+              );
+              return fallbackProfessor || englishVoices[0];
+              
+            case 'friend':
+              // Friend: Look for warm, friendly, approachable voices
+              const friendCandidates = englishVoices.filter(v => {
+                const name = v.name.toLowerCase();
+                // Priority 1: Classic friendly female names
+                if (name.includes("samantha") || name.includes("ava") || name.includes("victoria") ||
+                    name.includes("karen") || name.includes("lisa") || name.includes("sarah") ||
+                    name.includes("emma") || name.includes("olivia") || name.includes("sophia") ||
+                    name.includes("isabella") || name.includes("mia") || name.includes("charlotte") ||
+                    name.includes("amelia") || name.includes("zira") || name.includes("eva")) {
+                  return true;
+                }
+                // Priority 2: Female indicators
+                if (name.includes("female")) return true;
+                // Priority 3: Friendly sounding names
+                if (name.includes("friendly") || name.includes("warm") || name.includes("gentle")) return true;
+                return false;
+              });
+              
+              // Return the first match or fallback to a warm-sounding voice
+              if (friendCandidates.length > 0) return friendCandidates[0];
+              
+              // Fallback: Look for voices that might sound friendly
+              const fallbackFriend = englishVoices.find(v => 
+                v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("english")
+              );
+              return fallbackFriend || englishVoices[0];
+              
+            case 'robot':
+              // Robot: Look for clear, neutral, systematic voices
+              const robotCandidates = englishVoices.filter(v => {
+                const name = v.name.toLowerCase();
+                // Priority 1: System/Assistant voices
+                if (name.includes("system") || name.includes("google") || name.includes("microsoft") ||
+                    name.includes("siri") || name.includes("cortana") || name.includes("alexa") ||
+                    name.includes("assistant") || name.includes("tts") || name.includes("speech") ||
+                    name.includes("voice") || name.includes("neutral") || name.includes("clear")) {
+                  return true;
+                }
+                // Priority 2: Technical sounding names
+                if (name.includes("technical") || name.includes("digital") || name.includes("electronic")) return true;
+                // Priority 3: Clear pronunciation indicators
+                if (name.includes("clear") || name.includes("precise") || name.includes("accurate")) return true;
+                return false;
+              });
+              
+              // Return the first match or fallback to a clear-sounding voice
+              if (robotCandidates.length > 0) return robotCandidates[0];
+              
+              // Fallback: Look for voices that might sound clear and systematic
+              const fallbackRobot = englishVoices.find(v => 
+                v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("english")
+              );
+              return fallbackRobot || englishVoices[0];
+              
+            default:
+              // Default: Balanced, natural voice
+              return englishVoices.find(v => 
+                v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("english")
+              ) || englishVoices[0];
           }
-          
-          // If still no voice, try to find any voice that might be suitable
-          if (!voice) {
-            voice = voices.find(voice => 
-              voice.lang.startsWith("en") && 
-              (voice.name.toLowerCase().includes("en") || 
-               voice.name.toLowerCase().includes("us") ||
-               voice.name.toLowerCase().includes("english"))
-            );
-          }
-          
-          // Last resort: any English voice
-          if (!voice) {
-            voice = voices.find(voice => voice.lang.startsWith("en"));
-          }
-          
-          // If still no voice, use the first available voice
-          if (!voice && voices.length > 0) {
-            voice = voices[0];
-          }
-          
-          return voice;
         };
         
+        // Apply persona-specific voice configuration
         switch (style.toLowerCase()) {
           case 'professor':
             // Professor: Slower, deeper, more authoritative
             utterance.rate = 0.8;        // Slower speech
             utterance.pitch = 0.9;       // Slightly deeper pitch
             utterance.volume = 1;
-            
-            // Prefer male voices for professor persona - comprehensive list
-            const professorVoice = findBestVoice(
-              ["Male", "David", "Alex", "Daniel", "Tom", "James", "Mark", "Paul", "John", "Michael", "Robert", "William"],
-              (voice) => {
-                const name = voice.name.toLowerCase();
-                return name.includes("male") || 
-                       name.includes("alex") || 
-                       name.includes("david") ||
-                       name.includes("mark") ||
-                       name.includes("paul") ||
-                       name.includes("john") ||
-                       name.includes("michael") ||
-                       name.includes("robert") ||
-                       name.includes("william") ||
-                       name.includes("thomas") ||
-                       name.includes("james") ||
-                       name.includes("daniel");
-              }
-            );
-            
-            if (professorVoice) {
-              utterance.voice = professorVoice;
-            }
             break;
             
           case 'friend':
@@ -413,32 +450,6 @@ export default function ImprovedAiChatsVoicePage() {
             utterance.rate = 1.0;        // Normal speed
             utterance.pitch = 1.1;       // Slightly higher, friendly pitch
             utterance.volume = 1;
-            
-            // Prefer warm, friendly female voices - comprehensive list
-            const friendVoice = findBestVoice(
-              ["Female", "Samantha", "Ava", "Victoria", "Karen", "Lisa", "Sarah", "Emma", "Olivia", "Sophia", "Isabella", "Mia", "Charlotte", "Amelia"],
-              (voice) => {
-                const name = voice.name.toLowerCase();
-                return name.includes("female") || 
-                       name.includes("samantha") || 
-                       name.includes("ava") ||
-                       name.includes("victoria") ||
-                       name.includes("karen") ||
-                       name.includes("lisa") ||
-                       name.includes("sarah") ||
-                       name.includes("emma") ||
-                       name.includes("olivia") ||
-                       name.includes("sophia") ||
-                       name.includes("isabella") ||
-                       name.includes("mia") ||
-                       name.includes("charlotte") ||
-                       name.includes("amelia");
-              }
-            );
-            
-            if (friendVoice) {
-              utterance.voice = friendVoice;
-            }
             break;
             
           case 'robot':
@@ -446,30 +457,6 @@ export default function ImprovedAiChatsVoicePage() {
             utterance.rate = 1.1;        // Slightly faster
             utterance.pitch = 0.8;       // Lower, more monotone
             utterance.volume = 0.9;      // Slightly lower volume
-            
-            // Prefer neutral, clear voices for robot persona - comprehensive list
-            const robotVoice = findBestVoice(
-              ["Neutral", "Clear", "System", "Google", "Microsoft", "Siri", "Cortana", "Alexa", "Assistant", "TTS", "Speech", "Voice"],
-              (voice) => {
-                const name = voice.name.toLowerCase();
-                return name.includes("system") || 
-                       name.includes("google") || 
-                       name.includes("microsoft") ||
-                       name.includes("siri") ||
-                       name.includes("cortana") ||
-                       name.includes("alexa") ||
-                       name.includes("assistant") ||
-                       name.includes("tts") ||
-                       name.includes("speech") ||
-                       name.includes("voice") ||
-                       name.includes("neutral") ||
-                       name.includes("clear");
-              }
-            );
-            
-            if (robotVoice) {
-              utterance.voice = robotVoice;
-            }
             break;
             
           default:
@@ -477,25 +464,12 @@ export default function ImprovedAiChatsVoicePage() {
             utterance.rate = 0.9;
             utterance.pitch = 1;
             utterance.volume = 1;
-            
-            // Default voice selection - prefer clear, natural voices
-            const defaultVoice = findBestVoice(
-              ["Female", "Samantha", "Ava", "Victoria", "Sarah", "Emma", "Olivia"],
-              (voice) => {
-                const name = voice.name.toLowerCase();
-                return name.includes("female") || 
-                       name.includes("samantha") || 
-                       name.includes("ava") ||
-                       name.includes("victoria") ||
-                       name.includes("sarah") ||
-                       name.includes("emma") ||
-                       name.includes("olivia");
-              }
-            );
-            
-            if (defaultVoice) {
-              utterance.voice = defaultVoice;
-            }
+        }
+        
+        // Find and set the best voice for the persona
+        const bestVoice = findBestVoiceForPersona(style);
+        if (bestVoice) {
+          utterance.voice = bestVoice;
         }
       };
       
@@ -507,7 +481,6 @@ export default function ImprovedAiChatsVoicePage() {
       // When speech ends, add both messages to chat history
       // This implements the ChatGPT-like behavior where user messages appear only after AI responds
       utterance.onend = () => {
-        console.log('[DEBUG] TTS utterance ended. Resetting transcript and lastSentTranscriptRef.');
         setAiSpeaking(false);
         // Now add both messages to chat history
         setChatHistory((prev) => [
@@ -522,7 +495,6 @@ export default function ImprovedAiChatsVoicePage() {
 
       // If speech fails, still add messages to chat history
       utterance.onerror = () => {
-        console.log('[DEBUG] TTS utterance error. Resetting transcript and lastSentTranscriptRef.');
         setAiSpeaking(false);
         setChatHistory((prev) => [
           ...prev,
@@ -942,6 +914,8 @@ export default function ImprovedAiChatsVoicePage() {
           />
           <span className="text-sm font-medium">View history</span>
         </button>
+        
+
       </div>
     </div>
   );
