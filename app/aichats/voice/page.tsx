@@ -25,6 +25,8 @@ const grades = [
   "10th grade",
   "11th grade",
   "12th grade",
+  "UG",
+  "PG",
 ];
 
 type StyleOption = {
@@ -213,6 +215,8 @@ export default function ImprovedAiChatsVoicePage() {
     };
 
     checkPermissions();
+    
+
   }, [browserSupportsSpeechRecognition]);
 
   // Handle clicks outside dropdowns to close them
@@ -320,26 +324,110 @@ export default function ImprovedAiChatsVoicePage() {
       setAiSpeaking(true);
       console.log('[DEBUG] TTS utterance will start:', responseText);
       
-      // Create and configure speech synthesis
+      // Create and configure speech synthesis based on selected persona
       const utterance = new SpeechSynthesisUtterance(responseText);
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      utterance.volume = 1;
+      
+      // Configure voice characteristics based on selected persona
+      const configureVoiceForPersona = (style: string) => {
+        const voices = window.speechSynthesis.getVoices();
+        
+        // Helper function to find the best available voice
+        const findBestVoice = (preferredNames: string[], fallbackCriteria: (voice: SpeechSynthesisVoice) => boolean) => {
+          // First try to find voices with preferred names
+          let voice = voices.find(voice => 
+            voice.lang.startsWith("en") && 
+            preferredNames.some(name => voice.name.includes(name))
+          );
+          
+          // If no preferred voice found, use fallback criteria
+          if (!voice) {
+            voice = voices.find(voice => 
+              voice.lang.startsWith("en") && fallbackCriteria(voice)
+            );
+          }
+          
+          // Last resort: any English voice
+          if (!voice) {
+            voice = voices.find(voice => voice.lang.startsWith("en"));
+          }
+          
+          return voice;
+        };
+        
+        switch (style.toLowerCase()) {
+          case 'professor':
+            // Professor: Slower, deeper, more authoritative
+            utterance.rate = 0.8;        // Slower speech
+            utterance.pitch = 0.9;       // Slightly deeper pitch
+            utterance.volume = 1;
+            
+            // Prefer male voices for professor persona
+            const professorVoice = findBestVoice(
+              ["Male", "David", "Alex", "Daniel", "Tom", "James"],
+              (voice) => voice.name.toLowerCase().includes("male") || voice.name.includes("Alex")
+            );
+            
+            if (professorVoice) {
+              utterance.voice = professorVoice;
+            }
+            break;
+            
+          case 'friend':
+            // Friend: Normal speed, friendly pitch, warm tone
+            utterance.rate = 1.0;        // Normal speed
+            utterance.pitch = 1.1;       // Slightly higher, friendly pitch
+            utterance.volume = 1;
+            
+            // Prefer warm, friendly female voices
+            const friendVoice = findBestVoice(
+              ["Female", "Samantha", "Ava", "Victoria", "Karen", "Lisa"],
+              (voice) => voice.name.toLowerCase().includes("female") || voice.name.includes("Samantha")
+            );
+            
+            if (friendVoice) {
+              utterance.voice = friendVoice;
+            }
+            break;
+            
+          case 'robot':
+            // Robot: Monotone, slightly faster, robotic feel
+            utterance.rate = 1.1;        // Slightly faster
+            utterance.pitch = 0.8;       // Lower, more monotone
+            utterance.volume = 0.9;      // Slightly lower volume
+            
+            // Prefer neutral, clear voices for robot persona
+            const robotVoice = findBestVoice(
+              ["Neutral", "Clear", "System", "Google", "Microsoft"],
+              (voice) => voice.name.toLowerCase().includes("system") || voice.name.includes("Google")
+            );
+            
+            if (robotVoice) {
+              utterance.voice = robotVoice;
+            }
+            break;
+            
+          default:
+            // Default: Balanced settings
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            
+            // Default voice selection
+            const defaultVoice = findBestVoice(
+              ["Female", "Samantha", "Ava", "Victoria"],
+              (voice) => voice.name.toLowerCase().includes("female")
+            );
+            
+            if (defaultVoice) {
+              utterance.voice = defaultVoice;
+            }
+        }
+      };
+      
+      // Apply persona-based voice configuration
+      configureVoiceForPersona(selectedStyle);
+      
 
-      // Try to get a good voice
-      const voices = window.speechSynthesis.getVoices();
-      const preferredVoice =
-        voices.find(
-          (voice) =>
-            voice.lang.startsWith("en") &&
-            (voice.name.includes("Female") ||
-              voice.name.includes("Samantha") ||
-              voice.name.includes("Ava"))
-        ) || voices.find((voice) => voice.lang.startsWith("en"));
-
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
-      }
 
       // When speech ends, add both messages to chat history
       // This implements the ChatGPT-like behavior where user messages appear only after AI responds
@@ -660,6 +748,8 @@ export default function ImprovedAiChatsVoicePage() {
     }
   };
 
+
+
   // Floating selectors component
   const FloatingSelectors = (
     <div>
@@ -733,7 +823,7 @@ export default function ImprovedAiChatsVoicePage() {
                   </div>
                 </button>
   
-                                {showDropdown && (
+                {showDropdown && (
                   <div className="absolute mt-2 z-10 bg-white rounded-lg shadow-lg max-h-[300px] overflow-y-auto w-full border border-gray-100 dropdown-container">
                     {/* Header */}
                     <div className="bg-gray-100 px-4 py-3 rounded-t-lg border-b border-gray-200">
@@ -762,6 +852,8 @@ export default function ImprovedAiChatsVoicePage() {
             )
           )}
         </div>
+        
+
   
         {/* View History Button (outside gradient) */}
         <button

@@ -56,6 +56,8 @@ const grades = [
   "10th grade",
   "11th grade",
   "12th grade",
+  "UG",
+  "PG",
 ];
 const styles = [
   {
