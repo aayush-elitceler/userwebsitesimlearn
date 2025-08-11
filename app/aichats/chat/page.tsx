@@ -220,6 +220,22 @@ export default function AiChatsChatPage() {
     }
   }, [streamingMessageIndex, isStreaming, chatHistory]);
 
+  // Handle clicks outside dropdowns to close them
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showGradeDropdown || showStyleDropdown) {
+        const target = event.target as Element;
+        if (!target.closest('.dropdown-container')) {
+          setShowGradeDropdown(false);
+          setShowStyleDropdown(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showGradeDropdown, showStyleDropdown]);
+
   const handleSend = async (msg?: string) => {
     const sendMsg = typeof msg === "string" ? msg : inputValue;
     if (!selectedGrade || !selectedStyle || !sendMsg.trim()) return;
@@ -390,16 +406,16 @@ export default function AiChatsChatPage() {
   const FloatingSelectors = (
     <div>
       {/* Wrapper for selectors */}
-      <div className="fixed z-40 flex flex-row gap-[10px] items-center" style={{ top: "40px", right: "8rem" }}>
+      <div className="fixed z-40 flex flex-row gap-[10px] items-center" style={{ top: "40px", right: "8rem" }} onClick={(e) => e.stopPropagation()}>
         
         {/* Class & Persona in colored background */}
         <div
-          className={`flex flex-row gap-[10px] p-4 rounded-md transition-all duration-300 ${
+          className={`flex flex-row gap-3 p-4 rounded-xl transition-all duration-300 ${
             showOnboarding ? "z-[60] shadow-2xl" : ""
           }`}
           style={{
             background:
-              "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)",
+              "linear-gradient(90deg, rgba(255, 159, 39, 0.08) 0%, rgba(255, 81, 70, 0.08) 100%)",
           }}
         >
           {[
@@ -438,44 +454,39 @@ export default function AiChatsChatPage() {
             },
           ].map(
             ({ label, value, onClick, options, showDropdown, onSelect, renderOption }, i) => (
-              <div key={i} className="relative">
+              <div key={i} className="relative dropdown-container">
                 <button
-                  className={`hover:bg-orange-500 text-[#FF5146] flex items-center transition-all duration-150 ${
+                  className={`flex items-center transition-all duration-150 rounded-lg px-3 py-2 min-w-[120px] sm:min-w-[140px] justify-between ${
                     value
-                      ? "point-ask-gradient text-white rounded-md px-2 py-1 sm:px-3 sm:py-2 min-w-[100px] sm:min-w-[120px] justify-between"
-                      : "bg-transparent hover:text-white cursor-pointer border border-white/20 min-w-[100px] sm:min-w-[120px] justify-center rounded-md px-2 py-1"
+                      ? "point-ask-gradient text-white shadow-md"
+                      : "bg-white/80 hover:bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                   }`}
-                  style={
-                    !value
-                      ? {
-                          width: "44px",
-                          height: "39px",
-                          borderRadius: "4px",
-                          padding: "7px 10px",
-                        }
-                      : {}
-                  }
                   onClick={onClick}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap flex items-center">
+                    <span className="text-sm font-medium whitespace-nowrap flex items-center">
                       <span className="mr-1">{label}:</span>
-                      <span>{value || "Select"}</span>
-                      <ChevronDownIcon className="ml-1 size-4 shrink-0" />
+                      <span className="font-semibold">{value || "Select"}</span>
+                      <ChevronDownIcon className="ml-2 size-4 shrink-0" />
                     </span>
                   </div>
                 </button>
   
-                {showDropdown && (
-                  <div className="absolute mt-2 z-10 bg-white rounded-md shadow-lg max-h-[132px] overflow-y-auto w-full">
+                                {showDropdown && (
+                  <div className="absolute mt-2 z-10 bg-white rounded-lg shadow-lg max-h-[300px] overflow-y-auto w-full border border-gray-100 dropdown-container">
+                    {/* Header */}
+                    <div className="bg-gray-100 px-4 py-3 rounded-t-lg border-b border-gray-200">
+                      <span className="text-sm font-medium text-gray-700">Select {label}</span>
+                    </div>
+                    {/* Options */}
                     {options.map((opt: OptionType) => {
                       const key = isOptionWithIcon(opt) ? opt.label : opt;
                       const value = isOptionWithIcon(opt) ? opt.value : opt;
-  
+
                       return (
                         <div
                           key={key}
-                          className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm sm:text-base text-[#777]"
+                          className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 border-b border-gray-50 last:border-b-0 transition-colors duration-150"
                           onClick={() => onSelect(value)}
                         >
                           {isOptionWithIcon(opt) && renderOption
@@ -525,7 +536,7 @@ export default function AiChatsChatPage() {
 
       {/* Onboarding tooltip for FloatingSelectors */}
       {showOnboarding && onboardingStep === 1 && (
-        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-44 z-[60]">
+        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-60 z-[60]">
           <img
             src="/images/arrow.svg"
             alt="onboarding"
@@ -739,31 +750,34 @@ const ChatInputBar = forwardRef(
       <div
         className={inputBarClass}
         style={{
-          backdropFilter: "blur(10px)",
-          borderRadius: "12px",
-          border: "0.96px solid rgba(255,255,255,0.2)",
           height: "55px",
         }}
       >
-        <input
-          ref={ref}
-          type="text"
-          placeholder="Type your question..."
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && onSend()}
-          disabled={disabled}
-          autoFocus={autoFocus}
-          className="flex-1 bg-transparent p-3 text-black placeholder-gray-300 border-black focus:outline-none text-sm sm:text-base border border-black font-medium px-1 sm:px-2 rounded-full"
-        />
-        <button
-          onClick={onSend}
-          disabled={disabled || !value.trim()}
-          className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
-        >
-          <ArrowRight size={16} className="sm:hidden" />
-          <ArrowRight size={20} className="hidden sm:block" />
-        </button>
+        <div className="flex-1 relative">
+          <input
+            ref={ref}
+            type="text"
+            placeholder="Type your question..."
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && onSend()}
+            disabled={disabled}
+            autoFocus={autoFocus}
+            className={`w-full bg-transparent p-3 text-black placeholder-gray-300 focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2 rounded-full transition-all duration-300 ${
+              showOnboarding 
+                ? "border-2 border-orange-500 shadow-lg shadow-orange-500/50" 
+                : "border border-black"
+            }`}
+          />
+          <button
+            onClick={onSend}
+            disabled={disabled || !value.trim()}
+            className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+          >
+            <ArrowRight size={16} className="sm:hidden" />
+            <ArrowRight size={20} className="hidden sm:block" />
+          </button>
+        </div>
       </div>
     );
   }

@@ -183,6 +183,22 @@ export default function PointAskChatPage() {
     }
   }, [streamingMessageIndex, isStreaming, chatHistory]);
 
+  // Handle clicks outside dropdowns to close them
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showGradeDropdown || showStyleDropdown) {
+        const target = event.target as Element;
+        if (!target.closest('.dropdown-container')) {
+          setShowGradeDropdown(false);
+          setShowStyleDropdown(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showGradeDropdown, showStyleDropdown]);
+
   // Suggestion click handler
   const handleSuggestion = (s: string) => {
     setMessage(s);
@@ -293,13 +309,14 @@ export default function PointAskChatPage() {
       <div
         className="fixed z-40 flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44"
         style={{ top: "40px" }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Class & Persona selectors inside gradient */}
         <div
-          className="flex flex-row gap-[10px] p-4 rounded-md"
+          className="flex flex-row gap-3 p-4 rounded-xl"
           style={{
             background:
-              "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)",
+              "linear-gradient(90deg, rgba(255, 159, 39, 0.08) 0%, rgba(255, 81, 70, 0.08) 100%)",
           }}
         >
           {[
@@ -337,44 +354,39 @@ export default function PointAskChatPage() {
               ),
             },
           ].map(({ label, value, onClick, options, showDropdown, onSelect, renderOption }, i) => (
-            <div key={i} className="relative">
+            <div key={i} className="relative dropdown-container">
               <button
-                className={`hover:bg-orange-500 text-[#FF5146] flex items-center transition-all duration-150 ${
+                className={`flex items-center transition-all duration-150 rounded-lg px-3 py-2 min-w-[120px] sm:min-w-[140px] justify-between ${
                   value
-                    ? "point-ask-gradient text-white rounded-md px-2 py-1 sm:px-3 sm:py-2 min-w-[100px] sm:min-w-[120px] justify-between"
-                    : "bg-transparent hover:text-white cursor-pointer border border-white/20 min-w-[100px] sm:min-w-[120px] justify-center rounded-md px-2 py-1"
+                    ? "point-ask-gradient text-white shadow-md"
+                    : "bg-white/80 hover:bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                 }`}
-                style={
-                  !value
-                    ? {
-                        width: "44px",
-                        height: "39px",
-                        borderRadius: "4px",
-                        padding: "7px 10px",
-                      }
-                    : {}
-                }
                 onClick={onClick}
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-medium whitespace-nowrap flex items-center">
-                    <span className="mr-1">{label}:</span>
-                    <span>{value || "Select"}</span>
-                    <ChevronDownIcon className="ml-1 size-4 shrink-0" />
-                  </span>
-                </div>
-              </button>
+                                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium whitespace-nowrap flex items-center">
+                      <span className="mr-1">{label}:</span>
+                      <span className="font-semibold">{value || "Select"}</span>
+                      <ChevronDownIcon className="ml-2 size-4 shrink-0" />
+                    </span>
+                  </div>
+                </button>
   
-              {showDropdown && (
-                <div className="absolute mt-2 z-10 bg-white rounded-md shadow-lg max-h-[132px] overflow-y-auto w-full">
+                            {showDropdown && (
+                <div className="absolute mt-2 z-10 bg-white rounded-lg shadow-lg max-h-[300px] overflow-y-auto w-full border border-gray-100 dropdown-container">
+                  {/* Header */}
+                  <div className="bg-gray-100 px-4 py-3 rounded-t-lg border-b border-gray-200">
+                    <span className="text-sm font-medium text-gray-700">Select {label}</span>
+                  </div>
+                  {/* Options */}
                   {options.map((opt: OptionType) => {
                     const key = isOptionWithIcon(opt) ? opt.label : opt;
                     const value = isOptionWithIcon(opt) ? opt.value : opt;
-  
+
                     return (
                       <div
                         key={key}
-                        className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm sm:text-base text-[#777]"
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 border-b border-gray-50 last:border-b-0 transition-colors duration-150"
                         onClick={() => onSelect(value)}
                       >
                         {isOptionWithIcon(opt) && renderOption
