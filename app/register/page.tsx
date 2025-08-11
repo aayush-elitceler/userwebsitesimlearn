@@ -97,9 +97,9 @@ export default function Register() {
       } else {
         throw new Error("No token returned from API");
       }
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error("Registration error:", err);
-      alert(err.message || "Registration failed");
+      alert(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -189,8 +189,8 @@ export default function Register() {
     }
 
     router.push("/");
-  } catch (err: any) {
-    alert(err.message || "Profile update failed");
+  } catch (err: Error | unknown) {
+    alert(err instanceof Error ? err.message : "Profile update failed");
   } finally {
     setLoading(false);
   }

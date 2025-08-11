@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 interface AIMessageProps {
   text: string;
@@ -26,18 +26,7 @@ export default function AIMessage({ text }: AIMessageProps) {
     }
   }, [text]);
 
-  // Auto-start speaking once text is available and supported
-  useEffect(() => {
-    if (text && speechSupported && !isSpeaking) {
-      const timer = setTimeout(() => {
-        startSpeaking();
-      }, 300); // slight delay to ensure text is rendered
-
-      return () => clearTimeout(timer);
-    }
-  }, [text, speechSupported]);
-
-  const startSpeaking = () => {
+  const startSpeaking = useCallback(() => {
     if (!speechSupported || !text || isSpeaking) return;
 
     window.speechSynthesis.cancel();
@@ -99,7 +88,18 @@ export default function AIMessage({ text }: AIMessageProps) {
     };
 
     window.speechSynthesis.speak(utterance);
-  };
+  }, [speechSupported, text, isSpeaking]);
+
+  // Auto-start speaking once text is available and supported
+  useEffect(() => {
+    if (text && speechSupported && !isSpeaking) {
+      const timer = setTimeout(() => {
+        startSpeaking();
+      }, 300); // slight delay to ensure text is rendered
+
+      return () => clearTimeout(timer);
+    }
+  }, [text, speechSupported, isSpeaking, startSpeaking]);
 
   const pauseSpeaking = () => {
     if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {

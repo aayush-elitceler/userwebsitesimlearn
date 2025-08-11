@@ -29,8 +29,6 @@ type OptionType = string | OptionWithIcon;
 const isOptionWithIcon = (opt: OptionType): opt is OptionWithIcon =>
   typeof opt === "object" && "label" in opt && "value" in opt;
 
-
-
 const grades = [
   "1st grade",
   "2nd grade",
@@ -135,6 +133,35 @@ export default function AiChatsChatPage() {
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // === START: New Onboarding Code ===
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(1); // 1: grade/persona, 2: input bar
+
+  useEffect(() => {
+    // Always show onboarding on page refresh, regardless of cookie
+    setShowOnboarding(true);
+  }, []);
+
+  useEffect(() => {
+    if (showOnboarding) {
+      if (onboardingStep === 1) {
+        // First step: grade/persona tooltip for 2 seconds
+        const timer = setTimeout(() => {
+          setOnboardingStep(2);
+        }, 2000);
+        return () => clearTimeout(timer);
+      } else if (onboardingStep === 2) {
+        // Second step: input bar tooltip for 2 seconds
+        const timer = setTimeout(() => {
+          setShowOnboarding(false);
+          Cookies.set("hasVisited", "true", { expires: 365 });
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [showOnboarding, onboardingStep]);
+  // === END: New Onboarding Code ===
+
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory, apiLoading, isStreaming, displayedText]);
@@ -232,7 +259,9 @@ export default function AiChatsChatPage() {
 
   const FloatingSelectors = (
     <div
-      className="fixed z-40 flex flex-row gap-[10px] p-4 rounded-md right-4 sm:right-8 lg:right-40"
+      className={`fixed z-40 flex flex-row gap-[10px] p-4 rounded-md right-4 sm:right-8 lg:right-40 transition-all duration-300 ${
+        showOnboarding ? "z-[60] shadow-2xl" : ""
+      }`}
       style={{
         top: "40px",
         background:
@@ -351,6 +380,39 @@ export default function AiChatsChatPage() {
         backgroundPosition: "center",
       }}
     >
+      {/* Onboarding overlay */}
+      {showOnboarding && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-50"></div>
+      )}
+
+      {/* Onboarding tooltip for FloatingSelectors */}
+      {showOnboarding && onboardingStep === 1 && (
+        <div className="fixed top-[120px] right-4 sm:right-8 lg:right-40 z-[60]">
+          <img
+            src="/images/arrow.svg"
+            alt="onboarding"
+            className="w-[19px] h-[59px] object-cover mx-auto mb-5"
+          />
+          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+            Choose your grade and how you&apos;d like the AI to talk to you.
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding tooltip for Input Bar */}
+      {showOnboarding && onboardingStep === 2 && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[60]">
+          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+            Type your question here and hit send!
+          </div>
+          <img
+            src="/images/arrow.svg"
+            alt="onboarding"
+            className="w-[19px] h-[59px] object-cover mx-auto rotate-180"
+          />
+        </div>
+      )}
+
       {FloatingSelectors}
 
       <div className="w-full px-4 lg:px-8">
@@ -428,17 +490,15 @@ export default function AiChatsChatPage() {
         )}
       </div>
 
-      {/* Only show input bar once both selectors are set */}
-      {selectedGrade && selectedStyle && (
-        <ChatInputBar
-          ref={inputRef}
-          value={inputValue}
-          onChange={(v) => setInputValue(v)}
-          onSend={handleSend}
-          disabled={apiLoading}
-          autoFocus
-        />
-      )}
+      <ChatInputBar
+        ref={inputRef}
+        value={inputValue}
+        onChange={(v) => setInputValue(v)}
+        onSend={handleSend}
+        disabled={apiLoading || !selectedGrade || !selectedStyle}
+        autoFocus
+        showOnboarding={showOnboarding}
+      />
     </div>
   );
 }
@@ -449,11 +509,19 @@ type ChatInputBarProps = {
   onSend: () => void;
   disabled: boolean;
   autoFocus?: boolean;
+  showOnboarding: boolean;
 };
 
 const ChatInputBar = forwardRef(
   (
-    { value, onChange, onSend, disabled, autoFocus }: ChatInputBarProps,
+    {
+      value,
+      onChange,
+      onSend,
+      disabled,
+      autoFocus,
+      showOnboarding,
+    }: ChatInputBarProps,
     ref: ForwardedRef<HTMLInputElement>
   ) => {
     const { state } = useSidebar();

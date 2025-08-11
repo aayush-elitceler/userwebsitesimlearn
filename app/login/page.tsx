@@ -12,7 +12,14 @@ import Link from "next/link";
 const poppins = Poppins({ weight: ["400", "600", "700"], subsets: ["latin"] });
 
 // At the top of your page file
-declare const google: any;
+declare const google: {
+  accounts: {
+    id: {
+      initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void;
+      prompt: () => void;
+    };
+  };
+};
 
 
 export default function Login() {
@@ -25,10 +32,15 @@ export default function Login() {
 
 
 const handleGoogleSignIn = () => {
+  if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+    console.error("Google Client ID not configured");
+    return;
+  }
+
   /* global google */
   google.accounts.id.initialize({
     client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-    callback: async (response: any) => {
+    callback: async (response: { credential: string }) => {
       try {
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/google/login`,
