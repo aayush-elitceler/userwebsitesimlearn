@@ -11,6 +11,8 @@ import VoiceOverlay from "@/components/VoiceOverlay";
 import AIMessage from "@/components/VoiceWave";
 import { encode } from "gpt-tokenizer";
 import SpruceBall from "@/components/SpruceBall";
+import { fetchHistory, HistoryItem } from "@/lib/historyService";
+import HistorySlider from "@/components/HistorySlider";
 
 type StyleOption = {
   label: string;
@@ -102,6 +104,16 @@ export default function ImprovedAiChatsVoicePage() {
   >("unknown");
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  // === START: History Slider State ===
+  const [showHistorySlider, setShowHistorySlider] = useState(false);
+  const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  // === END: History Slider State ===
 
   // Check browser support and microphone permission on mount
   useEffect(() => {
@@ -368,118 +380,221 @@ export default function ImprovedAiChatsVoicePage() {
     }
   }, [transcript]);
 
+  // === START: History Functions ===
+  const fetchHistoryData = async () => {
+    console.log("🔍 [HISTORY] Starting to fetch history data...");
+    setHistoryLoading(true);
+    
+    try {
+      const history = await fetchHistory();
+      setHistoryData(history);
+    } catch (err) {
+      console.error("🔍 [HISTORY] Error fetching history:", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleHistoryClick = () => {
+    console.log("🔍 [HISTORY] View history button clicked");
+    setShowHistorySlider(true);
+    setIsClosing(false);
+    fetchHistoryData();
+  };
+
+  const handleCloseHistory = () => {
+    console.log("🔍 [HISTORY] Closing history slider");
+    setIsClosing(true);
+    setTimeout(() => {
+      setShowHistorySlider(false);
+      setIsClosing(false);
+    }, 300);
+  };
+
+  const handleViewChat = async (chatId: string, chatTitle: string) => {
+    console.log("🔍 [HISTORY] View chat clicked for:", chatId, chatTitle);
+    
+    try {
+      // Find the chat in history data to get the messages
+      const chatItem = historyData.find(item => item.id === chatId);
+      console.log("🔍 [HISTORY] Found chat item:", chatItem);
+      
+      if (chatItem && chatItem.messages && Array.isArray(chatItem.messages) && chatItem.messages.length > 0) {
+        console.log("🔍 [HISTORY] Messages found:", chatItem.messages.length);
+        
+        // Convert the messages to the chat format
+        const formattedMessages = chatItem.messages.map((msg: any, index: number) => {
+          console.log(`🔍 [HISTORY] Processing message ${index}:`, msg);
+          
+          const role = msg.role === 'USER' ? 'user' : 'ai';
+          const text = msg.content || '';
+          
+          console.log(`🔍 [HISTORY] Message ${index} - Role: ${role}, Text: ${text}`);
+          
+          return {
+            role: role as 'user' | 'ai',
+            text: text
+          };
+        });
+        
+        console.log("🔍 [HISTORY] Final formatted messages:", formattedMessages);
+        
+        // Set the chat history and close the slider
+        setChatHistory(formattedMessages);
+        setSelectedChatId(chatId);
+        handleCloseHistory();
+        
+        // Scroll to the chat area
+        setTimeout(() => {
+          chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        console.log("🔍 [HISTORY] No messages found. Chat item:", chatItem);
+        console.log("🔍 [HISTORY] Messages property:", chatItem?.messages);
+        console.log("🔍 [HISTORY] Is messages array:", Array.isArray(chatItem?.messages));
+        console.log("🔍 [HISTORY] Messages length:", chatItem?.messages?.length);
+        
+        // If no messages found, show an alert
+        alert(`No messages found for this chat: ${chatTitle}. Please check the console for details.`);
+      }
+    } catch (error) {
+      console.error("🔍 [HISTORY] Error loading chat:", error);
+      alert("Error loading chat messages");
+    }
+  };
+
+  const handleSearchChats = () => {
+    console.log("🔍 [HISTORY] Search chats button clicked");
+    setIsSearching(true);
+    setSearchQuery("");
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    console.log("🔍 [HISTORY] Search query:", query);
+  };
+  // === END: History Functions ===
+
   // Floating selectors component
   const FloatingSelectors = (
-    <div
-      className="absolute z-40 flex flex-row gap-[10px] p-4 rounded-md right-4 sm:right-8 lg:right-40"
-      style={{
-        top: "40px",
-        background:
-          "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)",
-      }}
-    >
-      {/* === Shared Button Styles === */}
-      {/** Function to generate buttons with dropdowns */}
-      {[
-        {
-          label: "Class",
-          value: selectedGrade,
-          onClick: () => {
-            setShowGradeDropdown((v) => !v);
-            setShowStyleDropdown(false);
-          },
-          options: grades,
-          showDropdown: showGradeDropdown,
-          onSelect: (val: string) => {
-            setSelectedGrade(val);
-            setShowGradeDropdown(false);
-          },
-        },
-        {
-          label: "Persona",
-          value: selectedStyle,
-          onClick: () => {
-            setShowStyleDropdown((v) => !v);
-            setShowGradeDropdown(false);
-          },
-          options: styles,
-          showDropdown: showStyleDropdown,
-          onSelect: (val: string) => {
-            setSelectedStyle(val);
-            setShowStyleDropdown(false);
-          },
-          renderOption: (style: StyleOption) => (
-            <div className="flex items-center gap-3 cursor-pointer">
-              {typeof style === "string" ? style : style.label}
+    <div>
+      {/* Outer flex holding gradient box and history button */}
+      <div
+        className="fixed z-40 flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44"
+        style={{ top: "40px" }}
+      >
+        {/* Class & Persona selectors inside gradient */}
+        <div
+          className="flex flex-row gap-[10px] p-4 rounded-md"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)",
+          }}
+        >
+          {[
+            {
+              label: "Class",
+              value: selectedGrade,
+              onClick: () => {
+                setShowGradeDropdown((v) => !v);
+                setShowStyleDropdown(false);
+              },
+              options: grades,
+              showDropdown: showGradeDropdown,
+              onSelect: (val: string) => {
+                setSelectedGrade(val);
+                setShowGradeDropdown(false);
+              },
+            },
+            {
+              label: "Persona",
+              value: selectedStyle,
+              onClick: () => {
+                setShowStyleDropdown((v) => !v);
+                setShowGradeDropdown(false);
+              },
+              options: styles,
+              showDropdown: showStyleDropdown,
+              onSelect: (val: string) => {
+                setSelectedStyle(val);
+                setShowStyleDropdown(false);
+              },
+              renderOption: (style: StyleOption) => (
+                <div className="flex items-center gap-3 cursor-pointer">
+                  {typeof style === "string" ? style : style.label}
+                </div>
+              ),
+            },
+          ].map(({ label, value, onClick, options, showDropdown, onSelect, renderOption }, i) => (
+            <div key={i} className="relative">
+              <button
+                className={`hover:bg-orange-500 text-[#FF5146] flex items-center transition-all duration-150 ${
+                  value
+                    ? "point-ask-gradient text-white rounded-md px-2 py-1 sm:px-3 sm:py-2 min-w-[100px] sm:min-w-[120px] justify-between"
+                    : "bg-transparent hover:text-white cursor-pointer border border-white/20 min-w-[100px] sm:min-w-[120px] justify-center rounded-md px-2 py-1"
+                }`}
+                style={
+                  !value
+                    ? {
+                        width: "44px",
+                        height: "39px",
+                        borderRadius: "4px",
+                        padding: "7px 10px",
+                      }
+                    : {}
+                }
+                onClick={onClick}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-medium whitespace-nowrap flex items-center">
+                    <span className="mr-1">{label}:</span>
+                    <span>{value || "Select"}</span>
+                    <ChevronDownIcon className="ml-1 size-4 shrink-0" />
+                  </span>
+                </div>
+              </button>
+  
+              {showDropdown && (
+                <div className="absolute mt-2 z-10 bg-white rounded-md shadow-lg max-h-[132px] overflow-y-auto w-full">
+                  {options.map((opt: OptionType) => {
+                    const key = isOptionWithIcon(opt) ? opt.label : opt;
+                    const value = isOptionWithIcon(opt) ? opt.value : opt;
+  
+                    return (
+                      <div
+                        key={key}
+                        className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm sm:text-base text-[#777]"
+                        onClick={() => onSelect(value)}
+                      >
+                        {isOptionWithIcon(opt) && renderOption
+                          ? renderOption(opt)
+                          : key}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          ),
-        },
-      ].map(
-        (
-          {
-            label,
-            value,
-            onClick,
-            options,
-            showDropdown,
-            onSelect,
-            renderOption,
-          },
-          i
-        ) => (
-          <div key={i} className="relative">
-            <button
-              className={`hover:bg-orange-500 text-[#FF5146] flex items-center transition-all duration-150 ${
-                value
-                  ? "point-ask-gradient text-white rounded-md px-2 py-1 sm:px-3 sm:py-2 min-w-[100px] sm:min-w-[120px] justify-between"
-                  : "bg-transparent hover:text-white  cursor-pointer border border-white/20 min-w-[100px] sm:min-w-[120px] justify-center rounded-md px-2 py-1"
-              }`}
-              style={
-                !value
-                  ? {
-                      width: "44px",
-                      height: "39px",
-                      borderRadius: "4px",
-                      padding: "7px 10px",
-                    }
-                  : {}
-              }
-              onClick={onClick}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-medium whitespace-nowrap flex items-center">
-                  <span className="mr-1">{label}:</span>
-                  <span>{value || "Select"}</span>
-                  <ChevronDownIcon className="ml-1 size-4 shrink-0" />
-                </span>
-              </div>
-            </button>
-
-            {showDropdown && (
-              <div className="absolute mt-2 z-10 bg-white rounded-md shadow-lg max-h-[132px] overflow-y-auto w-full">
-                {options.map((opt: OptionType, index: number) => {
-                  const key = isOptionWithIcon(opt) ? opt.label : opt;
-                  const value = isOptionWithIcon(opt) ? opt.value : opt;
-
-                  return (
-                    <div
-                      key={key}
-                      className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm sm:text-base text-[#777]"
-                      onClick={() => onSelect(value)}
-                    >
-                      {isOptionWithIcon(opt) && renderOption
-                        ? renderOption(opt)
-                        : key}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )
-      )}
+          ))}
+        </div>
+  
+        {/* View History Button outside gradient */}
+        <button
+          onClick={handleHistoryClick}
+          className="rounded-full px-4 py-2 bg-[#FFE4B5] border border-[#FF5146] text-[#FF5146] hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
+        >
+          <img
+            src="/images/history.svg"
+            alt="history"
+            className="w-4 h-4"
+          />
+          <span className="text-sm font-medium">View history</span>
+        </button>
+      </div>
     </div>
   );
+  
 
   return (
     <div
@@ -490,6 +605,34 @@ export default function ImprovedAiChatsVoicePage() {
       }}
     >
       {FloatingSelectors}
+
+      {/* History Slider */}
+      <HistorySlider
+        showHistorySlider={showHistorySlider}
+        isClosing={isClosing}
+        historyData={historyData}
+        historyLoading={historyLoading}
+        searchQuery={searchQuery}
+        isSearching={isSearching}
+        onClose={handleCloseHistory}
+        onSearchClick={handleSearchChats}
+        onSearchInputChange={handleSearchInputChange}
+        onSearchClose={() => {
+          setIsSearching(false);
+          setSearchQuery("");
+        }}
+        onNewChat={() => {
+          console.log("🔍 [HISTORY] New chat button clicked");
+          handleCloseHistory();
+          setSelectedChatId(null);
+          setChatHistory([]);
+          setImage(null);
+          setImageFile(null);
+          setIsImageConfirmed(false);
+        }}
+        onViewChat={handleViewChat}
+      />
+
       <div className="w-full px-4 lg:px-8 mt-6">
         {/* Welcome message and suggestions - only show before chat starts */}
         {!image && chatHistory.length === 0 && (

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import Logo from '@/public/images/logoAiDash.svg';
+import { useLogo } from '@/lib/LogoContext';
 import book from '@/public/images/book.png';
 import quizWhite from '@/public/images/quiz.svg';
 import { LayoutDashboard } from 'lucide-react';
@@ -141,6 +142,10 @@ const projectSubRoutes = [
 
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
+  const { logoUrl } = useLogo();
+  
+  // Debug: Log logo URL
+  console.log('Sidebar received logo URL:', logoUrl);
 
   // Admin avatar and name state
 
@@ -201,11 +206,16 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       {
         title: 'Logo',
         url: '/', // Updated URL
-        icon: Logo, // Image icon
+        icon: Logo, // Force use default logo for now
         isActive: true,
       },
     ],
   };
+  
+  // Debug: Log the final logo being used
+  console.log('Final logo being used:', data.navMain2[0].icon);
+  console.log('Logo URL from context:', logoUrl);
+  console.log('Default Logo import:', Logo);
 
   const [aiOpen, setAiOpen] = useState(false);
   const [pointOpen, setPointOpen] = useState(false);
@@ -288,7 +298,18 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             style={{ width: '16rem', minWidth: '16rem', maxWidth: '16rem' }}
           >
             <div>
-              <SidebarHeader items={data.navMain2} />
+                              {/* Simple Logo Display */}
+                <div className="py-2 px-4">
+                  <Link href="/">
+                                      <Image
+                    src={logoUrl || Logo}
+                    alt="Logo"
+                    width={100}
+                    height={40}
+                    className="object-contain mx-auto"
+                  />
+                  </Link>
+                </div>
               {/* Mobile close button */}
               <button
                 onClick={() => setMobileOpen(false)}
@@ -308,11 +329,11 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               {/* Sidebar nav/menu items (same as desktop) */}
               <nav className='flex flex-col flex-1 space-y-2 mt-4 px-4 overflow-y-auto scrollbar-hide pb-4'>
                 {/* Section Heading */}
-                <div className='pt-2 pb-3'>
-                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider'>
+                <div className='pt-2 pb-3 flex items-center gap-3'>
+                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
                     For students
                   </span>
-                  <div className='border-b border-gray-700 mt-3' />
+                  <div className='border-b border-gray-700 flex-1' />
                 </div>
                 {/* Dashboard */}
                 <div className='relative'>
@@ -343,19 +364,21 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setAiOpen(!aiOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isAiTutorActive
-                          ? 'point-ask-gradient text-white shadow-sm'
-                          : 'text-white hover:bg-white/10'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
-                        {/* <MicIcon style={{ color: isAiTutorActive ? '#fff' : '#222' }} /> */}
+                        <div className='w-7 h-7 rounded border-2 border-[#222] flex items-center justify-center'>
+                          <span className='text-xs font-bold text-[#222]'>AI</span>
+                        </div>
                         <span className='text-sm'>AI Tutor</span>
                       </span>
                       <ChevronUpDownIcon open={aiOpen || isAiTutorActive} />
                     </button>
                   </div>
                   {(aiOpen || isAiTutorActive) && (
-                    <div className='ml-6 mt-3 flex flex-col gap-2'>
+                    <div className='mt-3 flex flex-col gap-2'>
                       {aiTutorSubRoutes.map((sub) => {
                         const isSubActive = pathname === sub.href;
                         return (
@@ -386,19 +409,25 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setPointOpen(!pointOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isPointAskActive
-                          ? 'point-ask-gradient text-white shadow-sm'
-                          : 'text-white hover:bg-white/10'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
-                      
+                        <Image
+                          src={PointerBlack}
+                          alt='pointer'
+                          width={20}
+                          height={20}
+                          className={`h-5 w-5 flex-shrink-0 ${isPointAskActive ? '' : 'brightness-0'}`}
+                        />
                         <span className='text-sm'>Point & Ask</span>
                       </span>
                       <ChevronUpDownIcon open={pointOpen || isPointAskActive} />
                     </button>
                   </div>
                   {(pointOpen || isPointAskActive) && (
-                    <div className='ml-6 mt-3 flex flex-col gap-2'>
+                    <div className='mt-3 flex flex-col gap-2'>
                       {pointAskSubRoutes.map((sub) => {
                         const isSubActive = pathname === sub.href;
                         return (
@@ -429,8 +458,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setQuizOpen(!quizOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isQuizActive
-                          ? 'point-ask-gradient text-white shadow-sm'
-                          : 'text-white hover:bg-white/10'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
@@ -441,40 +470,13 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           height={20}
                           className={`h-5 w-5 flex-shrink-0 ${isQuizActive ? '' : 'brightness-0'}`}
                         />
-                        <span className='text-sm'>Quizzes</span>
+                        <span className='text-sm'>Take a quiz</span>
                       </span>
                       <ChevronUpDownIcon open={quizOpen || isQuizActive} />
                     </button>
                   </div>
                   {(quizOpen || isQuizActive) && (
-                    <div className='ml-6 mt-3 flex flex-col gap-2'>
-                      {quizSubRoutes.map((sub) => {
-                        const isSubActive = pathname === sub.href;
-                        return (
-                          <Link
-                            key={sub.href}
-                            href={sub.href}
-                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                              isSubActive
-                                ? 'bg-[#FFB12133] text-[#FF4949]'
-                                : 'text-[#222] hover:bg-[#FFB12133]'
-                            }`}
-                          >
-                            <Image
-                              src={sub.icon}
-                              alt={sub.label}
-                              width={20}
-                              height={20}
-                              className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
-                            />
-                            <span>{sub.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {(quizOpen || isQuizActive) && (
-                    <div className='ml-6 mt-3 flex flex-col gap-2'>
+                    <div className='mt-3 flex flex-col gap-2'>
                       {quizSubRoutes.map((sub) => {
                         const isSubActive = pathname === sub.href;
                         return (
@@ -511,8 +513,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setExamOpen(!examOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isExamActive
-                          ? 'point-ask-gradient text-white shadow-sm'
-                          : 'text-white hover:bg-white/10'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
@@ -529,7 +531,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     </button>
                   </div>
                   {(examOpen || isExamActive) && (
-                    <div className='ml-6 mt-3 flex flex-col gap-2'>
+                    <div className='mt-3 flex flex-col gap-2'>
                       {examSubRoutes.map((sub) => {
                         const isSubActive = pathname === sub.href;
                         return (
@@ -555,37 +557,37 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       })}
                     </div>
                   )}
-                 
                 </div>
+                {/* Projects Dropdown */}
                 <div className='mb-2'>
                   <div className='relative'>
-                    {isExamActive && (
-                      <div className='sidebar-indicator sidebar-indicator-quiz'></div>
+                    {isProjectsActive && (
+                      <div className='sidebar-indicator sidebar-indicator-projects'></div>
                     )}
                     <button
-                      onClick={() => setExamOpen(!examOpen)}
+                      onClick={() => setProjectOpen(!projectsOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                        isExamActive
-                          ? 'point-ask-gradient text-white shadow-sm'
-                          : 'text-white hover:bg-white/10'
+                        isProjectsActive
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
                         <Image
-                          src={examsWhite}
-                          alt='Exams'
+                          src={projectsWhite}
+                          alt='Projects'
                           width={20}
                           height={20}
-                          className={`h-5 w-5 flex-shrink-0 ${isExamActive ? '' : 'brightness-0'}`}
+                          className={`h-5 w-5 flex-shrink-0 ${isProjectsActive ? '' : 'brightness-0'}`}
                         />
-                        <span className='text-sm'>Exams</span>
+                        <span className='text-sm'>Projects</span>
                       </span>
-                      <ChevronUpDownIcon open={examOpen || isExamActive} />
+                      <ChevronUpDownIcon open={projectsOpen || isProjectsActive} />
                     </button>
                   </div>
-                  {(examOpen || isExamActive) && (
-                    <div className='ml-6 mt-3 flex flex-col gap-2'>
-                      {examSubRoutes.map((sub) => {
+                  {(projectsOpen || isProjectsActive) && (
+                    <div className='mt-3 flex flex-col gap-2'>
+                      {projectSubRoutes.map((sub) => {
                         const isSubActive = pathname === sub.href;
                         return (
                           <Link
@@ -610,58 +612,63 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       })}
                     </div>
                   )}
-                 
                 </div>
-                {/* Other menu items */}
-                {data.items
-                  .filter(
-                    (item) =>
-                      item.title !== 'Take a Quiz' &&
-                      item.title !== 'Generate Quiz'
-                    
-                  )
-                  .slice(2)
-                  .map((item, index) => {
-                    const isActive = pathname === item.url;
-                    const indicatorClasses = [
-                      'sidebar-indicator-quiz',
-                      'sidebar-indicator-projects',
-                      'sidebar-indicator-progress',
-                      'sidebar-indicator-exams',
-                    ];
-                    return (
-                      <div key={item.title} className='relative'>
-                        {isActive && (
-                          <div
-                            className={`sidebar-indicator ${indicatorClasses[index]}`}
-                          ></div>
-                        )}
-                        <Link
-                          href={item.url}
-                          className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                            isActive
-                              ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
-                              : 'text-[#222] hover:bg-[#FFB12133]'
-                          }`}
-                        >
-                          <Image
-                            src={item.icon}
-                            alt={item.title}
-                            className={`h-5 w-5 flex-shrink-0 ${isActive ? '' : 'brightness-0'}`}
-                          />
-                          <span className='text-sm'>{item.title}</span>
-                        </Link>
-                      </div>
-                    );
-                  })}
+                {/* Personalized Learning */}
+                <div className='relative'>
+                  {pathname === '/personalisedLearning' && (
+                    <div className='sidebar-indicator sidebar-indicator-progress'></div>
+                  )}
+                  <Link
+                    href='/personalisedLearning'
+                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
+                      pathname === '/personalisedLearning'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
+                    }`}
+                  >
+                    <Image
+                      src='/images/emoji_objects.svg'
+                      alt='Personalized Learning'
+                      width={20}
+                      height={20}
+                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/personalisedLearning' ? '' : 'brightness-0'}`}
+                    />
+                    <span className='text-sm'>Personalized le..</span>
+                  </Link>
+                </div>
                 {/* Section Heading for Corporates */}
-                <div className='pt-6 pb-3'>
-                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider'>
-                    For Corporates
+                <div className='pt-6 pb-3 flex items-center gap-3'>
+                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
+                    For corporate
                   </span>
-                  <div className='border-b border-gray-700 mt-3' />
+                  <div className='border-b border-gray-700 flex-1' />
                 </div>
-                {/* Example corporate links */}
+                
+                {/* Onboard Jobs */}
+                <div className='relative'>
+                  {pathname === '/onboard-job' && (
+                    <div className='sidebar-indicator sidebar-indicator-onboard'></div>
+                  )}
+                  <Link
+                    href='/onboard-job'
+                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
+                      pathname === '/onboard-job'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
+                    }`}
+                  >
+                    <Image
+                      src='/images/onboardJob.svg'
+                      alt='Onboard Jobs'
+                      width={20}
+                      height={20}
+                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/onboard-job' ? '' : 'brightness-0'}`}
+                    />
+                    <span className='text-sm'>Onboard Jobs</span>
+                  </Link>
+                </div>
+                
+                {/* Mock Interview */}
                 <div className='relative'>
                   {pathname === '/mock-interview' && (
                     <div className='sidebar-indicator sidebar-indicator-mock'></div>
@@ -670,8 +677,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/mock-interview'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/mock-interview'
-                        ? 'point-ask-gradient text-white shadow-sm'
-                        : 'text-white hover:bg-white/10'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
                     }`}
                   >
                     <Image
@@ -682,28 +689,6 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       className={`h-5 w-5 flex-shrink-0 ${pathname === '/mock-interview' ? '' : 'brightness-0'}`}
                     />
                     <span className='text-sm'>Mock Interview</span>
-                  </Link>
-                </div>
-                <div className='relative'>
-                  {pathname === '/onboard-job' && (
-                    <div className='sidebar-indicator sidebar-indicator-onboard'></div>
-                  )}
-                  <Link
-                    href='/onboard-job'
-                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                      pathname === '/onboard-job'
-                        ? 'point-ask-gradient text-white shadow-sm'
-                        : 'text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <Image
-                      src='/images/onboardJob.svg'
-                      alt='Onboard Job (AI)'
-                      width={20}
-                      height={20}
-                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/onboard-job' ? '' : 'brightness-0'}`}
-                    />
-                    <span className='text-sm'>Onboard Job (AI)</span>
                   </Link>
                 </div>
               </nav>
@@ -721,14 +706,25 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             nunitoSans.className
           } hidden lg:flex overflow-y-auto scrollbar-hide`}
         >
-          <div>
-            <div
-              className={`transition-all duration-300 ${
-                collapsed ? 'overflow-hidden' : ''
-              }`}
-            >
-              <SidebarHeader items={data.navMain2} />
-            </div>
+                      <div>
+              <div
+                className={`transition-all duration-300 ${
+                  collapsed ? 'overflow-hidden' : ''
+                }`}
+              >
+                {/* Simple Logo Display */}
+                <div className="py-2 px-4">
+                  <Link href="/">
+                    <Image
+                      src={logoUrl || Logo}
+                      alt="Logo"
+                      width={100}
+                      height={40}
+                      className="object-contain mx-auto"
+                    />
+                  </Link>
+                </div>
+              </div>
             {/* Desktop collapse button */}
             <button
               onClick={() => setCollapsed((prev) => !prev)}
@@ -754,11 +750,11 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             >
               {/* Section Heading */}
               {!collapsed && (
-                <div className='pt-2 pb-3'>
-                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider'>
+                <div className='pt-2 pb-3 flex items-center gap-3'>
+                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
                     For students
                   </span>
-                  <div className='border-b border-gray-700 mt-3' />
+                  <div className='border-b border-gray-700 flex-1' />
                 </div>
               )}
 
@@ -805,13 +801,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         collapsed ? '' : 'gap-3'
                       }`}
                     >
-                      <Image
-                          src="/images/aiicon.svg"
-                          alt='Quiz'
-                          width={20}
-                          height={20}
-                          className={`h-5 w-5 flex-shrink-0 ${isAiTutorActive ? '' : 'brightness-0'}`}
-                        />
+                      <div className='w-7 h-7 rounded border-2 border-[#222] flex items-center justify-center'>
+                        <span className='text-xs font-bold text-[#222]'>AI</span>
+                      </div>
                       {!collapsed && <span className='text-sm'>AI Tutor</span>}
                     </span>
                     {!collapsed && (
@@ -820,7 +812,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   </button>
                 </div>
                 {!collapsed && (aiOpen || isAiTutorActive) && (
-                  <div className='ml-6 mt-3 flex flex-col gap-2'>
+                  <div className='mt-3 flex flex-col gap-2'>
                     {aiTutorSubRoutes.map((sub) => {
                       const isSubActive = pathname === sub.href;
                       return (
@@ -854,7 +846,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isPointAskActive
                         ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
-                        : 'text-black hover:bg-white/10'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -880,7 +872,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   </button>
                 </div>
                 {!collapsed && (pointOpen || isPointAskActive) && (
-                  <div className='ml-6 mt-3 flex flex-col gap-2'>
+                  <div className='mt-3 flex flex-col gap-2'>
                     {pointAskSubRoutes.map((sub) => {
                       const isSubActive = pathname === sub.href;
                       return (
@@ -938,7 +930,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   </button>
                 </div>
                 {!collapsed && (quizOpen || isQuizActive) && (
-                  <div className='ml-6 mt-3 flex flex-col gap-2'>
+                  <div className='mt-3 flex flex-col gap-2'>
                     {quizSubRoutes.map((sub) => {
                       const isSubActive = pathname === sub.href;
                       return (
@@ -1002,7 +994,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   </button>
                 </div>
                 {!collapsed && (examOpen || isExamActive) && (
-                  <div className='ml-6 mt-3 flex flex-col gap-2'>
+                  <div className='mt-3 flex flex-col gap-2'>
                     {examSubRoutes.map((sub) => {
                       const isSubActive = pathname === sub.href;
                       return (
@@ -1066,7 +1058,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   </button>
                 </div>
                 {!collapsed && (projectsOpen || isProjectsActive) && (
-                  <div className='ml-6 mt-3 flex flex-col gap-2'>
+                  <div className='mt-3 flex flex-col gap-2'>
                     {projectSubRoutes.map((sub) => {
                       const isSubActive = pathname === sub.href;
                       return (
@@ -1093,89 +1085,47 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   </div>
                 )}
               </div>
-              {/* Other menu items */}
-              {data.items
-                .filter(
-                  (item) =>
-                    item.title !== 'Take a Quiz' &&
-                    item.title !== 'Generate Quiz'
-                )
-                .slice(2)
-                .map((item, index) => {
-                  const isActive = pathname === item.url;
-                  const indicatorClasses = [
-                    'sidebar-indicator-quiz',
-                    'sidebar-indicator-projects',
-                    'sidebar-indicator-progress',
-                    'sidebar-indicator-exams',
-                  ];
-                  return (
-                    <div key={item.title} className='relative'>
-                      {isActive && (
-                        <div
-                          className={`sidebar-indicator ${indicatorClasses[index]}`}
-                        ></div>
-                      )}
-                      <Link
-                        href={item.url}
-                        className={`flex items-center ${
-                          collapsed ? 'justify-center px-2' : 'gap-3 px-4'
-                        } py-3 rounded-md font-medium transition-all duration-200 ${
-                          isActive
-                            ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
-                            : 'text-[#222] hover:bg-[#FFB12133]'
-                        }`}
-                      >
-                        <Image
-                          src={item.icon}
-                          alt={item.title}
-                          className={`h-5 w-5 flex-shrink-0 ${isActive ? '' : 'brightness-0'}`}
-                        />
-                        {!collapsed && (
-                          <span className='text-sm'>{item.title}</span>
-                        )}
-                      </Link>
-                    </div>
-                  );
-                })}
-              {/* Section Heading for Corporates */}
+              {/* Personalized Learning */}
               {!collapsed && (
-                <div className='pt-6 pb-3'>
-                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider'>
-                    For Corporates
-                  </span>
-                  <div className='border-b border-gray-700 mt-3' />
+                <div className='relative'>
+                  {pathname === '/personalisedLearning' && (
+                    <div className='sidebar-indicator sidebar-indicator-progress'></div>
+                  )}
+                  <Link
+                    href='/personalisedLearning'
+                    className={`flex items-center ${
+                      collapsed ? 'justify-center px-2' : 'gap-3 px-4'
+                    } py-3 rounded-md font-medium transition-all duration-200 ${
+                      pathname === '/personalisedLearning'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
+                    }`}
+                  >
+                    <Image
+                      src='/images/emoji_objects.svg'
+                      alt='Personalized Learning'
+                      width={20}
+                      height={20}
+                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/personalisedLearning' ? '' : 'brightness-0'}`}
+                    />
+                    {!collapsed && (
+                      <span className='text-sm'>Personalized le..</span>
+                    )}
+                  </Link>
                 </div>
               )}
-
-              {/* Corporate links */}
-              <div className='relative'>
-                {pathname === '/mock-interview' && (
-                  <div className='sidebar-indicator sidebar-indicator-mock'></div>
-                )}
-                <Link
-                  href='/mock-interview'
-                  className={`flex items-center ${
-                    collapsed ? 'justify-center px-2' : 'gap-3 px-4'
-                  } py-3 rounded-md font-medium transition-all duration-200 ${
-                    pathname === '/mock-interview'
-                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
-                      : 'text-black hover:bg-white/10'
-                  }`}
-                >
-                  <Image
-                    src='/images/speechmock.svg'
-                    alt='Mock Interview'
-                    width={20}
-                    height={20}
-                    className={`h-5 w-5 flex-shrink-0 ${pathname === '/mock-interview' ? '' : 'brightness-0'}`}
-                  />
-                  {!collapsed && (
-                    <span className='text-sm'>Mock Interview</span>
-                  )}
-                </Link>
+              {/* Section Heading for Corporates */}
+              {!collapsed && (
+               
+                <div className='pt-2 pb-3 flex items-center gap-3 mt-[25px]'>
+                <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
+                  For Corporates
+                </span>
+                <div className='border-b border-gray-700 flex-1' />
               </div>
+              )}
 
+              {/* Onboard Jobs */}
               <div className='relative'>
                 {pathname === '/onboard-job' && (
                   <div className='sidebar-indicator sidebar-indicator-onboard'></div>
@@ -1187,18 +1137,46 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   } py-3 rounded-md font-medium transition-all duration-200 ${
                     pathname === '/onboard-job'
                       ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
-                      : 'text-black hover:bg-white/10'
+                      : 'text-[#222] hover:bg-[#FFB12133]'
                   }`}
                 >
                   <Image
                     src='/images/onboardJob.svg'
-                    alt='Onboard Job (AI)'
+                    alt='Onboard Jobs'
                     width={20}
                     height={20}
                     className={`h-5 w-5 flex-shrink-0 ${pathname === '/onboard-job' ? '' : 'brightness-0'}`}
                   />
                   {!collapsed && (
-                    <span className='text-sm'>Onboard Job (AI)</span>
+                    <span className='text-sm'>Onboard Jobs</span>
+                  )}
+                </Link>
+              </div>
+
+              {/* Mock Interview */}
+              <div className='relative'>
+                {pathname === '/mock-interview' && (
+                  <div className='sidebar-indicator sidebar-indicator-mock'></div>
+                )}
+                <Link
+                  href='/mock-interview'
+                  className={`flex items-center ${
+                    collapsed ? 'justify-center px-2' : 'gap-3 px-4'
+                  } py-3 rounded-md font-medium transition-all duration-200 ${
+                    pathname === '/mock-interview'
+                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                      : 'text-[#222] hover:bg-[#FFB12133]'
+                  }`}
+                >
+                  <Image
+                    src='/images/speechmock.svg'
+                    alt='Mock Interview'
+                    width={20}
+                    height={20}
+                    className={`h-5 w-5 flex-shrink-0 ${pathname === '/mock-interview' ? '' : 'brightness-0'}`}
+                  />
+                  {!collapsed && (
+                    <span className='text-sm'>Mock Interview</span>
                   )}
                 </Link>
               </div>

@@ -23,6 +23,7 @@ export function SidebarHeader({
         isActive?: boolean;
     }[];
 }) {
+    console.log('SidebarHeader received items:', items);
     return (
         <SidebarGroup className="overflow-hidden p-0">
             <SidebarMenu>
@@ -39,14 +40,18 @@ export function SidebarHeader({
                                         size="lg"
                                         tooltip={item.title}
                                     >
-                                        {item.icon && (
+                                        {item.icon ? (
                                             <Image
                                                 src={item.icon}
                                                 alt={item.title}
                                                 width={160}
                                                 height={60}
-                                                className="object-contain mx-auto my-6"
+                                                className="object-contain mx-auto my-6 mt-10"
                                             />
+                                        ) : (
+                                            <div className="text-center py-6">
+                                                <span className="text-lg font-bold text-gray-600">LOGO</span>
+                                            </div>
                                         )}
                                     </SidebarMenuButton>
                                 </Link>

@@ -3,6 +3,7 @@ import "./globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import LayoutWrapper from "@/components/LayoutWrapper"; // Import client wrapper
 import { Toaster } from "@/components/ui/toaster";
+import { LogoProvider } from "@/lib/LogoContext";
 import { Nunito_Sans } from "next/font/google";
 import Script from "next/script"; // ✅ Added
 
@@ -33,10 +34,12 @@ export default function RootLayout({
         />
       </head>
       <body className={nunitoSans.className}>
-        <SidebarProvider>
-          <LayoutWrapper>{children}</LayoutWrapper>
-          <Toaster />
-        </SidebarProvider>
+        <LogoProvider>
+          <SidebarProvider>
+            <LayoutWrapper>{children}</LayoutWrapper>
+            <Toaster />
+          </SidebarProvider>
+        </LogoProvider>
       </body>
     </html>
   );

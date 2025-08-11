@@ -16,6 +16,7 @@ import { Poppins } from "next/font/google";
 import { ArrowRight } from "lucide-react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import { useLogo } from "@/lib/LogoContext";
 
 const poppins = Poppins({ weight: ["400", "600", "700"], subsets: ["latin"] });
 
@@ -90,6 +91,7 @@ interface LearningGrowthData {
   currentPercentage: number;
 }
 interface DashboardData {
+  logo?: string;
   user: User;
   dailyStreak: DailyStreak;
   badgeChallenge: BadgeChallenge;
@@ -111,6 +113,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { setLogoUrl } = useLogo();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -146,6 +149,14 @@ export default function Home() {
 
         const result: ApiResponse = await response.json();
         setDashboardData(result.data);
+        
+        // Set logo URL if available
+        if (result.data.logo) {
+          console.log('Setting logo URL:', result.data.logo);
+          setLogoUrl(result.data.logo);
+        } else {
+          console.log('No logo found in data');
+        }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Failed to load dashboard data");

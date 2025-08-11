@@ -11,6 +11,8 @@ import Cookies from "js-cookie";
 import { ArrowRight, ChevronDownIcon, X } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
+import { fetchHistory, getFilteredHistory, HistoryItem } from "@/lib/historyService";
+import HistorySlider from "@/components/HistorySlider";
 
 type StyleOption = {
   label: string;
@@ -30,12 +32,14 @@ const isOptionWithIcon = (opt: OptionType): opt is OptionWithIcon =>
   typeof opt === "object" && "label" in opt && "value" in opt;
 
 // === START: History Types ===
-interface HistoryItem {
-  id?: number;
-  type: "Image" | "Chat" | "Voice";
-  query: string;
-  date: string;
-  answeredBy: string;
+interface RawHistoryItem {
+  id?: string;
+  title?: string;
+  userId?: string;
+  imageUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  messages?: unknown[];
 }
 // === END: History Types ===
 
@@ -152,6 +156,9 @@ export default function AiChatsChatPage() {
   const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   // === END: History Slider State ===
 
   useEffect(() => {
@@ -217,6 +224,11 @@ export default function AiChatsChatPage() {
     const sendMsg = typeof msg === "string" ? msg : inputValue;
     if (!selectedGrade || !selectedStyle || !sendMsg.trim()) return;
 
+    // Clear history indicator when starting a new conversation
+    if (selectedChatId) {
+      setSelectedChatId(null);
+    }
+
     setApiLoading(true);
     setChatHistory((prev) => [...prev, { role: "user", text: sendMsg.trim() }]);
     setInputValue("");
@@ -267,102 +279,27 @@ export default function AiChatsChatPage() {
   };
 
   const handleSuggestion = (s: string) => {
+    // Clear history indicator when using suggestions
+    if (selectedChatId) {
+      setSelectedChatId(null);
+    }
+    
     setInputValue(s);
     if (selectedGrade && selectedStyle) {
       setTimeout(() => handleSend(s), 50);
     }
   };
 
-  // === START: History Functions ===
-  const fetchHistory = async () => {
+    // === START: History Functions ===
+  const fetchHistoryData = async () => {
     console.log("🔍 [HISTORY] Starting to fetch history data...");
     setHistoryLoading(true);
     
     try {
-      const authCookie = Cookies.get("auth");
-      let token: string | undefined;
-      
-      if (authCookie) {
-        try {
-          token = JSON.parse(authCookie).token;
-          console.log("🔍 [HISTORY] Auth token found:", token ? "Yes" : "No");
-        } catch (error) {
-          console.log("🔍 [HISTORY] Error parsing auth cookie:", error);
-        }
-      } else {
-        console.log("🔍 [HISTORY] No auth cookie found");
-      }
-
-      // Log the API endpoint being called
-      const apiUrl = "https://apisimplylearn.selflearnai.in/api/v1/ai/chat/history";
-      console.log("🔍 [HISTORY] Calling API endpoint:", apiUrl);
-      console.log("🔍 [HISTORY] Request headers:", {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      });
-
-      const res = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      console.log("🔍 [HISTORY] API response status:", res.status);
-      console.log("🔍 [HISTORY] API response headers:", Object.fromEntries(res.headers.entries()));
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.log("🔍 [HISTORY] API error response:", errorText);
-        throw new Error(`Failed to fetch history: ${res.status} ${errorText}`);
-      }
-
-      const data = await res.json();
-      console.log("🔍 [HISTORY] API response data:", data);
-      console.log("🔍 [HISTORY] API response data type:", typeof data);
-      console.log("🔍 [HISTORY] API response data keys:", Object.keys(data || {}));
-      
-      // Extract history from response
-      const history = data?.data?.history || data?.history || [];
-      console.log("🔍 [HISTORY] Extracted history data:", history);
-      console.log("🔍 [HISTORY] History data length:", history.length);
-      console.log("🔍 [HISTORY] History data structure:", history);
-      
+      const history = await fetchHistory();
       setHistoryData(history);
     } catch (err) {
       console.error("🔍 [HISTORY] Error fetching history:", err);
-      // Set mock data for demonstration
-      setHistoryData([
-        {
-          id: 1,
-          type: "Image" as const,
-          query: "Trapezium Area Formula",
-          date: "July 26, 2025",
-          answeredBy: "AI tutor"
-        },
-        {
-          id: 2,
-          type: "Chat" as const,
-          query: "What is Ohm's Law?",
-          date: "July 25, 2025",
-          answeredBy: "AI tutor"
-        },
-        {
-          id: 3,
-          type: "Voice" as const,
-          query: "What is Cyber law?",
-          date: "July 25, 2025",
-          answeredBy: "AI tutor"
-        },
-        {
-          id: 4,
-          type: "Chat" as const,
-          query: "What is Ohm's Law?",
-          date: "July 24, 2025",
-          answeredBy: "AI tutor"
-        }
-      ] as HistoryItem[]);
     } finally {
       setHistoryLoading(false);
     }
@@ -372,7 +309,7 @@ export default function AiChatsChatPage() {
     console.log("🔍 [HISTORY] View history button clicked");
     setShowHistorySlider(true);
     setIsClosing(false);
-    fetchHistory();
+    fetchHistoryData();
   };
 
   const handleCloseHistory = () => {
@@ -383,129 +320,185 @@ export default function AiChatsChatPage() {
       setIsClosing(false);
     }, 300);
   };
+
+  const handleViewChat = async (chatId: string, chatTitle: string) => {
+    console.log("🔍 [HISTORY] View chat clicked for:", chatId, chatTitle);
+    
+    try {
+      // Find the chat in history data to get the messages
+      const chatItem = historyData.find(item => item.id === chatId);
+      console.log("🔍 [HISTORY] Found chat item:", chatItem);
+      
+      if (chatItem && chatItem.messages && Array.isArray(chatItem.messages) && chatItem.messages.length > 0) {
+        console.log("🔍 [HISTORY] Messages found:", chatItem.messages.length);
+        
+        // Convert the messages to the chat format
+        const formattedMessages = chatItem.messages.map((msg: any, index: number) => {
+          console.log(`🔍 [HISTORY] Processing message ${index}:`, msg);
+          
+          const role = msg.role === 'USER' ? 'user' : 'ai';
+          const text = msg.content || '';
+          
+          console.log(`🔍 [HISTORY] Message ${index} - Role: ${role}, Text: ${text}`);
+          
+          return {
+            role: role as 'user' | 'ai',
+            text: text
+          };
+        });
+        
+        console.log("🔍 [HISTORY] Final formatted messages:", formattedMessages);
+        
+        // Set the chat history and close the slider
+        setChatHistory(formattedMessages);
+        setInputValue(chatTitle);
+        setSelectedChatId(chatId);
+        handleCloseHistory();
+        
+        // Scroll to the chat area
+        setTimeout(() => {
+          chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        console.log("🔍 [HISTORY] No messages found. Chat item:", chatItem);
+        console.log("🔍 [HISTORY] Messages property:", chatItem?.messages);
+        console.log("🔍 [HISTORY] Is messages array:", Array.isArray(chatItem?.messages));
+        console.log("🔍 [HISTORY] Messages length:", chatItem?.messages?.length);
+        
+        // If no messages found, show an alert
+        alert(`No messages found for this chat: ${chatTitle}. Please check the console for details.`);
+      }
+    } catch (error) {
+      console.error("🔍 [HISTORY] Error loading chat:", error);
+      alert("Error loading chat messages");
+    }
+  };
+
+  const handleSearchChats = () => {
+    console.log("🔍 [HISTORY] Search chats button clicked");
+    setIsSearching(true);
+    setSearchQuery("");
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    console.log("🔍 [HISTORY] Search query:", query);
+  };
   // === END: History Functions ===
 
   const FloatingSelectors = (
-    <div
-      className={`fixed z-40 flex flex-row gap-[10px] p-4 rounded-md right-4 sm:right-8 lg:right-40 transition-all duration-300 ${
-        showOnboarding ? "z-[60] shadow-2xl" : ""
-      }`}
-      style={{
-        top: "40px",
-        background:
-          "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)",
-      }}
-    >
-      {/* === Shared Button Styles === */}
-      {/** Function to generate buttons with dropdowns */}
-      {[
-        {
-          label: "Class",
-          value: selectedGrade,
-          onClick: () => {
-            setShowGradeDropdown((v) => !v);
-            setShowStyleDropdown(false);
-          },
-          options: grades,
-          showDropdown: showGradeDropdown,
-          onSelect: (val: string) => {
-            setSelectedGrade(val);
-            setShowGradeDropdown(false);
-          },
-        },
-        {
-          label: "Persona",
-          value: selectedStyle,
-          onClick: () => {
-            setShowStyleDropdown((v) => !v);
-            setShowGradeDropdown(false);
-          },
-          options: styles,
-          showDropdown: showStyleDropdown,
-          onSelect: (val: string) => {
-            setSelectedStyle(val);
-            setShowStyleDropdown(false);
-          },
-          renderOption: (style: StyleOption) => (
-            <div className="flex items-center gap-3 cursor-pointer">
-              {typeof style === "string" ? style : style.label}
-            </div>
-          ),
-        },
-      ].map(
-        (
-          {
-            label,
-            value,
-            onClick,
-            options,
-            showDropdown,
-            onSelect,
-            renderOption,
-          },
-          i
-        ) => (
-          <div key={i} className="relative">
-            <button
-              className={`hover:bg-orange-500 text-[#FF5146] flex items-center transition-all duration-150 ${
-                value
-                  ? "point-ask-gradient text-white rounded-md px-2 py-1 sm:px-3 sm:py-2 min-w-[100px] sm:min-w-[120px] justify-between"
-                  : "bg-transparent hover:text-white  cursor-pointer border border-white/20 min-w-[100px] sm:min-w-[120px] justify-center rounded-md px-2 py-1"
-              }`}
-              style={
-                !value
-                  ? {
-                      width: "44px",
-                      height: "39px",
-                      borderRadius: "4px",
-                      padding: "7px 10px",
-                    }
-                  : {}
-              }
-              onClick={onClick}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-medium whitespace-nowrap flex items-center">
-                  <span className="mr-1">{label}:</span>
-                  <span>{value || "Select"}</span>
-                  <ChevronDownIcon className="ml-1 size-4 shrink-0" />
-                </span>
+    <div>
+      {/* Wrapper for selectors */}
+      <div className="fixed z-40 flex flex-row gap-[10px] items-center" style={{ top: "40px", right: "8rem" }}>
+        
+        {/* Class & Persona in colored background */}
+        <div
+          className={`flex flex-row gap-[10px] p-4 rounded-md transition-all duration-300 ${
+            showOnboarding ? "z-[60] shadow-2xl" : ""
+          }`}
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)",
+          }}
+        >
+          {[
+            {
+              label: "Class",
+              value: selectedGrade,
+              onClick: () => {
+                setShowGradeDropdown((v) => !v);
+                setShowStyleDropdown(false);
+              },
+              options: grades,
+              showDropdown: showGradeDropdown,
+              onSelect: (val: string) => {
+                setSelectedGrade(val);
+                setShowGradeDropdown(false);
+              },
+            },
+            {
+              label: "Persona",
+              value: selectedStyle,
+              onClick: () => {
+                setShowStyleDropdown((v) => !v);
+                setShowGradeDropdown(false);
+              },
+              options: styles,
+              showDropdown: showStyleDropdown,
+              onSelect: (val: string) => {
+                setSelectedStyle(val);
+                setShowStyleDropdown(false);
+              },
+              renderOption: (style: StyleOption) => (
+                <div className="flex items-center gap-3 cursor-pointer">
+                  {typeof style === "string" ? style : style.label}
+                </div>
+              ),
+            },
+          ].map(
+            ({ label, value, onClick, options, showDropdown, onSelect, renderOption }, i) => (
+              <div key={i} className="relative">
+                <button
+                  className={`hover:bg-orange-500 text-[#FF5146] flex items-center transition-all duration-150 ${
+                    value
+                      ? "point-ask-gradient text-white rounded-md px-2 py-1 sm:px-3 sm:py-2 min-w-[100px] sm:min-w-[120px] justify-between"
+                      : "bg-transparent hover:text-white cursor-pointer border border-white/20 min-w-[100px] sm:min-w-[120px] justify-center rounded-md px-2 py-1"
+                  }`}
+                  style={
+                    !value
+                      ? {
+                          width: "44px",
+                          height: "39px",
+                          borderRadius: "4px",
+                          padding: "7px 10px",
+                        }
+                      : {}
+                  }
+                  onClick={onClick}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap flex items-center">
+                      <span className="mr-1">{label}:</span>
+                      <span>{value || "Select"}</span>
+                      <ChevronDownIcon className="ml-1 size-4 shrink-0" />
+                    </span>
+                  </div>
+                </button>
+  
+                {showDropdown && (
+                  <div className="absolute mt-2 z-10 bg-white rounded-md shadow-lg max-h-[132px] overflow-y-auto w-full">
+                    {options.map((opt: OptionType) => {
+                      const key = isOptionWithIcon(opt) ? opt.label : opt;
+                      const value = isOptionWithIcon(opt) ? opt.value : opt;
+  
+                      return (
+                        <div
+                          key={key}
+                          className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm sm:text-base text-[#777]"
+                          onClick={() => onSelect(value)}
+                        >
+                          {isOptionWithIcon(opt) && renderOption
+                            ? renderOption(opt)
+                            : key}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </button>
-
-            {showDropdown && (
-              <div className="absolute mt-2 z-10 bg-white rounded-md shadow-lg max-h-[132px] overflow-y-auto w-full">
-                {options.map((opt: OptionType, index: number) => {
-                  const key = isOptionWithIcon(opt) ? opt.label : opt;
-                  const value = isOptionWithIcon(opt) ? opt.value : opt;
-
-                  return (
-                    <div
-                      key={key}
-                      className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm sm:text-base text-[#777]"
-                      onClick={() => onSelect(value)}
-                    >
-                      {isOptionWithIcon(opt) && renderOption
-                        ? renderOption(opt)
-                        : key}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )
-      )}
-
-      {/* View History Button */}
-      <div className="relative">
+            )
+          )}
+        </div>
+  
+        {/* View History Button OUTSIDE colored box */}
         <button
           onClick={handleHistoryClick}
-          className="rounded-md px-3 py-2 bg-[#FFE4B5] border border-[#FF5146] text-[#FF5146] hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center"
+          className="rounded-full px-3 py-2 bg-[#FFE4B5] border border-[#FF5146] text-[#FF5146] hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
         >
-          <img 
-            src="/images/history.svg" 
-            alt="history" 
+          <img
+            src="/images/history.svg"
+            alt="history"
             className="w-4 h-4"
           />
           <span className="text-sm font-medium">View history</span>
@@ -513,6 +506,8 @@ export default function AiChatsChatPage() {
       </div>
     </div>
   );
+  
+  
 
   return (
     <div
@@ -530,7 +525,7 @@ export default function AiChatsChatPage() {
 
       {/* Onboarding tooltip for FloatingSelectors */}
       {showOnboarding && onboardingStep === 1 && (
-        <div className="fixed top-[120px] right-4 sm:right-8 lg:right-40 z-[60]">
+        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-44 z-[60]">
           <img
             src="/images/arrow.svg"
             alt="onboarding"
@@ -559,140 +554,35 @@ export default function AiChatsChatPage() {
       {FloatingSelectors}
 
       {/* History Slider */}
-      {showHistorySlider && (
-        <div 
-          className={`fixed inset-0 z-[70] transition-opacity duration-300 ${
-            isClosing ? 'bg-black/0' : 'bg-black/50'
-          }`} 
-          onClick={handleCloseHistory}
-        >
-          <div 
-            className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
-              isClosing ? 'translate-x-full' : 'translate-x-0'
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#FF5146] flex items-center justify-center">
-                  <svg width="20" height="20" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-bold text-black">Your history</h2>
-              </div>
-              <button
-                onClick={handleCloseHistory}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="p-6 space-y-3">
-              <button 
-                onClick={() => {
-                  console.log("🔍 [HISTORY] New chat button clicked");
-                  handleCloseHistory();
-                  // Clear current chat and start fresh
-                  setChatHistory([]);
-                  setInputValue("");
-                }}
-                className="w-full rounded-md px-4 py-3 bg-[#FFE4B5] border border-[#FF5146] text-black hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-3 justify-center"
-              >
-                <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                <span className="font-medium">New chat</span>
-              </button>
-              <button 
-                onClick={() => {
-                  console.log("🔍 [HISTORY] Search chats button clicked");
-                  // TODO: Implement search functionality
-                  alert("Search functionality coming soon!");
-                }}
-                className="w-full rounded-md px-4 py-3 bg-[#FFE4B5] border border-[#FF5146] text-black hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-3 justify-center"
-              >
-                <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span className="font-medium">Search chats</span>
-              </button>
-            </div>
-
-            {/* History Content */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
-              <h3 className="text-lg font-bold text-black mb-4">Chats</h3>
-              
-              {historyLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5146] mx-auto"></div>
-                  <p className="text-gray-500 mt-2">Loading history...</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {historyData.map((item, index) => (
-                    <div key={item.id || index} className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        {/* Icon based on type */}
-                        <div className="w-6 h-6 mt-1">
-                          {item.type === "Image" && (
-                            <svg width="24" height="24" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
-                              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          )}
-                          {item.type === "Chat" && (
-                            <svg width="24" height="24" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
-                              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
-                          )}
-                          {item.type === "Voice" && (
-                            <svg width="24" height="24" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
-                              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-                              <path d="M19 10v2a7 7 0 01-14 0v-2" />
-                              <line x1="12" y1="19" x2="12" y2="23" />
-                              <line x1="8" y1="23" x2="16" y2="23" />
-                            </svg>
-                          )}
-                        </div>
-                        
-                        {/* Content */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-black">{item.type}:</span>
-                            <span className="text-black">{item.query}</span>
-                          </div>
-                          <p className="text-sm text-gray-500">{item.answeredBy}</p>
-                        </div>
-                        
-                        {/* View chat link */}
-                        <button 
-                          onClick={() => {
-                            console.log("🔍 [HISTORY] View chat clicked for:", item);
-                            // TODO: Implement view chat functionality
-                            alert(`Viewing chat: ${item.type} - ${item.query}`);
-                          }}
-                          className="text-[#FF5146] text-sm font-medium hover:underline"
-                        >
-                          View chat
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <HistorySlider
+        showHistorySlider={showHistorySlider}
+        isClosing={isClosing}
+        historyData={historyData}
+        historyLoading={historyLoading}
+        searchQuery={searchQuery}
+        isSearching={isSearching}
+        onClose={handleCloseHistory}
+        onSearchClick={handleSearchChats}
+        onSearchInputChange={handleSearchInputChange}
+        onSearchClose={() => {
+          setIsSearching(false);
+          setSearchQuery("");
+        }}
+        onNewChat={() => {
+          console.log("🔍 [HISTORY] New chat button clicked");
+          handleCloseHistory();
+          setSelectedChatId(null);
+          setChatHistory([]);
+          setInputValue("");
+        }}
+        onViewChat={handleViewChat}
+      />
 
       <div className="w-full px-4 lg:px-8">
         {/* Welcome message and suggestions - only show before chat starts */}
         {chatHistory.length === 0 && (
           <div className="min-h-screen flex flex-col justify-center items-center max-w-4xl mx-auto ">
-            <div className="mt-24 mb-4 text-center w-full">
+            <div className="mt-32 mb-4 text-center w-full">
               <div className="text-2xl md:text-3xl font-bold text-black mb-2">
                 <span role="img" aria-label="wave">
                   👋
@@ -732,20 +622,28 @@ export default function AiChatsChatPage() {
 
         {/* Chat area - only show after chat starts */}
         {chatHistory.length > 0 && (
-          <div className="pt-24 pb-32 max-w-4xl mx-auto">
-            <div className="w-full flex flex-col gap-3">
+          <div className="pt-32 pb-32 max-w-4xl mx-auto min-h-screen flex flex-col justify-end relative z-10">
+            <div className="w-full flex flex-col gap-4">
               {chatHistory.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex ${
+                  className={`flex items-end gap-3 ${
                     msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  } mb-2`}
                 >
+                  {/* AI Avatar - only show for AI messages */}
+                  {msg.role === "ai" && (
+                    <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      AI
+                    </div>
+                  )}
+                  
+                  {/* Message Bubble */}
                   <div
-                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 ${
+                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.role === "user"
-                        ? "point-ask-gradient text-white"
-                        : "bg-[rgba(34,34,34,0.9)] text-white border border-black"
+                        ? "bg-[#FFF8DC] text-gray-800 border border-[#FFE4B5]"
+                        : "bg-[#FFE6CC] text-gray-800 border border-[#FFDAB9]"
                     }`}
                   >
                     <p className="text-sm md:text-base leading-relaxed">
@@ -756,16 +654,37 @@ export default function AiChatsChatPage() {
                         : msg.text}
                     </p>
                   </div>
+                  
+                  {/* User Avatar - only show for user messages */}
+                  {msg.role === "user" && (
+                    <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                      {(() => {
+                        try {
+                          const authCookie = Cookies.get("auth");
+                          if (authCookie) {
+                            const userData = JSON.parse(authCookie);
+                            return userData.firstName?.charAt(0)?.toUpperCase() || "U";
+                          }
+                        } catch (e) {
+                          console.error("Error parsing auth cookie:", e);
+                        }
+                        return "U";
+                      })()}
+                    </div>
+                  )}
                 </div>
               ))}
               {apiLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20 opacity-70">
+                <div className="flex items-end gap-3 justify-start">
+                  <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    AI
+                  </div>
+                  <div className="bg-[#FFE6CC] text-gray-800 rounded-2xl px-4 py-3 border border-[#FFDAB9] opacity-70 shadow-sm">
                     <p className="text-sm md:text-base">Thinking...</p>
                   </div>
                 </div>
               )}
-              <div ref={chatBottomRef} />
+              <div ref={chatBottomRef} className="h-4" />
             </div>
           </div>
         )}
