@@ -50,7 +50,7 @@ export default function UserProfilePage() {
         }
 
         const res = await fetch(
-          'http://35.154.108.96:3000/api/v1/users/auth/get-profile',
+          'https://apisimplylearn.selflearnai.in/api/v1/users/auth/get-profile',
           {
             headers: {
               Authorization: `Bearer ${token}`,
