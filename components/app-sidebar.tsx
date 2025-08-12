@@ -268,7 +268,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
     <div >
       {/* Mobile Hamburger Button */}
       <button
-        className='lg:hidden fixed top-4 left-4 z-50 point-ask-gradient text-black rounded-full p-2 shadow-lg focus:outline-none'
+        className='lg:hidden fixed top-4 left-4 z-50 bg-white text-gray-700 rounded-full p-2 shadow-lg focus:outline-none border border-gray-200 hover:bg-gray-50 transition-colors'
         onClick={() => setMobileOpen(true)}
         aria-label='Open sidebar'
       >
@@ -288,14 +288,19 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       {mobileOpen && (
         <>
           <div
-            className='fixed  lg:hidden'
+            className='fixed inset-0 bg-black/50 z-[9998] lg:hidden'
             onClick={() => setMobileOpen(false)}
-          />{' '}
+          />
           <SidebarContent
             className={`bg-white h-screen fixed left-0 top-0 z-[9999] transition-transform duration-300 flex flex-col justify-between w-64 overflow-hidden
             ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden
             ${nunitoSans.className} overflow-y-auto scrollbar-hide`}
-            style={{ width: '16rem', minWidth: '16rem', maxWidth: '16rem' }}
+            style={{ 
+              width: '16rem', 
+              minWidth: '16rem', 
+              maxWidth: '16rem',
+              boxShadow: '0px 4px 16px 0px #00000040'
+            }}
           >
             <div>
                               {/* Simple Logo Display */}
@@ -313,7 +318,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               {/* Mobile close button */}
               <button
                 onClick={() => setMobileOpen(false)}
-                className='absolute top-7 right-4 z-[101] bg-white rounded-full shadow hover:bg-gray-100 transition'
+                className='absolute top-7 right-4 z-[101] bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors border border-gray-200'
                 aria-label='Close sidebar'
               >
                 <svg
@@ -330,10 +335,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               <nav className='flex flex-col flex-1 space-y-2 mt-4 px-4 overflow-y-auto scrollbar-hide pb-4'>
                 {/* Section Heading */}
                 <div className='pt-2 pb-3 flex items-center gap-3'>
-                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
+                  <span className='text-xs text-gray-500 font-semibold uppercase tracking-wider whitespace-nowrap'>
                     For students
                   </span>
-                  <div className='border-b border-gray-700 flex-1' />
+                  <div className='border-b border-gray-300 flex-1' />
                 </div>
                 {/* Dashboard */}
                 <div className='relative'>
@@ -345,7 +350,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 relative ${
                       pathname === '/'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-[#222] hover:bg-[#FFB12133]'
                     }`}
                   >
@@ -364,7 +369,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setAiOpen(!aiOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isAiTutorActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                           : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
@@ -409,7 +414,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setPointOpen(!pointOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isPointAskActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                           : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
@@ -458,7 +463,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setQuizOpen(!quizOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isQuizActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                           : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
@@ -513,7 +518,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setExamOpen(!examOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isExamActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                           : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
@@ -568,7 +573,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setProjectOpen(!projectsOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isProjectsActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                           : 'text-[#222] hover:bg-[#FFB12133]'
                       }`}
                     >
@@ -622,7 +627,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/personalisedLearning'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/personalisedLearning'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-[#222] hover:bg-[#FFB12133]'
                     }`}
                   >
@@ -653,7 +658,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/onboard-job'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/onboard-job'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-[#222] hover:bg-[#FFB12133]'
                     }`}
                   >
@@ -677,7 +682,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/mock-interview'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/mock-interview'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-[#222] hover:bg-[#FFB12133]'
                     }`}
                   >
@@ -705,6 +710,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
           } ${
             nunitoSans.className
           } hidden lg:flex overflow-y-auto scrollbar-hide`}
+          style={{
+            boxShadow: '0px 4px 16px 0px #00000040',
+            zIndex: 1000
+          }}
         >
                       <div>
               <div
@@ -728,7 +737,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             {/* Desktop collapse button */}
             <button
               onClick={() => setCollapsed((prev) => !prev)}
-              className={`absolute top-7 z-20 bg-white rounded-full shadow hover:bg-gray-100 transition-all duration-200 ${
+              className={`absolute top-7 z-20 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 ${
                 collapsed ? 'right-2' : 'right-4'
               }`}
               aria-label='Toggle sidebar'
@@ -751,10 +760,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               {/* Section Heading */}
               {!collapsed && (
                 <div className='pt-2 pb-3 flex items-center gap-3'>
-                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
+                  <span className='text-xs text-gray-500 font-semibold uppercase tracking-wider whitespace-nowrap'>
                     For students
                   </span>
-                  <div className='border-b border-gray-700 flex-1' />
+                  <div className='border-b border-gray-300 flex-1' />
                 </div>
               )}
 
@@ -770,7 +779,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                   } py-3 rounded-md font-medium transition-all duration-200 relative ${
                     pathname === '/'
-                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                       : 'text-[#222] hover:bg-[#FFB12133]'
                   }`}
                 >
@@ -791,7 +800,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isAiTutorActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-black hover:bg-white/10'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -845,7 +854,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isPointAskActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-[#222] hover:bg-[#FFB12133]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -905,7 +914,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isQuizActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-black hover:bg-white/10'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -969,7 +978,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isExamActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-black hover:bg-white/10'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -1033,7 +1042,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isProjectsActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-black hover:bg-white/10'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -1097,7 +1106,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/personalisedLearning'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                         : 'text-[#222] hover:bg-[#FFB12133]'
                     }`}
                   >
@@ -1136,7 +1145,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                   } py-3 rounded-md font-medium transition-all duration-200 ${
                     pathname === '/onboard-job'
-                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                       : 'text-[#222] hover:bg-[#FFB12133]'
                   }`}
                 >
@@ -1164,7 +1173,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                   } py-3 rounded-md font-medium transition-all duration-200 ${
                     pathname === '/mock-interview'
-                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-sm'
+                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
                       : 'text-[#222] hover:bg-[#FFB12133]'
                   }`}
                 >

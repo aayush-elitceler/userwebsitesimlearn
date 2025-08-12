@@ -19,12 +19,19 @@ export default function ExamReportPage() {
   const { examId } = useParams();
   const [result, setResult] = useState<ExamReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function fetchResult() {
       setLoading(true);
+      setError('');
       try {
         const token = getTokenFromCookie();
+        if (!token) {
+          setError('No auth token found. Please login.');
+          setLoading(false);
+          return;
+        }
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/report?examId=${examId}`,
           {
@@ -36,9 +43,11 @@ export default function ExamReportPage() {
         const data = await res.json();
         if (data.success && data.data && data.data.exam) {
           setResult(data.data);
+        } else {
+          setError(data.message || 'Failed to load exam report');
         }
       } catch (e) {
-        // handle error
+        setError('An error occurred while loading the report');
       } finally {
         setLoading(false);
       }
@@ -46,7 +55,45 @@ export default function ExamReportPage() {
     if (examId) fetchResult();
   }, [examId]);
 
-  if (loading) return <div className="text-black p-8">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white flex flex-col items-center">
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60'>
+          <div className='rounded-2xl shadow-lg p-8 min-w-[420px] max-w-[90vw] flex flex-col items-center' style={{
+            background: 'linear-gradient(180deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)'
+          }}>
+            <div className='mb-6'>
+              <img 
+                src="/images/loadingSpinner.svg" 
+                alt="Loading" 
+                className='w-24 h-24 animate-spin'
+              />
+            </div>
+            <div className='text-black font-semibold text-lg mb-6'>
+              Loading your exam report....
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100 flex flex-col items-center">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="text-red-400 font-semibold text-xl mb-4">{error}</div>
+          <button
+            className="px-6 py-2 rounded bg-gray-700 text-white"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   if (!result) return <div className="text-black p-8">Result not found.</div>;
 
   return (

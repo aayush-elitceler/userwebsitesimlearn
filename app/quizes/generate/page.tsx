@@ -225,16 +225,23 @@ export default function GenerateQuizPage() {
           {/* Persona */}
           <div className='flex flex-col'>
             <label htmlFor="persona" className='text-black mb-1 font-semibold'>Persona</label>
-            <select
-              id="persona"
-              value={persona}
-              onChange={(e) => setPersona(e.target.value)}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
-              required
-            >
-              <option value='teacher'>Teacher</option>
-              <option value='student'>Student</option>
-            </select>
+            <div className='relative'>
+              <select
+                id="persona"
+                value={persona}
+                onChange={(e) => setPersona(e.target.value)}
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                required
+              >
+                <option value='teacher'>Teacher</option>
+                <option value='student'>Student</option>
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
           </div>
           {/* Topic */}
           <div className='flex flex-col'>
@@ -251,57 +258,78 @@ export default function GenerateQuizPage() {
           {/* Difficulty */}
           <div className='flex flex-col'>
             <label htmlFor="difficulty" className='text-black mb-1 font-semibold'>Difficulty</label>
-            <select
-              id="difficulty"
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
-              required
-            >
-              {difficulties.map((d) => (
-                <option key={d} value={d}>
-                  {d.charAt(0).toUpperCase() + d.slice(1)}
-                </option>
-              ))}
-            </select>
+            <div className='relative'>
+              <select
+                id="difficulty"
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                required
+              >
+                {difficulties.map((d) => (
+                  <option key={d} value={d}>
+                    {d.charAt(0).toUpperCase() + d.slice(1)}
+                  </option>
+                ))}
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
           </div>
           {/* Number of Questions */}
           <div className='flex flex-col'>
             <label htmlFor="numQuestions" className='text-black mb-1 font-semibold'>
               No. of Questions
             </label>
-            <select
-              id="numQuestions"
-              value={numQuestions}
-              onChange={(e) => setNumQuestions(Number(e.target.value))}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
-              required
-            >
-              <option value=''>3-10</option>
-              {numQuestionsOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+            <div className='relative'>
+              <select
+                id="numQuestions"
+                value={numQuestions}
+                onChange={(e) => setNumQuestions(Number(e.target.value))}
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                required
+              >
+                <option value=''>3-10</option>
+                {numQuestionsOptions.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
           </div>
           {/* Time Limit */}
           <div className='flex flex-col'>
             <label htmlFor="timer" className='text-black mb-1 font-semibold'>Time Limit</label>
-            <select
-              id="timer"
-              value={timer}
-              onChange={(e) => setTimer(Number(e.target.value))}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
-              required
-            >
-              <option value=''>5, 10, 15 minutes</option>
-              {timeLimits.map((t) => (
-                <option key={t} value={t}>
-                  {t} minutes
-                </option>
-              ))}
-            </select>
+            <div className='relative'>
+              <select
+                id="timer"
+                value={timer}
+                onChange={(e) => setTimer(Number(e.target.value))}
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                required
+              >
+                <option value=''>5, 10, 15 minutes</option>
+                {timeLimits.map((t) => (
+                  <option key={t} value={t}>
+                    {t} minutes
+                  </option>
+                ))}
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
           </div>
         </form>
         {/* Buttons */}

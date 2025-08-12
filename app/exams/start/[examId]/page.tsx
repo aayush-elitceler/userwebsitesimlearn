@@ -14,18 +14,18 @@ export default function ExamStartPopup() {
   }, [examId, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#181c24]">
-      <div className="bg-[#232c24] rounded-3xl p-10 w-full max-w-lg shadow-lg flex flex-col items-center">
-        <div className="mb-6">
-          {/* Loader spinner */}
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-gray-400 mx-auto mb-4" />
+    <div className="min-h-screen flex items-center justify-center bg-white bg-opacity-60">
+      <div className='rounded-2xl shadow-lg p-8 min-w-[420px] max-w-[90vw] flex flex-col items-center' style={{
+        background: 'linear-gradient(180deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)'
+      }}>
+        <div className='mb-6'>
+          <img 
+            src="/images/loadingSpinner.svg" 
+            alt="Loading" 
+            className='w-24 h-24 animate-spin'
+          />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-4">Starting your Exam....</h2>
-        <ul className="text-gray-200 text-center mb-6 space-y-2">
-          <li>• Leaving or switching tabs will trigger a warning</li>
-          <li>• 3 violations will auto-submit your exam</li>
-          <li>• Navigation and back buttons are disabled</li>
-        </ul>
+        <h2 className="text-2xl font-bold text-black mb-4">Starting your Exam....</h2>
       </div>
     </div>
   );
