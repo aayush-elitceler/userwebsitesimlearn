@@ -40,6 +40,7 @@ export default function ChatGPTVoiceInterface({
   const [microphonePermission, setMicrophonePermission] = useState<
     'granted' | 'denied' | 'prompt' | 'unknown'
   >('unknown');
+  const [sendTrigger, setSendTrigger] = useState(0);
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
@@ -91,10 +92,20 @@ export default function ChatGPTVoiceInterface({
     }
 
     if (!listening) {
-      handleStopListening();
+      try {
+        SpeechRecognition.stopListening();
+        setSpeechError(null);
+        if (transcript.trim() && selectedGrade && selectedStyle) {
+          setTimeout(() => {
+            setSendTrigger((v) => v + 1);
+          }, 100);
+        }
+      } catch (error) {
+        console.error('Error stopping speech recognition:', error);
+        setSpeechError('Failed to stop listening');
+      }
     }
-    // @ts-ignore
-  }, [listening, handleStopListening]);
+  }, [listening, transcript, selectedGrade, selectedStyle]);
 
   useEffect(() => {
     if (chatBottomRef.current) {
@@ -238,6 +249,14 @@ export default function ChatGPTVoiceInterface({
       resetTranscript();
     }
   }, [selectedGrade, selectedStyle, transcript, resetTranscript]);
+
+  // Invoke handleSend after it is defined when sendTrigger increments
+  useEffect(() => {
+    if (sendTrigger > 0) {
+      handleSend();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sendTrigger]);
 
   // Enhanced stop listening with error handling and auto-submit
   const handleStopListening = useCallback(() => {
