@@ -30,6 +30,7 @@ jobs:
           tags: aayushsharma100/simplylearnweb:latest
           build-args: |
             NEXT_PUBLIC_BASE_URL=https://apisimplylearn.selflearnai.in/api/v1
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
       - name: Verify Pushed Image
         run: docker pull aayushsharma100/simplylearnweb:latest
@@ -47,4 +48,5 @@ jobs:
             sudo docker rm simplylearnweb || true
             sudo docker run -d --name simplylearnweb --restart always -p 3000:3000 \
               -e NEXT_PUBLIC_BASE_URL=https://apisimplylearn.selflearnai.in/api/v1 \
+              -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
               aayushsharma100/simplylearnweb:latest
