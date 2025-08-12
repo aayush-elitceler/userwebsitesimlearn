@@ -123,6 +123,10 @@ export default function ImprovedAiChatsVoicePage() {
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
+  // === START: New Onboarding Code ===
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(1); // 1: grade/persona only
+
   // === START: History Slider State ===
   const [showHistorySlider, setShowHistorySlider] = useState(false);
   const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
@@ -132,6 +136,27 @@ export default function ImprovedAiChatsVoicePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   // === END: History Slider State ===
+
+  useEffect(() => {
+    // Always show onboarding on page refresh, regardless of cookie
+    setShowOnboarding(true);
+  }, []);
+
+  useEffect(() => {
+    if (showOnboarding) {
+      if (onboardingStep === 1) {
+        // First step: wait for grade and persona selection
+        if (selectedGrade && selectedStyle) {
+          // User has selected both, hide onboarding after a short delay
+          const timer = setTimeout(() => {
+            setShowOnboarding(false);
+            Cookies.set("hasVisitedPointAskVoice", "true", { expires: 365 });
+          }, 1000);
+          return () => clearTimeout(timer);
+        }
+      }
+    }
+  }, [showOnboarding, onboardingStep, selectedGrade, selectedStyle]);
 
   // Check browser support and microphone permission on mount
   useEffect(() => {
@@ -740,7 +765,7 @@ export default function ImprovedAiChatsVoicePage() {
     <div>
       {/* Outer flex holding gradient box and history button */}
       <div
-        className='fixed z-40 flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44'
+        className='fixed z-[60] flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44'
         style={{ top: '40px' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -869,6 +894,44 @@ export default function ImprovedAiChatsVoicePage() {
         backgroundPosition: 'center',
       }}
     >
+      {/* Onboarding overlay */}
+      {showOnboarding && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-50"></div>
+      )}
+
+      {/* Onboarding tooltip for FloatingSelectors */}
+      {showOnboarding && onboardingStep === 1 && (
+        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-60 z-[60]">
+          <img
+            src="/images/arrow.svg"
+            alt="onboarding"
+            className="w-[19px] h-[59px] object-cover mx-auto mb-5"
+          />
+          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+            {selectedGrade && selectedStyle ? (
+              <div>
+                <div className="mb-2">Great! You've selected:</div>
+                <div className="text-sm opacity-90">
+                  Grade: {selectedGrade} | Style: {selectedStyle}
+                </div>
+                <div className="text-xs mt-2 opacity-75">Now you can upload an image or share your screen and start voice chatting!</div>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2">Choose your grade and how you&apos;d like the AI to talk to you.</div>
+                <div className="text-xs opacity-75">
+                  {!selectedGrade && !selectedStyle && "Please select both grade and persona"}
+                  {selectedGrade && !selectedStyle && "Now select a persona"}
+                  {!selectedGrade && selectedStyle && "Now select a grade"}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+
+
       {FloatingSelectors}
 
       {/* History Slider */}
@@ -1156,7 +1219,7 @@ export default function ImprovedAiChatsVoicePage() {
           <div className='flex gap-3 justify-center mb-8'>
             <button
               onClick={handleStartListening}
-              className='point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full ...'
+              className="point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full transition-all duration-300"
             >
               {/* mic icon SVG */}
               Start Speaking
