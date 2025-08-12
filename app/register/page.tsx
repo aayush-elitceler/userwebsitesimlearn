@@ -224,14 +224,19 @@ export default function Register() {
           </CardHeader>
 
           <CardContent className="space-y-5">
-            {/* Stepper */}
-            <div className="relative w-full">
-              <div className="absolute top-3 left-0 w-full h-[2px] bg-gray-300 z-0" />
-              <div
-                className="absolute top-3 left-0 h-[2px] bg-red-500 z-0 transition-all duration-300"
-                style={{ width: `${((step - 1) / 3) * 100}%` }}
-              />
-              <div className="relative flex justify-between z-10">
+                         {/* Stepper */}
+             <div 
+               className="relative w-full p-6 rounded-lg"
+               style={{
+                 background: "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)"
+               }}
+             >
+                             <div className="absolute top-10 left-6 right-6 h-[2px] bg-gray-300 z-0" />
+               <div
+                 className="absolute top-10 left-6 h-[2px] bg-red-500 z-0 transition-all duration-300"
+                 style={{ width: `calc(${((step - 1) / 3) * 100}% - 48px)` }}
+               />
+               <div className="relative flex justify-between z-10 px-4">
                 {["Basic Information", "Academic Details", "Contact Details", "Photo Upload"].map(
                   (label, index) => {
                     const stepNumber = index + 1;
@@ -240,21 +245,25 @@ export default function Register() {
                     return (
                       <div key={label} className="flex flex-col items-center text-center">
                         <span
-                          className={`w-6 h-6 flex items-center justify-center rounded-full border text-xs font-medium
+                          className={`w-8 h-8 flex items-center justify-center rounded-full border-2 text-sm font-medium
                           ${
                             isActive
-                              ? "border-red-500 bg-white text-red-500"
+                              ? "border-[#FF5146] bg-white text-[#FF5146]"
                               : isCompleted
-                              ? "border-red-500 bg-red-500 text-white"
-                              : "border-gray-400 bg-white text-gray-500"
+                              ? "border-[#FF5146] bg-[#FF5146] text-white"
+                              : "border-[#FF5146] bg-white text-[#FF5146]"
                           }`}
                         >
                           {stepNumber}
                         </span>
                         <span
-                          className={`text-xs mt-1 w-max ${
-                            isActive || isCompleted ? "text-red-500" : "text-gray-500"
+                          className={`text-xs mt-2 px-1 ${
+                            isActive || isCompleted ? "text-[#FF5146] font-medium" : "text-gray-600"
                           }`}
+                          style={{
+                            fontSize: 'clamp(10px, 2vw, 12px)',
+                            lineHeight: '1.2'
+                          }}
                         >
                           {label}
                         </span>
@@ -370,37 +379,42 @@ export default function Register() {
               </>
             )}
 
-            {step === 4 && (
-              <div className="flex flex-col items-center">
-                <label
-                  htmlFor="photo"
-                  className="w-48 h-48 border-2 border-dashed border-orange-300 rounded-full flex items-center justify-center cursor-pointer"
-                >
-                  {formData.photo ? (
-                    <img
-                      src={URL.createObjectURL(formData.photo)}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <span className="text-orange-400">📷</span>
-                  )}
-                </label>
-                <input
-                  type="file"
-                  id="photo"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                />
-                <Button
-                  variant="outline"
-                  className="mt-4 bg-red-500 text-white hover:bg-red-600 rounded-full px-6"
-                >
-                  Add photo
-                </Button>
-              </div>
-            )}
+                         {step === 4 && (
+               <div className="flex flex-col items-center">
+                 <label
+                   htmlFor="photo"
+                   className="w-48 h-48 border-2 border-dashed border-orange-300 rounded-full flex items-center justify-center cursor-pointer"
+                 >
+                   {formData.photo ? (
+                     <img
+                       src={URL.createObjectURL(formData.photo)}
+                       alt="Preview"
+                       className="w-full h-full object-cover rounded-full"
+                     />
+                   ) : (
+                     <img
+                       src="/images/camera.svg"
+                       alt="Camera"
+                       className="w-12 h-12"
+                       style={{ filter: 'brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)' }}
+                     />
+                   )}
+                 </label>
+                 <input
+                   type="file"
+                   id="photo"
+                   className="hidden"
+                   accept="image/*"
+                   onChange={handlePhotoChange}
+                 />
+                 <Button
+                   variant="outline"
+                   className="mt-4 bg-[#FF5146] text-white hover:bg-red-600 rounded-full px-6"
+                 >
+                   Add photo
+                 </Button>
+               </div>
+             )}
 
             {/* Navigation Buttons */}
             <div className="flex justify-between gap-2">
