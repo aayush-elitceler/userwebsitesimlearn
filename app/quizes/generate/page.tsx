@@ -216,7 +216,7 @@ export default function GenerateQuizPage() {
               type='number'
               value={grade}
               onChange={(e) => setGrade(Number(e.target.value))}
-              className='rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none '
+              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
               min={1}
               max={12}
               required
@@ -229,7 +229,7 @@ export default function GenerateQuizPage() {
               id="persona"
               value={persona}
               onChange={(e) => setPersona(e.target.value)}
-              className='rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none '
+              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
               required
             >
               <option value='teacher'>Teacher</option>
@@ -243,7 +243,7 @@ export default function GenerateQuizPage() {
               type='text'
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              className='rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none '
+              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
               placeholder='make a quiz on force and motion for physics.'
               required
             />
@@ -255,7 +255,7 @@ export default function GenerateQuizPage() {
               id="difficulty"
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className='rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none '
+              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
               required
             >
               {difficulties.map((d) => (
@@ -274,7 +274,7 @@ export default function GenerateQuizPage() {
               id="numQuestions"
               value={numQuestions}
               onChange={(e) => setNumQuestions(Number(e.target.value))}
-              className='rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none '
+              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
               required
             >
               <option value=''>3-10</option>
@@ -292,7 +292,7 @@ export default function GenerateQuizPage() {
               id="timer"
               value={timer}
               onChange={(e) => setTimer(Number(e.target.value))}
-              className='rounded px-3 py-2 bg-[#FFB12133] text-black  focus:outline-none '
+              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
               required
             >
               <option value=''>5, 10, 15 minutes</option>
@@ -308,7 +308,7 @@ export default function GenerateQuizPage() {
         <div className='flex justify-end gap-4 mt-8'>
           <button
             type='button'
-            className='border border-white text-black rounded-lg px-8 py-2 font-semibold bg-transparent hover:bg-white/10 transition'
+            className='border border-red-400 text-red-400 rounded-lg px-8 py-2 font-semibold bg-transparent hover:bg-white/10 transition'
             onClick={() => {
               setTopic('');
               setDifficulty('medium');
