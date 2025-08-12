@@ -695,7 +695,7 @@ export default function AiChatsChatPage() {
                     className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.role === "user"
                         ? "bg-[#FFF8DC] text-gray-800 border border-[#FFE4B5]"
-                        : "bg-[#FFE6CC] text-gray-800 border border-[#FFDAB9]"
+                        : "bg-[#FFE6CC] text-[#FF5146] border border-[#FFDAB9]"
                     }`}
                   >
                     <p className="text-sm md:text-base leading-relaxed">
@@ -731,7 +731,7 @@ export default function AiChatsChatPage() {
                   <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                     AI
                   </div>
-                  <div className="bg-[#FFE6CC] text-gray-800 rounded-2xl px-4 py-3 border border-[#FFDAB9] opacity-70 shadow-sm">
+                  <div className="bg-[#FFE6CC] text-[#FF5146] rounded-2xl px-4 py-3 border border-[#FFDAB9] opacity-70 shadow-sm">
                     <p className="text-sm md:text-base">Thinking...</p>
                   </div>
                 </div>
