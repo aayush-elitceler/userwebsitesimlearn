@@ -115,19 +115,66 @@ export default function UserProfilePage() {
       <div className='max-w-4xl mx-auto'>
         <div className='flex justify-between items-center mb-6'>
           <h1 className='text-2xl font-semibold text-gray-800'>My Profile</h1>
-          <div className='flex items-center gap-3'>
-            <button
-              onClick={() => router.push('/')}
-              className='px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors'
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={handleLogout}
-              className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors'
-            >
-              Logout
-            </button>
+
+          {/* Top-right section with class/school info and buttons */}
+          <div className='flex flex-col sm:flex-row items-end sm:items-center gap-4 sm:gap-6'>
+            {/* Class and School Info - Vertical Stack */}
+            <div className='text-right sm:text-left'>
+              {profile.section && (
+                <div className='text-sm text-gray-600 mb-1'>
+                  Class: Section {profile.section}
+                </div>
+              )}
+              <div className='text-sm text-gray-600'>School: Self Learn AI</div>
+            </div>
+
+            {/* Action Buttons with Icons */}
+            <div className='flex items-center gap-3'>
+              <button
+                onClick={() => router.push('/')}
+                className='px-4 py-2 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors flex items-center gap-2'
+              >
+                <svg
+                  className='w-4 h-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z'
+                  />
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M8 5v4m4-4v4m4-4v4'
+                  />
+                </svg>
+                Dashboard
+              </button>
+              <button
+                onClick={handleLogout}
+                className='px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center gap-2'
+              >
+                <svg
+                  className='w-4 h-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1'
+                  />
+                </svg>
+                Logout
+              </button>
+            </div>
           </div>
         </div>
 
@@ -147,11 +194,6 @@ export default function UserProfilePage() {
                 <span className='px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200'>
                   {profile.gender}
                 </span>
-                {profile.section && (
-                  <span className='px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border'>
-                    Section {profile.section}
-                  </span>
-                )}
                 {profile.dob && (
                   <span className='px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border'>
                     DOB: {new Date(profile.dob).toLocaleDateString()}

@@ -259,11 +259,12 @@ export default function Home() {
         <div className='flex gap-3'>
           <button
             onClick={() => router.push('/profile')}
-            className='px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors font-medium'
+            className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center text-xl'
+            title='Profile'
           >
-            Profile
+            👤
           </button>
-          <button
+          {/* <button
             onClick={() => {
               Cookies.remove('auth');
               router.push('/login');
@@ -271,7 +272,7 @@ export default function Home() {
             className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium'
           >
             Logout
-          </button>
+          </button> */}
         </div>
       </div>
 
