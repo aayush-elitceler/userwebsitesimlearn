@@ -158,6 +158,7 @@ export default function ImprovedAiChatsVoicePage() {
 
   // === START: New Onboarding Code ===
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(1); // 1: grade/persona, 2: voice input
 
   useEffect(() => {
     // Always show onboarding on page refresh, regardless of cookie
@@ -166,13 +167,19 @@ export default function ImprovedAiChatsVoicePage() {
 
   useEffect(() => {
     if (showOnboarding) {
-      const timer = setTimeout(() => {
-        setShowOnboarding(false);
-        Cookies.set("hasVisited", "true", { expires: 365 });
-      }, 2000); // 2-second delay
-      return () => clearTimeout(timer);
+      if (onboardingStep === 1) {
+        // First step: wait for user to select both grade and persona
+        if (selectedGrade && selectedStyle) {
+          // User has selected both, move to next step after a short delay
+          const timer = setTimeout(() => {
+            setShowOnboarding(false);
+            Cookies.set("hasVisited", "true", { expires: 365 });
+          }, 1000);
+          return () => clearTimeout(timer);
+        }
+      }
     }
-  }, [showOnboarding]);
+  }, [showOnboarding, onboardingStep, selectedGrade, selectedStyle]);
   // === END: New Onboarding Code ===
 
   // === START: History Slider State ===
@@ -802,7 +809,7 @@ export default function ImprovedAiChatsVoicePage() {
     <div>
       {/* Outer flex to hold both colored box and history button */}
       <div
-        className="absolute z-40 flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44"
+        className="absolute z-[60] flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44"
         style={{ top: "40px" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -1039,7 +1046,7 @@ export default function ImprovedAiChatsVoicePage() {
       )}
 
       {/* Onboarding tooltip for FloatingSelectors */}
-      {showOnboarding && (
+      {showOnboarding && onboardingStep === 1 && (
         <div className="fixed top-[120px] right-32 sm:right-36 lg:right-77 z-[60]">
           <img
             src="/images/arrow.svg"
@@ -1047,7 +1054,24 @@ export default function ImprovedAiChatsVoicePage() {
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
           <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
-            Choose your grade and how you&apos;d like the AI to talk to you.
+            {selectedGrade && selectedStyle ? (
+              <div>
+                <div className="mb-2">Great! You've selected:</div>
+                <div className="text-sm opacity-90">
+                  Grade: {selectedGrade} | Style: {selectedStyle}
+                </div>
+                <div className="text-xs mt-2 opacity-75">Ready to start voice chat!</div>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2">Choose your grade and how you&apos;d like the AI to talk to you.</div>
+                <div className="text-xs opacity-75">
+                  {!selectedGrade && !selectedStyle && "Please select both grade and persona"}
+                  {selectedGrade && !selectedStyle && "Now select a persona"}
+                  {!selectedGrade && selectedStyle && "Now select a grade"}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
