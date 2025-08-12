@@ -315,10 +315,10 @@ export default function QuizStartPage() {
                   {q.options.map((opt, i) => (
                     <label
                       key={opt.id}
-                      className={`block rounded-lg px-4 py-3 cursor-pointer transition-all border border-transparent ${
+                      className={`block rounded-md px-4 py-3 cursor-pointer transition-all border border-transparent ${
                         selected[q.id] === opt.id
                           ? 'point-ask-gradient text-white border-green-400'
-                          : 'bg-[#FFB12133] text-[#646464] hover:point-ask-gradient'
+                          : 'bg-gradient-to-r from-orange-100 to-red-200 text-[#646464] hover:point-ask-gradient'
                       }`}
                     >
                       <input
@@ -341,7 +341,7 @@ export default function QuizStartPage() {
               </div>
             ))}
             <button
-              className='point-ask-gradient text-white p-4 cursor-pointer'
+              className='point-ask-gradient text-white p-3 cursor-pointer rounded-xl'
               onClick={() => submitQuiz(quiz, selected, quizStartedAt, router)}
             >
               Submit Quiz
