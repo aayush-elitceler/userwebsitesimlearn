@@ -940,7 +940,7 @@ export default function PointAskChatPage() {
       {/* Chat input bar, only enabled after all options are selected and image uploaded */}
       {selectedGrade && selectedStyle && image && (
         <div
-          className={`fixed bottom-2 sm:bottom-4 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 bg-[rgba(255,255,255,0.1)] py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
+          className={`fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 bg-[rgba(255,255,255,0.1)] py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
             pathname === "/login" ||
             pathname === "/login/otp" ||
             pathname === "/register"
@@ -952,12 +952,13 @@ export default function PointAskChatPage() {
           style={{
             backdropFilter: "blur(10px)",
             borderRadius: "12px",
-            border: "0.96px solid rgba(255,255,255,0.2)",
+            boxShadow: "0px 4px 16px 0px #00000040",
+            border: "0.96px solid #FFFFFF1F",
             height: "55px",
           }}
         >
           <input
-            className="flex-1 bg-transparent text-black placeholder-gray-300 p-3 rounded-full focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2 border border-black"
+            className="flex-1 bg-transparent text-black placeholder-gray-300 p-3 rounded-full focus:outline-none text-sm sm:text-base font-medium"
             type="text"
             placeholder="Type your question..."
             value={message}
@@ -972,7 +973,7 @@ export default function PointAskChatPage() {
             autoComplete="off"
           />
           <button
-            className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+            className="rounded-full p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
             onClick={() => handleSend()}
             disabled={
               !message.trim() ||

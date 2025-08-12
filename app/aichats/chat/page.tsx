@@ -783,7 +783,7 @@ const ChatInputBar = forwardRef(
       pathname === "/login/otp" ||
       pathname === "/register";
     const sidebarCollapsed = state === "collapsed";
-    const inputBarClass = `fixed bottom-2 sm:bottom-4 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 bg-[rgba(255,255,255,0.1)] py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
+    const inputBarClass = `fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 bg-[rgba(255,255,255,0.1)] py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
       hideSidebar ? "" : sidebarCollapsed ? "sidebar-collapsed" : ""
     }`;
 
@@ -792,33 +792,34 @@ const ChatInputBar = forwardRef(
         className={inputBarClass}
         style={{
           height: "55px",
+          boxShadow: "0px 4px 16px 0px #00000040",
+          border: "0.96px solid #FFFFFF1F",
+          borderRadius: "12px",
         }}
       >
-        <div className="flex-1 relative">
-          <input
-            ref={ref}
-            type="text"
-            placeholder="Type your question..."
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onSend()}
-            disabled={disabled}
-            autoFocus={autoFocus}
-            className={`w-full bg-transparent p-3 text-black placeholder-gray-300 focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2 rounded-full transition-all duration-300 ${
-              showOnboarding 
-                ? "border-2 border-orange-500 shadow-lg shadow-orange-500/50" 
-                : "border border-black"
-            }`}
-          />
-          <button
-            onClick={onSend}
-            disabled={disabled || !value.trim()}
-            className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
-          >
-            <ArrowRight size={16} className="sm:hidden" />
-            <ArrowRight size={20} className="hidden sm:block" />
-          </button>
-        </div>
+        <input
+          ref={ref}
+          type="text"
+          placeholder="Type your question..."
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onSend()}
+          disabled={disabled}
+          autoFocus={autoFocus}
+          className={`flex-1 bg-transparent p-3 text-black placeholder-gray-300 focus:outline-none text-sm sm:text-base font-medium rounded-full transition-all duration-300 ${
+            showOnboarding 
+              ? "border-2 border-orange-500 shadow-lg shadow-orange-500/50" 
+              : ""
+          }`}
+        />
+        <button
+          onClick={onSend}
+          disabled={disabled || !value.trim()}
+          className="rounded-full p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+        >
+          <ArrowRight size={16} className="sm:hidden" />
+          <ArrowRight size={20} className="hidden sm:block" />
+        </button>
       </div>
     );
   }
