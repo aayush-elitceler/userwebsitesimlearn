@@ -860,19 +860,27 @@ export default function PointAskChatPage() {
         {/* Chat area - only show after chat starts */}
         {chatHistory.length > 0 && (
           <div className="pt-24 pb-32 max-w-4xl mx-auto">
-            <div className="w-full flex flex-col gap-3">
+            <div className="w-full flex flex-col gap-4">
               {chatHistory.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex ${
+                  className={`flex items-end gap-3 ${
                     msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  } mb-2`}
                 >
+                  {/* AI Avatar - only show for AI messages */}
+                  {msg.role === "ai" && (
+                    <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      AI
+                    </div>
+                  )}
+                  
+                  {/* Message Bubble */}
                   <div
-                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 ${
+                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.role === "user"
-                        ? "point-ask-gradient text-white"
-                        : "bg-[rgba(34,34,34,0.9)] text-white border border-[#007437]/20"
+                        ? "bg-[#FFF8DC] text-gray-800 border border-[#FFE4B5]"
+                        : "bg-[#FFE6CC] text-[#FF5146] border border-[#FFDAB9]"
                     }`}
                   >
                     {/* Show image with the user's first message */}
@@ -893,16 +901,37 @@ export default function PointAskChatPage() {
                         : msg.text}
                     </p>
                   </div>
+                  
+                  {/* User Avatar - only show for user messages */}
+                  {msg.role === "user" && (
+                    <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                      {(() => {
+                        try {
+                          const authCookie = Cookies.get("auth");
+                          if (authCookie) {
+                            const userData = JSON.parse(authCookie);
+                            return userData.firstName?.charAt(0)?.toUpperCase() || "U";
+                          }
+                        } catch (e) {
+                          console.error("Error parsing auth cookie:", e);
+                        }
+                        return "U";
+                      })()}
+                    </div>
+                  )}
                 </div>
               ))}
               {apiLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20 opacity-70">
+                <div className="flex items-end gap-3 justify-start">
+                  <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    AI
+                  </div>
+                  <div className="bg-[#FFE6CC] text-[#FF5146] rounded-2xl px-4 py-3 border border-[#FFDAB9] opacity-70 shadow-sm">
                     <p className="text-sm md:text-base">Thinking...</p>
                   </div>
                 </div>
               )}
-              <div ref={chatBottomRef} />
+              <div ref={chatBottomRef} className="h-4" />
             </div>
           </div>
         )}
@@ -928,7 +957,7 @@ export default function PointAskChatPage() {
           }}
         >
           <input
-            className="flex-1 bg-transparent text-black placeholder-gray-300 p-3 rounded-md focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2 border border-black"
+            className="flex-1 bg-transparent text-black placeholder-gray-300 p-3 rounded-full focus:outline-none text-sm sm:text-base font-medium px-1 sm:px-2 border border-black"
             type="text"
             placeholder="Type your question..."
             value={message}
