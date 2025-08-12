@@ -114,7 +114,7 @@ export default function GenerateQuizPage() {
       {/* Modal Popup */}
       {showModal && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60'>
-          <div className='rounded-2xl shadow-lg p-8 min-w-[320px] max-w-[90vw] flex flex-col items-center' style={{
+          <div className='rounded-2xl shadow-lg p-8 min-w-[420px] max-w-[90vw] flex flex-col items-center' style={{
             background: 'linear-gradient(180deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)'
           }}>
             {loading ? (
