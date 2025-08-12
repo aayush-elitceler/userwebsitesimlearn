@@ -1,128 +1,181 @@
-"use client"
-import { useState } from 'react';
+'use client';
 
+import { useEffect, useState } from 'react';
+import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 
-const mockInstitution = {
-  name: "Harmony Public School",
-  type: "School",
-  affiliatedBoard: "CBSE",
-  address: {
-    street: "123 Main Street",
-    city: "New Delhi",
-    state: "Delhi",
-    pincode: "110001"
-  },
-  email: "info@harmonyps.edu.in",
-  phone: "+91 9876543210",
-  website: "https://harmonyps.edu.in",
-  yearOfEstablishment: "2005",
-  totalStudents: 1200,
-};
+interface ProfileData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  dob: string;
+  gender: string;
+  section: string | null;
+  schoolMailId: string | null;
+  phone: string | null;
+  alternatePhone: string | null;
+  photoUrl: string | null;
+}
 
-export default function InstitutionProfile() {
-  const [institution] = useState(mockInstitution);
+interface ApiResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  data: ProfileData;
+}
+
+export default function UserProfilePage() {
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
   const router = useRouter();
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const authCookie = Cookies.get('auth');
+        let token: string | undefined;
+        if (authCookie) {
+          try {
+            token = JSON.parse(authCookie).token;
+          } catch (e) {
+            console.error('Error parsing auth cookie', e);
+          }
+        }
+
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
+        const res = await fetch(
+          'http://35.154.108.96:3000/api/v1/users/auth/get-profile',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch profile');
+        }
+
+        const json: ApiResponse = await res.json();
+        setProfile(json.data);
+      } catch (err: any) {
+        console.error(err);
+        setError('Unable to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [router]);
+
   const handleLogout = () => {
-    // Remove token/cookie logic here if needed
+    Cookies.remove('auth');
     router.push('/login');
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center font-sans">
-      <div className="w-full max-w-5xl min-h-[80vh] bg-white rounded-2xl shadow-lg flex overflow-hidden border border-[#F2EAF6]">
-        {/* Sidebar */}
-        <aside className="w-72 border-r border-[#F2EAF6] flex flex-col py-8 px-6">
-          <div className="text-xl font-semibold mb-8">My profile</div>
-          <nav className="flex-1 flex flex-col gap-2">
-            <button className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#F8F2F9] text-[#8B2D6C] font-medium border-l-4 border-[#8B2D6C]">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2"><circle cx="10" cy="10" r="8" /></svg>
-               Information
-            </button>
-            <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-[#F8F2F9] transition">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2"><circle cx="10" cy="10" r="8" /></svg>
-              About Us
-            </button>
-            <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-[#F8F2F9] transition">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2"><circle cx="10" cy="10" r="8" /></svg>
-              Terms & Conditions
-            </button>
-            <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-[#F8F2F9] transition">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2"><circle cx="10" cy="10" r="8" /></svg>
-              My plans
-            </button>
-            <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-[#F8F2F9] transition">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2"><circle cx="10" cy="10" r="8" /></svg>
-              Privacy Policy
-            </button>
-            <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-[#F8F2F9] transition">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2"><circle cx="10" cy="10" r="8" /></svg>
-              Report an issue
-            </button>
-          </nav>
+  if (loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gray-50'>
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4'></div>
+          <p className='text-gray-600'>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gray-50'>
+        <div className='text-center'>
+          <p className='text-red-600 text-lg mb-4'>
+            {error || 'Profile not found'}
+          </p>
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 mt-8 text-[#E11D48] font-medium hover:underline"
+            onClick={() => window.location.reload()}
+            className='px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600'
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className=""><path d="M15 12l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" /></svg>
-            Logout
+            Retry
           </button>
-        </aside>
-        {/* Main Card */}
-        <main className="flex-1 flex flex-col items-center justify-center py-12 px-8">
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-[#8B2D6C] to-[#C6426E] flex items-center justify-center text-white text-3xl font-bold mb-2">
-              {institution.name.charAt(0)}
-            </div>
-            <div className="text-2xl font-bold text-[#1A2343] mt-2">{institution.name}</div>
-            <div className="text-gray-500 text-base">{institution.email}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='min-h-screen bg-gray-50 py-8 px-4 sm:px-6 md:px-8'>
+      <div className='max-w-4xl mx-auto'>
+        <div className='flex justify-between items-center mb-6'>
+          <h1 className='text-2xl font-semibold text-gray-800'>My Profile</h1>
+          <div className='flex items-center gap-3'>
+            <button
+              onClick={() => router.push('/')}
+              className='px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors'
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={handleLogout}
+              className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors'
+            >
+              Logout
+            </button>
           </div>
-          <div className="w-full max-w-2xl grid grid-cols-2 gap-x-12 gap-y-6 bg-[#F8F2F9] rounded-2xl p-8">
-            <div>
-              <div className="text-gray-500">Institution Type</div>
-              <div className="font-semibold text-lg">{institution.type}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Affiliated Board/University</div>
-              <div className="font-semibold text-lg">{institution.affiliatedBoard}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Street Address</div>
-              <div className="font-semibold text-lg">{institution.address.street}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">City</div>
-              <div className="font-semibold text-lg">{institution.address.city}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">State</div>
-              <div className="font-semibold text-lg">{institution.address.state}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Pincode</div>
-              <div className="font-semibold text-lg">{institution.address.pincode}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Official Phone</div>
-              <div className="font-semibold text-lg">{institution.phone}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Website</div>
-              <div className="font-semibold text-lg">
-                <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-[#8B2D6C] underline">{institution.website}</a>
+        </div>
+
+        <div className='bg-white rounded-2xl shadow-sm border border-gray-100 p-6'>
+          <div className='flex flex-col sm:flex-row items-center sm:items-start gap-6'>
+            <img
+              src={profile.photoUrl || '/images/imageprofile.png'}
+              alt='Profile'
+              className='w-24 h-24 rounded-full object-cover border'
+            />
+            <div className='flex-1'>
+              <div className='text-xl font-semibold text-gray-900'>
+                {profile.firstName} {profile.lastName}
+              </div>
+              <div className='text-gray-500'>{profile.email}</div>
+              <div className='mt-2 inline-flex items-center gap-2 text-sm text-gray-600'>
+                <span className='px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200'>
+                  {profile.gender}
+                </span>
+                {profile.section && (
+                  <span className='px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border'>
+                    Section {profile.section}
+                  </span>
+                )}
+                {profile.dob && (
+                  <span className='px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border'>
+                    DOB: {new Date(profile.dob).toLocaleDateString()}
+                  </span>
+                )}
               </div>
             </div>
-            <div>
-              <div className="text-gray-500">Year of Establishment</div>
-              <div className="font-semibold text-lg">{institution.yearOfEstablishment}</div>
+          </div>
+
+          <div className='mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4'>
+            <div className='p-4 rounded-xl bg-gray-50 border'>
+              <div className='text-gray-500 text-sm'>School Email</div>
+              <div className='font-medium'>{profile.schoolMailId || '—'}</div>
             </div>
-            <div>
-              <div className="text-gray-500">Total Student Strength</div>
-              <div className="font-semibold text-lg">{institution.totalStudents}</div>
+            <div className='p-4 rounded-xl bg-gray-50 border'>
+              <div className='text-gray-500 text-sm'>Primary Phone</div>
+              <div className='font-medium'>{profile.phone || '—'}</div>
+            </div>
+            <div className='p-4 rounded-xl bg-gray-50 border'>
+              <div className='text-gray-500 text-sm'>Alternate Phone</div>
+              <div className='font-medium'>{profile.alternatePhone || '—'}</div>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
