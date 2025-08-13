@@ -37,6 +37,7 @@ interface User {
   lastName: string;
   role: string;
   photoUrl: string;
+  section?: string;
 }
 interface DayStreak {
   day: string;
@@ -112,13 +113,14 @@ export default function Home() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
+  const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
   const { setLogoUrl } = useLogo();
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchData = async () => {
       try {
         const authCookie = Cookies.get('auth');
         let token: string | undefined;
@@ -135,7 +137,8 @@ export default function Home() {
           return;
         }
 
-        const response = await fetch(
+        // Fetch dashboard data
+        const dashboardResponse = await fetch(
           `https://apisimplylearn.selflearnai.in/api/v1/users/dashboard`,
           {
             headers: {
@@ -145,32 +148,51 @@ export default function Home() {
           }
         );
 
-        if (!response.ok) {
+        if (!dashboardResponse.ok) {
           throw new Error('Failed to fetch dashboard data');
         }
 
-        const result: ApiResponse = await response.json();
-        setDashboardData(result.data);
+        const dashboardResult: ApiResponse = await dashboardResponse.json();
+        setDashboardData(dashboardResult.data);
 
         // Set logo URL if available
-        if (result.data.logo) {
-          console.log('Setting logo URL:', result.data.logo);
-          setLogoUrl(result.data.logo);
+        if (dashboardResult.data.logo) {
+          console.log('Setting logo URL:', dashboardResult.data.logo);
+          setLogoUrl(dashboardResult.data.logo);
         } else {
           console.log('No logo found in data');
         }
+
+        // Fetch profile data to get section information
+        const profileResponse = await fetch(
+          'https://apisimplylearn.selflearnai.in/api/v1/users/auth/get-profile',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (profileResponse.ok) {
+          const profileResult = await profileResponse.json();
+          setProfileData(profileResult.data);
+          console.log('Profile Data:', profileResult.data);
+        }
       } catch (err) {
-        console.error('Error fetching dashboard data:', err);
+        console.error('Error fetching data:', err);
         setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardData();
+    fetchData();
   }, []);
 
   console.log('Dashboard Data:', dashboardData);
+  console.log('User Data:', dashboardData?.user);
+  console.log('Section:', dashboardData?.user?.section);
 
   const createLearningGrowthData = () => {
     if (!dashboardData?.learningGrowth) return null;
@@ -253,10 +275,18 @@ export default function Home() {
     <div
       className={`min-h-screen bg-gray-50 px-4 sm:px-6 md:px-8 py-6 ${poppins.className}`}
     >
-      {/* Header with Logout and Profile buttons */}
+      {/* Header with Profile button and School/Class Info */}
       <div className='flex justify-between items-center mb-6'>
         <div></div> {/* Empty div for spacing */}
-        <div className='flex gap-3'>
+        <div className='flex items-center gap-3'>
+          {/* School and Class Info */}
+          <div className='text-sm text-gray-600 text-right'>
+            {profileData?.section && (
+              <div>Class: Section {profileData.section}</div>
+            )}
+            <div>School: Self Learn AI</div>
+          </div>
+          
           <button
             onClick={() => router.push('/profile')}
             className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center text-xl'

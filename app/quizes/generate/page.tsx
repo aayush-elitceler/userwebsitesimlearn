@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const difficulties = ['easy', 'medium', 'hard'];
-const numQuestionsOptions = [3, 4, 5, 6, 7, 8, 9, 10];
+const numQuestionsOptions = Array.from({length: 26}, (_, i) => i); // 0 to 25
 const timeLimits = [5, 10, 15, 20, 30, 60];
 
 interface Option {
@@ -211,16 +211,27 @@ export default function GenerateQuizPage() {
         >
           {/* Grade */}
           <div className='flex flex-col'>
-            <label className='text-black mb-1 font-semibold'>Grade</label>
-            <input
-              type='number'
-              value={grade}
-              onChange={(e) => setGrade(Number(e.target.value))}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
-              min={1}
-              max={12}
-              required
-            />
+            <label htmlFor="grade" className='text-black mb-1 font-semibold'>Grade</label>
+            <div className='relative'>
+              <select
+                id="grade"
+                value={grade}
+                onChange={(e) => setGrade(Number(e.target.value))}
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                required
+              >
+                {Array.from({length: 12}, (_, i) => i + 1).map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
           </div>
           {/* Persona */}
           <div className='flex flex-col'>
@@ -292,7 +303,6 @@ export default function GenerateQuizPage() {
                 className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
-                <option value=''>3-10</option>
                 {numQuestionsOptions.map((n) => (
                   <option key={n} value={n}>
                     {n}
@@ -317,7 +327,6 @@ export default function GenerateQuizPage() {
                 className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
-                <option value=''>5, 10, 15 minutes</option>
                 {timeLimits.map((t) => (
                   <option key={t} value={t}>
                     {t} minutes

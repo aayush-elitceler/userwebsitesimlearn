@@ -276,15 +276,27 @@ export default function CreateExamPage() {
           {(form.questionType === "long" || form.questionType === "both") && (
             <>
               <div className='flex flex-col'>
-                <label className='text-black mb-1 font-semibold'>No. of Long Questions</label>
-                <input
-                  name="longCount"
-                  type="number"
-                  min={0}
-                  value={form.longCount}
-                  onChange={handleChange}
-                  className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none'
-                />
+                <label htmlFor="longCount" className='text-black mb-1 font-semibold'>No. of Long Questions</label>
+                <div className='relative'>
+                  <select
+                    id="longCount"
+                    name="longCount"
+                    value={form.longCount}
+                    onChange={handleChange}
+                    className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                  >
+                    {Array.from({length: 15}, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                    <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                    </svg>
+                  </div>
+                </div>
               </div>
               <div className='flex flex-col'>
                 <label className='text-black mb-1 font-semibold'>Marks per Long Question</label>
@@ -303,15 +315,27 @@ export default function CreateExamPage() {
           {(form.questionType === "short" || form.questionType === "both") && (
             <>
               <div className='flex flex-col'>
-                <label className='text-black mb-1 font-semibold'>No. of Short Questions</label>
-                <input
-                  name="shortCount"
-                  type="number"
-                  min={0}
-                  value={form.shortCount}
-                  onChange={handleChange}
-                  className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none'
-                />
+                <label htmlFor="shortCount" className='text-black mb-1 font-semibold'>No. of Short Questions</label>
+                <div className='relative'>
+                  <select
+                    id="shortCount"
+                    name="shortCount"
+                    value={form.shortCount}
+                    onChange={handleChange}
+                    className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                  >
+                    {Array.from({length: 15}, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                    <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                    </svg>
+                  </div>
+                </div>
               </div>
               <div className='flex flex-col'>
                 <label className='text-black mb-1 font-semibold'>Marks per Short Question</label>
