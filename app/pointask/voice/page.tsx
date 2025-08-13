@@ -123,10 +123,6 @@ export default function ImprovedAiChatsVoicePage() {
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // === START: New Onboarding Code ===
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(1); // 1: grade/persona only
-
   // === START: History Slider State ===
   const [showHistorySlider, setShowHistorySlider] = useState(false);
   const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
@@ -136,27 +132,6 @@ export default function ImprovedAiChatsVoicePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   // === END: History Slider State ===
-
-  useEffect(() => {
-    // Always show onboarding on page refresh, regardless of cookie
-    setShowOnboarding(true);
-  }, []);
-
-  useEffect(() => {
-    if (showOnboarding) {
-      if (onboardingStep === 1) {
-        // First step: wait for grade and persona selection
-        if (selectedGrade && selectedStyle) {
-          // User has selected both, hide onboarding after a short delay
-          const timer = setTimeout(() => {
-            setShowOnboarding(false);
-            Cookies.set("hasVisitedPointAskVoice", "true", { expires: 365 });
-          }, 1000);
-          return () => clearTimeout(timer);
-        }
-      }
-    }
-  }, [showOnboarding, onboardingStep, selectedGrade, selectedStyle]);
 
   // Check browser support and microphone permission on mount
   useEffect(() => {
@@ -331,7 +306,6 @@ export default function ImprovedAiChatsVoicePage() {
   // Send message to API with better error handling
   const handleSend = useCallback(async () => {
     if (!selectedGrade || !selectedStyle || !inputValue.trim()) return;
-
     const isFirstMessage = chatHistory.length === 0;
 
     setApiLoading(true);
@@ -388,17 +362,18 @@ export default function ImprovedAiChatsVoicePage() {
         method: 'POST',
         body: formData,
       });
-
+     
       if (!res.ok) {
+        console.log(res);
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-
+     
       const data = await res.json();
       const responseText =
         data?.data?.response ||
         data?.response ||
         "Sorry, I couldn't process your request.";
-
+      
       // Token/Model Logging
       const model = 'Gemini 1.0 Pro';
       const inputTokens = encode(inputValue.trim()).length;
@@ -480,6 +455,7 @@ export default function ImprovedAiChatsVoicePage() {
     try {
       SpeechRecognition.stopListening();
       setSpeechError(null);
+    
 
       // Auto-submit if we have transcript and required selections
       if (transcript.trim() && selectedGrade && selectedStyle) {
@@ -494,6 +470,7 @@ export default function ImprovedAiChatsVoicePage() {
       setSpeechError('Failed to stop listening');
     }
   }, [transcript, selectedGrade, selectedStyle, handleSend]);
+  
 
   // useEffect(() => {
   //   if (!listening) {
@@ -508,6 +485,7 @@ export default function ImprovedAiChatsVoicePage() {
       setSpeechError(null);
       activeSessionRef.current = true;
 
+
       // Check microphone permission first
       if (microphonePermission === 'denied') {
         setSpeechError(
@@ -515,7 +493,7 @@ export default function ImprovedAiChatsVoicePage() {
         );
         return;
       }
-
+    
       // Request microphone access explicitly
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -524,7 +502,7 @@ export default function ImprovedAiChatsVoicePage() {
         setSpeechError('Please allow microphone access to use voice input');
         return;
       }
-
+     
       resetTranscript();
 
       // Start listening with enhanced options
@@ -532,7 +510,7 @@ export default function ImprovedAiChatsVoicePage() {
         continuous: true,
         language: 'en-US',
       });
-
+    
       // If screen sharing and no image captured yet, grab one immediately
       if (!imageFile && screenShareStream) {
         const f = await captureScreenFrameToFile();
@@ -542,6 +520,7 @@ export default function ImprovedAiChatsVoicePage() {
           setIsImageConfirmed(true);
         }
       }
+     
     } catch (error) {
       console.error('Error starting speech recognition:', error);
       setSpeechError('Failed to start voice recognition. Please try again.');
@@ -608,11 +587,16 @@ export default function ImprovedAiChatsVoicePage() {
 
   // Auto-send when a phrase likely completes (basic heuristic) and we have an image or screen share
   useEffect(() => {
+  
     if (!activeSessionRef.current) return;
+    
     if (!transcript || transcript.trim().length < 3) return;
+  
     const trimmed = transcript.trim();
     const endsWithPunct = /[\.\?\!\)]$/.test(trimmed);
-    if (endsWithPunct && (imageFile || screenShareStream)) {
+
+    if (imageFile || screenShareStream) {
+  
       // debounce send a bit
       const t = setTimeout(() => {
         setInputValue(trimmed);
@@ -765,7 +749,7 @@ export default function ImprovedAiChatsVoicePage() {
     <div>
       {/* Outer flex holding gradient box and history button */}
       <div
-        className='fixed z-[60] flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44'
+        className='fixed z-40 flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44'
         style={{ top: '40px' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -894,44 +878,6 @@ export default function ImprovedAiChatsVoicePage() {
         backgroundPosition: 'center',
       }}
     >
-      {/* Onboarding overlay */}
-      {showOnboarding && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-50"></div>
-      )}
-
-      {/* Onboarding tooltip for FloatingSelectors */}
-      {showOnboarding && onboardingStep === 1 && (
-        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-60 z-[60]">
-          <img
-            src="/images/arrow.svg"
-            alt="onboarding"
-            className="w-[19px] h-[59px] object-cover mx-auto mb-5"
-          />
-          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
-            {selectedGrade && selectedStyle ? (
-              <div>
-                <div className="mb-2">Great! You've selected:</div>
-                <div className="text-sm opacity-90">
-                  Grade: {selectedGrade} | Style: {selectedStyle}
-                </div>
-                <div className="text-xs mt-2 opacity-75">Now you can upload an image or share your screen and start voice chatting!</div>
-              </div>
-            ) : (
-              <div>
-                <div className="mb-2">Choose your grade and how you&apos;d like the AI to talk to you.</div>
-                <div className="text-xs opacity-75">
-                  {!selectedGrade && !selectedStyle && "Please select both grade and persona"}
-                  {selectedGrade && !selectedStyle && "Now select a persona"}
-                  {!selectedGrade && selectedStyle && "Now select a grade"}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-
-
       {FloatingSelectors}
 
       {/* History Slider */}
@@ -1172,68 +1118,35 @@ export default function ImprovedAiChatsVoicePage() {
         {/* Chat area - only show after chat starts */}
         {chatHistory.length > 0 && (
           <div className='pb-32 max-w-4xl mx-auto'>
-            <div className='w-full flex flex-col gap-4'>
+            <div className='w-full flex flex-col gap-3'>
               {chatHistory.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-end gap-3 ${
+                  className={`flex ${
                     msg.role === 'user' ? 'justify-end' : 'justify-start'
-                  } mb-2`}
+                  }`}
                 >
-                  {/* AI Avatar - only show for AI messages */}
-                  {msg.role === 'ai' && (
-                    <div className='w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0'>
-                      AI
+                  {msg.role === 'user' ? (
+                    <div className='max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 point-ask-gradient text-white'>
+                      <p className='text-sm md:text-base leading-relaxed'>
+                        {msg.text}
+                      </p>
                     </div>
-                  )}
-                  
-                  {/* Message Bubble */}
-                  <div
-                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
-                      msg.role === 'user'
-                        ? 'bg-[#FFF8DC] text-gray-800 border border-[#FFE4B5]'
-                        : 'bg-[#FFE6CC] text-[#FF5146] border border-[#FFDAB9]'
-                    }`}
-                  >
-                    <p className='text-sm md:text-base leading-relaxed'>
-                      {msg.role === 'ai' &&
-                      idx === streamingMessageIndex &&
-                      isStreaming
-                        ? `${displayedText}${displayedText ? '|' : ''}`
-                        : msg.text}
-                    </p>
-                  </div>
-                  
-                  {/* User Avatar - only show for user messages */}
-                  {msg.role === 'user' && (
-                    <div className='w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0'>
-                      {(() => {
-                        try {
-                          const authCookie = Cookies.get('auth');
-                          if (authCookie) {
-                            const userData = JSON.parse(authCookie);
-                            return userData.firstName?.charAt(0)?.toUpperCase() || 'U';
-                          }
-                        } catch (e) {
-                          console.error('Error parsing auth cookie:', e);
-                        }
-                        return 'U';
-                      })()}
+                  ) : (
+                    <div className='max-w-[85%] md:max-w-[75%]'>
+                      <AIMessage text={msg.text} />
                     </div>
                   )}
                 </div>
               ))}
               {thinking && (
-                <div className='flex items-end gap-3 justify-start'>
-                  <div className='w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0'>
-                    AI
-                  </div>
-                  <div className='bg-[#FFE6CC] text-[#FF5146] rounded-2xl px-4 py-3 border border-[#FFDAB9] opacity-70 shadow-sm'>
+                <div className='flex justify-start'>
+                  <div className='bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20 opacity-70'>
                     <p className='text-sm md:text-base'>Thinking...</p>
                   </div>
                 </div>
               )}
-              <div ref={chatBottomRef} className='h-4' />
+              <div ref={chatBottomRef} />
             </div>
           </div>
         )}
@@ -1252,7 +1165,7 @@ export default function ImprovedAiChatsVoicePage() {
           <div className='flex gap-3 justify-center mb-8'>
             <button
               onClick={handleStartListening}
-              className="point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full transition-all duration-300"
+              className='point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full ...'
             >
               {/* mic icon SVG */}
               Start Speaking
