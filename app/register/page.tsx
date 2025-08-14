@@ -44,6 +44,27 @@ export default function Register() {
 
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+
+  // Country codes for phone numbers
+  const countryCodes = [
+    { code: "+91", country: "India" },
+    { code: "+1", country: "USA/Canada" },
+    { code: "+44", country: "UK" },
+    { code: "+61", country: "Australia" },
+    { code: "+86", country: "China" },
+    { code: "+81", country: "Japan" },
+    { code: "+49", country: "Germany" },
+    { code: "+33", country: "France" },
+    { code: "+39", country: "Italy" },
+    { code: "+34", country: "Spain" },
+  ];
+
+  // Class options
+  const classOptions = [
+    "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7", "Class 8", "Class 9", "Class 10",
+    "Class 11", "Class 12", "UG", "PG"
+  ];
 
   const handleAccountChange = (field: string, value: string) => {
     setAccountData((prev) => ({ ...prev, [field]: value }));
@@ -75,6 +96,12 @@ export default function Register() {
   };
 
   const handleStep1Submit = async () => {
+    // If already registered, just move to next step
+    if (isRegistered && token) {
+      setStep(2);
+      return;
+    }
+
     try {
       setLoading(true);
       const payload = {
@@ -93,6 +120,7 @@ export default function Register() {
       const token = data?.data?.token;
       if (token) {
         setToken(token);
+        setIsRegistered(true);
         setStep(2);
       } else {
         throw new Error("No token returned from API");
@@ -137,26 +165,14 @@ export default function Register() {
     return;
   }
 
-  // Auto-add +91 if not present
-  const formatPhone = (num: string) => {
-    let clean = num.trim();
-    if (!clean.startsWith("+")) {
-      clean = "+91" + clean.replace(/^0+/, ""); // remove leading zeros if any
-    }
-    return clean;
-  };
-
-  const phoneFormatted = formatPhone(formData.phone);
-  const altPhoneFormatted = formatPhone(formData.altPhone);
-
-  // Validate phone format (after adding +91)
-  const phoneRegex = /^\+\d{10,15}$/;
-  if (!phoneRegex.test(phoneFormatted) || !phoneRegex.test(altPhoneFormatted)) {
-    alert("Phone numbers must be valid and include country code.");
+  // Validate phone format (basic validation)
+  const phoneRegex = /^\d{10}$/;
+  if (!phoneRegex.test(formData.phone) || !phoneRegex.test(formData.altPhone)) {
+    alert("Phone numbers must be 10 digits.");
     return;
   }
 
-  // Email check
+  // Email check (removed .edu restriction)
   if (!/\S+@\S+\.\S+/.test(formData.schoolEmail)) {
     alert("Invalid school email address");
     return;
@@ -171,8 +187,8 @@ export default function Register() {
     fd.append("class", formData.class.trim());
     fd.append("section", formData.section.trim().toUpperCase()); // Ensure A/B/C uppercase
     fd.append("schoolMailId", formData.schoolEmail.trim());
-    fd.append("phone", phoneFormatted);
-    fd.append("alternatePhone", altPhoneFormatted);
+    fd.append("phone", "+91" + formData.phone); // Add country code
+    fd.append("alternatePhone", "+91" + formData.altPhone); // Add country code
     if (formData.photo) {
       fd.append("profilePic", formData.photo);
     }
@@ -196,7 +212,21 @@ export default function Register() {
   }
 };
 
+  // Function to go back to previous step
+  const goBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
 
+  // Function to handle next step navigation
+  const handleNextStep = () => {
+    if (step === 1) {
+      handleStep1Submit();
+    } else {
+      setStep(step + 1);
+    }
+  };
 
   return (
     <div
@@ -277,110 +307,204 @@ export default function Register() {
             {/* Step Content */}
             {step === 1 && (
               <>
-                <Input
-                  placeholder="Name"
-                  value={accountData.name}
-                  onChange={(e) => handleAccountChange("name", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={accountData.email}
-                  onChange={(e) => handleAccountChange("email", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={accountData.password}
-                  onChange={(e) => handleAccountChange("password", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="Enter your name"
+                    value={accountData.name}
+                    onChange={(e) => handleAccountChange("name", e.target.value)}
+                    className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={accountData.email}
+                    onChange={(e) => handleAccountChange("email", e.target.value)}
+                    className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={accountData.password}
+                    onChange={(e) => handleAccountChange("password", e.target.value)}
+                    className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
+                  />
+                </div>
               </>
             )}
 
             {step === 2 && (
               <>
-                <Input
-                  placeholder="Student Name"
-                  value={formData.studentName}
-                  onChange={(e) => handleChange("studentName", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
-                <div
-      className="w-full border border-[#E5E5E5] rounded-lg bg-white flex items-center justify-between px-4 py-3 cursor-pointer relative"
-      onClick={toggleCalendar}
-    >
-      <span className={formData.dob ? "text-gray-700" : "text-gray-400"}>
-        {formData.dob || "Date of Birth"}
-      </span>
-      <img
-        src="/images/calendar_month.svg"
-        alt="Calendar"
-        className="w-5 h-5 pointer-events-none"
-      />
-      <input
-        ref={dateInputRef}
-        type="date"
-        value={formData.dob}
-        onChange={(e) => handleChange("dob", e.target.value)}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-      />
-    </div>
-
-
-                <select
-                  value={formData.gender}
-                  onChange={(e) => handleChange("gender", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-3 px-1 bg-white text-gray-700"
-                >
-                  <option value="">Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Student Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="Enter student name"
+                    value={formData.studentName}
+                    onChange={(e) => handleChange("studentName", e.target.value)}
+                    className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Date of Birth <span className="text-red-500">*</span>
+                  </label>
+                  <div
+                    className="w-full border border-[#E5E5E5] rounded-lg bg-white flex items-center justify-between px-4 py-3 cursor-pointer relative"
+                    onClick={toggleCalendar}
+                  >
+                    <span className={formData.dob ? "text-gray-700" : "text-gray-400"}>
+                      {formData.dob || "Select date of birth"}
+                    </span>
+                    <img
+                      src="/images/calendar_month.svg"
+                      alt="Calendar"
+                      className="w-5 h-5 pointer-events-none"
+                    />
+                    <input
+                      ref={dateInputRef}
+                      type="date"
+                      value={formData.dob}
+                      onChange={(e) => handleChange("dob", e.target.value)}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => handleChange("gender", e.target.value)}
+                    className="w-full border border-[#E5E5E5] rounded-lg py-3 px-1 bg-white text-gray-700"
+                    aria-label="Gender selection"
+                  >
+                    <option value="">Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </>
             )}
 
             {step === 3 && (
               <>
-                <Input
-                  placeholder="Class"
-                  value={formData.class}
-                  onChange={(e) => handleChange("class", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
-                <Input
-                  placeholder="Section"
-                  value={formData.section}
-                  onChange={(e) => handleChange("section", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
-                <Input
-                  type="email"
-                  placeholder="School Mail ID"
-                  value={formData.schoolEmail}
-                  onChange={(e) => handleChange("schoolEmail", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
-                <Input
-                  placeholder="Phone Number"
-                  value={formData.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
-                <Input
-                  placeholder="Alternative Phone Number"
-                  value={formData.altPhone}
-                  onChange={(e) => handleChange("altPhone", e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
-                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Class <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.class}
+                    onChange={(e) => handleChange("class", e.target.value)}
+                    className="w-full border border-[#E5E5E5] rounded-lg py-3 px-1 bg-white text-gray-700"
+                    aria-label="Class selection"
+                  >
+                    <option value="">Select class</option>
+                    {classOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Section <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="Enter section (e.g., A, B, C)"
+                    value={formData.section}
+                    onChange={(e) => handleChange("section", e.target.value)}
+                    className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    School Email <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="Enter school email"
+                    value={formData.schoolEmail}
+                    onChange={(e) => handleChange("schoolEmail", e.target.value)}
+                    className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <select 
+                      className="border border-[#E5E5E5] rounded-lg py-3 px-2 bg-white text-gray-700 min-w-[80px]"
+                      aria-label="Country code"
+                    >
+                      {countryCodes.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.code}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      placeholder="Enter 10-digit phone number"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        handleChange("phone", value);
+                      }}
+                      className="flex-1 border border-[#E5E5E5] rounded-lg py-6 bg-white"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Alternative Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <select 
+                      className="border border-[#E5E5E5] rounded-lg py-3 px-2 bg-white text-gray-700 min-w-[80px]"
+                      aria-label="Alternative phone country code"
+                    >
+                      {countryCodes.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.code}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      placeholder="Enter 10-digit phone number"
+                      value={formData.altPhone}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        handleChange("altPhone", value);
+                      }}
+                      className="flex-1 border border-[#E5E5E5] rounded-lg py-6 bg-white"
+                    />
+                  </div>
+                </div>
               </>
             )}
 
                          {step === 4 && (
                <div className="flex flex-col items-center">
+                 <label className="text-sm font-medium text-gray-700 mb-4">
+                   Profile Photo <span className="text-gray-400">(Optional)</span>
+                 </label>
                  <label
                    htmlFor="photo"
                    className="w-48 h-48 border-2 border-dashed border-orange-300 rounded-full flex items-center justify-center cursor-pointer"
@@ -418,16 +542,25 @@ export default function Register() {
 
             {/* Navigation Buttons */}
             <div className="flex justify-between gap-2">
-              {step < 4 && (
+              {step > 1 && (
                 <Button
                   type="button"
-                  onClick={() => (step === 1 ? handleStep1Submit() : setStep(step + 1))}
-                  className="bg-gradient-to-r w-full from-orange-400 to-red-400 text-white py-6 px-6 rounded-lg"
-                  disabled={loading}
+                  onClick={goBack}
+                  className="bg-gray-500 text-white py-6 px-6 rounded-lg"
                 >
-                  {loading ? "Loading..." : "Next"}
+                  Back
                 </Button>
               )}
+                             {step < 4 && (
+                 <Button
+                   type="button"
+                   onClick={handleNextStep}
+                   className={`bg-gradient-to-r from-orange-400 to-red-400 text-white py-6 px-6 rounded-lg ${step === 1 ? 'w-full' : 'flex-1'}`}
+                   disabled={loading}
+                 >
+                   {loading ? "Loading..." : "Next"}
+                 </Button>
+               )}
               {step === 4 && (
                 <Button
                   type="button"
