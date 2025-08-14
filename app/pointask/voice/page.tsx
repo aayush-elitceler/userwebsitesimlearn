@@ -362,18 +362,18 @@ export default function ImprovedAiChatsVoicePage() {
         method: 'POST',
         body: formData,
       });
-     
+
       if (!res.ok) {
         console.log(res);
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-     
+
       const data = await res.json();
       const responseText =
         data?.data?.response ||
         data?.response ||
         "Sorry, I couldn't process your request.";
-      
+
       // Token/Model Logging
       const model = 'Gemini 1.0 Pro';
       const inputTokens = encode(inputValue.trim()).length;
@@ -455,7 +455,6 @@ export default function ImprovedAiChatsVoicePage() {
     try {
       SpeechRecognition.stopListening();
       setSpeechError(null);
-    
 
       // Auto-submit if we have transcript and required selections
       if (transcript.trim() && selectedGrade && selectedStyle) {
@@ -470,7 +469,6 @@ export default function ImprovedAiChatsVoicePage() {
       setSpeechError('Failed to stop listening');
     }
   }, [transcript, selectedGrade, selectedStyle, handleSend]);
-  
 
   // useEffect(() => {
   //   if (!listening) {
@@ -485,7 +483,6 @@ export default function ImprovedAiChatsVoicePage() {
       setSpeechError(null);
       activeSessionRef.current = true;
 
-
       // Check microphone permission first
       if (microphonePermission === 'denied') {
         setSpeechError(
@@ -493,7 +490,7 @@ export default function ImprovedAiChatsVoicePage() {
         );
         return;
       }
-    
+
       // Request microphone access explicitly
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -502,7 +499,7 @@ export default function ImprovedAiChatsVoicePage() {
         setSpeechError('Please allow microphone access to use voice input');
         return;
       }
-     
+
       resetTranscript();
 
       // Start listening with enhanced options
@@ -510,7 +507,7 @@ export default function ImprovedAiChatsVoicePage() {
         continuous: true,
         language: 'en-US',
       });
-    
+
       // If screen sharing and no image captured yet, grab one immediately
       if (!imageFile && screenShareStream) {
         const f = await captureScreenFrameToFile();
@@ -520,7 +517,6 @@ export default function ImprovedAiChatsVoicePage() {
           setIsImageConfirmed(true);
         }
       }
-     
     } catch (error) {
       console.error('Error starting speech recognition:', error);
       setSpeechError('Failed to start voice recognition. Please try again.');
@@ -587,16 +583,14 @@ export default function ImprovedAiChatsVoicePage() {
 
   // Auto-send when a phrase likely completes (basic heuristic) and we have an image or screen share
   useEffect(() => {
-  
     if (!activeSessionRef.current) return;
-    
+
     if (!transcript || transcript.trim().length < 3) return;
-  
+
     const trimmed = transcript.trim();
     const endsWithPunct = /[\.\?\!\)]$/.test(trimmed);
 
     if (imageFile || screenShareStream) {
-  
       // debounce send a bit
       const t = setTimeout(() => {
         setInputValue(trimmed);
@@ -871,308 +865,312 @@ export default function ImprovedAiChatsVoicePage() {
   );
 
   return (
-    <div
-      className='min-h-screen flex flex-col items-center justify-center relative'
-      style={{
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      {FloatingSelectors}
+    // <div
+    //   className='min-h-screen flex flex-col items-center justify-center relative'
+    //   style={{
+    //     backgroundSize: 'cover',
+    //     backgroundPosition: 'center',
+    //   }}
+    // >
+    //   {FloatingSelectors}
 
-      {/* History Slider */}
-      <HistorySlider
-        showHistorySlider={showHistorySlider}
-        isClosing={isClosing}
-        historyData={historyData}
-        historyLoading={historyLoading}
-        searchQuery={searchQuery}
-        isSearching={isSearching}
-        onClose={handleCloseHistory}
-        onSearchClick={handleSearchChats}
-        onSearchInputChange={handleSearchInputChange}
-        onSearchClose={() => {
-          setIsSearching(false);
-          setSearchQuery('');
-        }}
-        onNewChat={() => {
-          console.log('🔍 [HISTORY] New chat button clicked');
-          handleCloseHistory();
-          setSelectedChatId(null);
-          setChatHistory([]);
-          setImage(null);
-          setImageFile(null);
-          setIsImageConfirmed(false);
-        }}
-        onViewChat={handleViewChat}
-      />
+    //   {/* History Slider */}
+    //   <HistorySlider
+    //     showHistorySlider={showHistorySlider}
+    //     isClosing={isClosing}
+    //     historyData={historyData}
+    //     historyLoading={historyLoading}
+    //     searchQuery={searchQuery}
+    //     isSearching={isSearching}
+    //     onClose={handleCloseHistory}
+    //     onSearchClick={handleSearchChats}
+    //     onSearchInputChange={handleSearchInputChange}
+    //     onSearchClose={() => {
+    //       setIsSearching(false);
+    //       setSearchQuery('');
+    //     }}
+    //     onNewChat={() => {
+    //       console.log('🔍 [HISTORY] New chat button clicked');
+    //       handleCloseHistory();
+    //       setSelectedChatId(null);
+    //       setChatHistory([]);
+    //       setImage(null);
+    //       setImageFile(null);
+    //       setIsImageConfirmed(false);
+    //     }}
+    //     onViewChat={handleViewChat}
+    //   />
 
-      <div className='w-full px-4 lg:px-8 mt-6'>
-        {/* Welcome message and suggestions - only show before chat starts */}
-        {!image && chatHistory.length === 0 && (
-          <div className=' flex flex-col mt-12 items-center max-w-4xl mx-auto'>
-            <div className='mt-24 mb-4 text-center w-full'>
-              <div className='text-2xl md:text-3xl font-bold text-black mb-2'>
-                <span role='img' aria-label='wave'>
-                  👋
-                </span>{' '}
-                Upload a question image to get started!
-                {selectedStyle ? 'like a ' + selectedStyle : ''}{' '}
-                {selectedGrade
-                  ? selectedGrade === 'UG' || selectedGrade === 'PG'
-                    ? ` for ${selectedGrade} level`
-                    : ' for Grade ' + selectedGrade.replace(/\D/g, '')
-                  : ''}
-              </div>
-              <div className='text-lg text-black mb-8'>
-                Select your class and style, then upload a photo of your
-                question.
-              </div>
-            </div>
-            <div className='flex flex-col md:flex-row gap-8 w-full justify-center mb-8'>
-              <button
-                className='flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-transparent text-black w-full md:w-1/2 border border-[#007437]/30'
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <span className='point-ask-gradient rounded-full w-12 h-12 flex items-center justify-center'>
-                  <svg
-                    width='28'
-                    height='28'
-                    fill='none'
-                    stroke='#fff'
-                    strokeWidth='2'
-                    viewBox='0 0 24 24'
-                  >
-                    <rect x='3' y='7' width='18' height='13' rx='2' />
-                    <path d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' />
-                  </svg>
-                </span>
-                Upload Image
-                <input
-                  ref={fileInputRef}
-                  type='file'
-                  accept='image/*'
-                  className='hidden'
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleImageUpload(e.target.files[0]);
-                    }
-                  }}
-                />
-              </button>
+    //   <div className='w-full px-4 lg:px-8 mt-6'>
+    //     {/* Welcome message and suggestions - only show before chat starts */}
+    //     {!image && chatHistory.length === 0 && (
+    //       <div className=' flex flex-col mt-12 items-center max-w-4xl mx-auto'>
+    //         <div className='mt-24 mb-4 text-center w-full'>
+    //           <div className='text-2xl md:text-3xl font-bold text-black mb-2'>
+    //             <span role='img' aria-label='wave'>
+    //               👋
+    //             </span>{' '}
+    //             Upload a question image to get started!
+    //             {selectedStyle ? 'like a ' + selectedStyle : ''}{' '}
+    //             {selectedGrade
+    //               ? selectedGrade === 'UG' || selectedGrade === 'PG'
+    //                 ? ` for ${selectedGrade} level`
+    //                 : ' for Grade ' + selectedGrade.replace(/\D/g, '')
+    //               : ''}
+    //           </div>
+    //           <div className='text-lg text-black mb-8'>
+    //             Select your class and style, then upload a photo of your
+    //             question.
+    //           </div>
+    //         </div>
+    //         <div className='flex flex-col md:flex-row gap-8 w-full justify-center mb-8'>
+    //           <button
+    //             className='flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-transparent text-black w-full md:w-1/2 border border-[#007437]/30'
+    //             onClick={() => fileInputRef.current?.click()}
+    //           >
+    //             <span className='point-ask-gradient rounded-full w-12 h-12 flex items-center justify-center'>
+    //               <svg
+    //                 width='28'
+    //                 height='28'
+    //                 fill='none'
+    //                 stroke='#fff'
+    //                 strokeWidth='2'
+    //                 viewBox='0 0 24 24'
+    //               >
+    //                 <rect x='3' y='7' width='18' height='13' rx='2' />
+    //                 <path d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' />
+    //               </svg>
+    //             </span>
+    //             Upload Image
+    //             <input
+    //               ref={fileInputRef}
+    //               type='file'
+    //               accept='image/*'
+    //               className='hidden'
+    //               onChange={(e) => {
+    //                 if (e.target.files && e.target.files[0]) {
+    //                   handleImageUpload(e.target.files[0]);
+    //                 }
+    //               }}
+    //             />
+    //           </button>
 
-              {/* Share Screen Button */}
-              <button
-                className='flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-transparent text-black w-full md:w-1/2 border border-[#FF5146]/30'
-                onClick={() =>
-                  isScreenSharing ? stopScreenShare() : startScreenShare()
-                }
-              >
-                <span className='point-ask-gradient rounded-full w-12 h-12 flex items-center justify-center'>
-                  <svg
-                    width='28'
-                    height='28'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='#fff'
-                    strokeWidth='2'
-                  >
-                    <rect x='3' y='4' width='18' height='12' rx='2' />
-                    <path d='M7 20h10M12 16v4' />
-                  </svg>
-                </span>
-                {isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
-              </button>
-            </div>
+    //           {/* Share Screen Button */}
+    //           <button
+    //             className='flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-transparent text-black w-full md:w-1/2 border border-[#FF5146]/30'
+    //             onClick={() =>
+    //               isScreenSharing ? stopScreenShare() : startScreenShare()
+    //             }
+    //           >
+    //             <span className='point-ask-gradient rounded-full w-12 h-12 flex items-center justify-center'>
+    //               <svg
+    //                 width='28'
+    //                 height='28'
+    //                 viewBox='0 0 24 24'
+    //                 fill='none'
+    //                 stroke='#fff'
+    //                 strokeWidth='2'
+    //               >
+    //                 <rect x='3' y='4' width='18' height='12' rx='2' />
+    //                 <path d='M7 20h10M12 16v4' />
+    //               </svg>
+    //             </span>
+    //             {isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
+    //           </button>
+    //         </div>
 
-            {screenShareError && (
-              <div className='text-red-500 mb-4'>{screenShareError}</div>
-            )}
+    //         {screenShareError && (
+    //           <div className='text-red-500 mb-4'>{screenShareError}</div>
+    //         )}
 
-            {/* Live screen preview and capture controls */}
-            {isScreenSharing && (
-              <div className='w-full flex flex-col items-center gap-4 mb-8'>
-                <video
-                  ref={screenVideoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className='rounded-xl border w-full sm:w-[600px] max-w-full bg-black'
-                />
-                <div className='flex gap-3'>
-                  <button
-                    className='point-ask-gradient text-white rounded-lg px-6 py-2'
-                    onClick={captureScreenFrame}
-                  >
-                    Capture Frame
-                  </button>
-                  <button
-                    className='bg-gray-800 text-white rounded-lg px-6 py-2'
-                    onClick={stopScreenShare}
-                  >
-                    Stop Sharing
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        {(image || isScreenSharing) && !thinking && (
-          <div className='pt-24'>
-            {/* Compact image preview when image is uploaded but no response yet */}
+    //         {/* Live screen preview and capture controls */}
+    //         {isScreenSharing && (
+    //           <div className='w-full flex flex-col items-center gap-4 mb-8'>
+    //             <video
+    //               ref={screenVideoRef}
+    //               autoPlay
+    //               muted
+    //               playsInline
+    //               className='rounded-xl border w-full sm:w-[600px] max-w-full bg-black'
+    //             />
+    //             <div className='flex gap-3'>
+    //               <button
+    //                 className='point-ask-gradient text-white rounded-lg px-6 py-2'
+    //                 onClick={captureScreenFrame}
+    //               >
+    //                 Capture Frame
+    //               </button>
+    //               <button
+    //                 className='bg-gray-800 text-white rounded-lg px-6 py-2'
+    //                 onClick={stopScreenShare}
+    //               >
+    //                 Stop Sharing
+    //               </button>
+    //             </div>
+    //           </div>
+    //         )}
+    //       </div>
+    //     )}
+    //     {(image || isScreenSharing) && !thinking && (
+    //       <div className='pt-24'>
+    //         {/* Compact image preview when image is uploaded but no response yet */}
 
-            <div className='w-full flex flex-col items-center mb-6'>
-              {image && (
-                <div className='rounded-2xl overflow-hidden bg-black w-full sm:w-[600px] max-w-full h-[300px] sm:h-[300px] flex items-center justify-center mb-4'>
-                  <img
-                    src={image}
-                    alt='Uploaded question'
-                    className='object-cover w-full h-full'
-                  />
-                </div>
-              )}
-              {isScreenSharing && !image && (
-                <div className='rounded-2xl overflow-hidden bg-black w-full sm:w-[600px] max-w-full h-[300px] sm:h-[300px] flex items-center justify-center mb-4'>
-                  <video
-                    ref={screenVideoRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    className='object-contain w-full h-full'
-                  />
-                </div>
-              )}
-              <div className='flex items-center gap-2 mb-4'>
-                <span className='text-white font-medium text-lg rounded-lg px-6 py-2 point-ask-gradient'>
-                  {image
-                    ? 'Image captured'
-                    : isScreenSharing
-                    ? 'Screen sharing active'
-                    : ''}
-                </span>
-              </div>
-              {/* Action buttons */}
-              {!isImageConfirmed && (
-                <div className='flex gap-[5.3px]'>
-                  {/* Use this */}
-                  <button
-                    className='text-white font-medium transition-colors flex items-center justify-center'
-                    style={{
-                      width: '114.5px',
-                      height: '89.6px',
-                      borderRadius: '16.97px',
-                      backgroundColor: '#3C434B',
-                    }}
-                    onClick={() => {
-                      console.log('use this clicked');
+    //         <div className='w-full flex flex-col items-center mb-6'>
+    //           {image && (
+    //             <div className='rounded-2xl overflow-hidden bg-black w-full sm:w-[600px] max-w-full h-[300px] sm:h-[300px] flex items-center justify-center mb-4'>
+    //               <img
+    //                 src={image}
+    //                 alt='Uploaded question'
+    //                 className='object-cover w-full h-full'
+    //               />
+    //             </div>
+    //           )}
+    //           {isScreenSharing && !image && (
+    //             <div className='rounded-2xl overflow-hidden bg-black w-full sm:w-[600px] max-w-full h-[300px] sm:h-[300px] flex items-center justify-center mb-4'>
+    //               <video
+    //                 ref={screenVideoRef}
+    //                 autoPlay
+    //                 muted
+    //                 playsInline
+    //                 className='object-contain w-full h-full'
+    //               />
+    //             </div>
+    //           )}
+    //           <div className='flex items-center gap-2 mb-4'>
+    //             <span className='text-white font-medium text-lg rounded-lg px-6 py-2 point-ask-gradient'>
+    //               {image
+    //                 ? 'Image captured'
+    //                 : isScreenSharing
+    //                 ? 'Screen sharing active'
+    //                 : ''}
+    //             </span>
+    //           </div>
+    //           {/* Action buttons */}
+    //           {!isImageConfirmed && (
+    //             <div className='flex gap-[5.3px]'>
+    //               {/* Use this */}
+    //               <button
+    //                 className='text-white font-medium transition-colors flex items-center justify-center'
+    //                 style={{
+    //                   width: '114.5px',
+    //                   height: '89.6px',
+    //                   borderRadius: '16.97px',
+    //                   backgroundColor: '#3C434B',
+    //                 }}
+    //                 onClick={() => {
+    //                   console.log('use this clicked');
 
-                      setIsImageConfirmed(true);
-                      const chatInput = document.querySelector(
-                        'input[placeholder="Type your question..."]'
-                      ) as HTMLInputElement;
-                      if (chatInput) {
-                        chatInput.focus();
-                        chatInput.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'center',
-                        });
-                      }
-                      // ✅ Confirm image
-                    }}
-                  >
-                    <div className='flex flex-col items-center gap-2'>
-                      {/* [Icon omitted for brevity] */}
-                      <img src='/images/usethis.svg' alt='' />
-                      <span className='text-sm'>Use this</span>
-                    </div>
-                  </button>
-                  <button
-                    className='text-white font-medium transition-colors flex items-center justify-center'
-                    style={{
-                      width: '114.5px',
-                      height: '89.6px',
-                      borderRadius: '16.97px',
-                      backgroundColor: '#3C434B',
-                    }}
-                    onClick={() => {
-                      setImage(null);
-                      setImageFile(null);
-                      setIsImageConfirmed(false); // ❌ Reset confirmation
-                      if (fileInputRef.current) {
-                        fileInputRef.current.value = '';
-                      }
-                    }}
-                  >
-                    <div className='flex flex-col items-center gap-2'>
-                      {/* [Icon omitted for brevity] */}
-                      <img src='/images/retake.svg' alt='' />
-                      <span className='text-sm'>Retake</span>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+    //                   setIsImageConfirmed(true);
+    //                   const chatInput = document.querySelector(
+    //                     'input[placeholder="Type your question..."]'
+    //                   ) as HTMLInputElement;
+    //                   if (chatInput) {
+    //                     chatInput.focus();
+    //                     chatInput.scrollIntoView({
+    //                       behavior: 'smooth',
+    //                       block: 'center',
+    //                     });
+    //                   }
+    //                   // ✅ Confirm image
+    //                 }}
+    //               >
+    //                 <div className='flex flex-col items-center gap-2'>
+    //                   {/* [Icon omitted for brevity] */}
+    //                   <img src='/images/usethis.svg' alt='' />
+    //                   <span className='text-sm'>Use this</span>
+    //                 </div>
+    //               </button>
+    //               <button
+    //                 className='text-white font-medium transition-colors flex items-center justify-center'
+    //                 style={{
+    //                   width: '114.5px',
+    //                   height: '89.6px',
+    //                   borderRadius: '16.97px',
+    //                   backgroundColor: '#3C434B',
+    //                 }}
+    //                 onClick={() => {
+    //                   setImage(null);
+    //                   setImageFile(null);
+    //                   setIsImageConfirmed(false); // ❌ Reset confirmation
+    //                   if (fileInputRef.current) {
+    //                     fileInputRef.current.value = '';
+    //                   }
+    //                 }}
+    //               >
+    //                 <div className='flex flex-col items-center gap-2'>
+    //                   {/* [Icon omitted for brevity] */}
+    //                   <img src='/images/retake.svg' alt='' />
+    //                   <span className='text-sm'>Retake</span>
+    //                 </div>
+    //               </button>
+    //             </div>
+    //           )}
+    //         </div>
+    //       </div>
+    //     )}
 
-        {/* Chat area - only show after chat starts */}
-        {chatHistory.length > 0 && (
-          <div className='pb-32 max-w-4xl mx-auto'>
-            <div className='w-full flex flex-col gap-3'>
-              {chatHistory.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${
-                    msg.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  {msg.role === 'user' ? (
-                    <div className='max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 point-ask-gradient text-white'>
-                      <p className='text-sm md:text-base leading-relaxed'>
-                        {msg.text}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className='max-w-[85%] md:max-w-[75%]'>
-                      <AIMessage text={msg.text} />
-                    </div>
-                  )}
-                </div>
-              ))}
-              {thinking && (
-                <div className='flex justify-start'>
-                  <div className='bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20 opacity-70'>
-                    <p className='text-sm md:text-base'>Thinking...</p>
-                  </div>
-                </div>
-              )}
-              <div ref={chatBottomRef} />
-            </div>
-          </div>
-        )}
-      </div>
+    //     {/* Chat area - only show after chat starts */}
+    //     {chatHistory.length > 0 && (
+    //       <div className='pb-32 max-w-4xl mx-auto'>
+    //         <div className='w-full flex flex-col gap-3'>
+    //           {chatHistory.map((msg, idx) => (
+    //             <div
+    //               key={idx}
+    //               className={`flex ${
+    //                 msg.role === 'user' ? 'justify-end' : 'justify-start'
+    //               }`}
+    //             >
+    //               {msg.role === 'user' ? (
+    //                 <div className='max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 point-ask-gradient text-white'>
+    //                   <p className='text-sm md:text-base leading-relaxed'>
+    //                     {msg.text}
+    //                   </p>
+    //                 </div>
+    //               ) : (
+    //                 <div className='max-w-[85%] md:max-w-[75%]'>
+    //                   <AIMessage text={msg.text} />
+    //                 </div>
+    //               )}
+    //             </div>
+    //           ))}
+    //           {thinking && (
+    //             <div className='flex justify-start'>
+    //               <div className='bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20 opacity-70'>
+    //                 <p className='text-sm md:text-base'>Thinking...</p>
+    //               </div>
+    //             </div>
+    //           )}
+    //           <div ref={chatBottomRef} />
+    //         </div>
+    //       </div>
+    //     )}
+    //   </div>
 
-      {/* Only show input bar if both selectors are chosen */}
-      {/* {selectedGrade && selectedStyle && <MicInputBar />} */}
-      <div className='flex items-center justify-center mb-8'>
-        {(listening || isSpeaking) && (
-          <SpruceBall listening={listening || isSpeaking} />
-        )}
-      </div>
+    //   {/* Only show input bar if both selectors are chosen */}
+    //   {/* {selectedGrade && selectedStyle && <MicInputBar />} */}
+    //   <div className='flex items-center justify-center mb-8'>
+    //     {(listening || isSpeaking) && (
+    //       <SpruceBall listening={listening || isSpeaking} />
+    //     )}
+    //   </div>
 
-      <div className='mb-8'>
-        {(isImageConfirmed || isScreenSharing) && (
-          <div className='flex gap-3 justify-center mb-8'>
-            <button
-              onClick={handleStartListening}
-              className='point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full ...'
-            >
-              {/* mic icon SVG */}
-              Start Speaking
-            </button>
-          </div>
-        )}
-      </div>
+    //   <div className='mb-8'>
+    //     {(isImageConfirmed || isScreenSharing) && (
+    //       <div className='flex gap-3 justify-center mb-8'>
+    //         <button
+    //           onClick={handleStartListening}
+    //           className='point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full ...'
+    //         >
+    //           {/* mic icon SVG */}
+    //           Start Speaking
+    //         </button>
+    //       </div>
+    //     )}
+    //   </div>
+    // </div>
+
+    <div className='min-h-screen flex flex-col items-center justify-center'>
+      <h1 className='text-6xl font-bold text-[#FF8C00]'>Coming Soon</h1>
     </div>
   );
 }
