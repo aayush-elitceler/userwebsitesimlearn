@@ -804,10 +804,10 @@ export default function ImprovedAiChatsVoicePage() {
             ) => (
               <div key={i} className='relative dropdown-container'>
                 <button
-                  className={`flex items-center transition-all duration-150 rounded-lg px-3 py-2 min-w-[120px] sm:min-w-[140px] justify-between ${
+                  className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${
                     value
-                      ? 'point-ask-gradient text-white shadow-md'
-                      : 'bg-white/80 hover:bg-white text-gray-700 border border-gray-200 hover:border-gray-300'
+                      ? 'point-ask-gradient text-white shadow-lg shadow-orange-500/25'
+                      : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-200/60 hover:border-gray-300 hover:shadow-md shadow-sm'
                   }`}
                   onClick={onClick}
                 >
@@ -815,16 +815,16 @@ export default function ImprovedAiChatsVoicePage() {
                     <span className='text-sm font-medium whitespace-nowrap flex items-center'>
                       <span className='mr-1'>{label}:</span>
                       <span className='font-semibold'>{value || 'Select'}</span>
-                      <ChevronDownIcon className='ml-2 size-4 shrink-0' />
+                      <ChevronDownIcon className={`ml-2 size-4 shrink-0 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
                     </span>
                   </div>
                 </button>
 
                 {showDropdown && (
-                  <div className='absolute mt-2 z-10 bg-white rounded-lg shadow-lg max-h-[300px] overflow-y-auto w-full border border-gray-100 dropdown-container'>
+                  <div className='absolute mt-2 z-10 bg-white/95 backdrop-blur-md rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200/50 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200'>
                     {/* Header */}
-                    <div className='bg-gray-100 px-4 py-3 rounded-t-lg border-b border-gray-200'>
-                      <span className='text-sm font-medium text-gray-700'>
+                    <div className='bg-gradient-to-r from-gray-50 to-gray-100/80 px-4 py-3 rounded-t-xl border-b border-gray-200/50'>
+                      <span className='text-sm font-semibold text-gray-700'>
                         Select {label}
                       </span>
                     </div>
@@ -836,7 +836,7 @@ export default function ImprovedAiChatsVoicePage() {
                       return (
                         <div
                           key={key}
-                          className='px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm text-gray-700 border-b border-gray-50 last:border-b-0 transition-colors duration-150'
+                          className='px-4 py-3 hover:bg-blue-50/80 cursor-pointer text-sm text-gray-700 border-b border-gray-100/50 last:border-b-0 transition-all duration-150 hover:shadow-sm'
                           onClick={() => onSelect(value)}
                         >
                           {isOptionWithIcon(opt) && renderOption

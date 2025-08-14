@@ -141,6 +141,53 @@ body {
   padding: 0;
 }
 
+/* Enhanced dropdown animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.fade-in-0 {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.zoom-in-95 {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Smooth transitions for dropdown icons */
+.dropdown-container svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Enhanced hover effects for dropdown items */
+.dropdown-container .hover\:shadow-sm:hover {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+  transition: all 0.15s ease-in-out;
+}
+
 /* Custom input bar positioning for sidebar layout */
 .input-bar-responsive {
   left: 1rem;
