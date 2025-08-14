@@ -282,9 +282,9 @@ export default function Home() {
           {/* School and Class Info */}
           <div className='text-sm text-gray-600 text-right'>
             {profileData?.section && (
-              <div>Class: Section {profileData.section}</div>
+              <div>Section {profileData.section}</div>
             )}
-            <div>School: Self Learn AI</div>
+            <div>Self Learn AI</div>
           </div>
           
           <button
