@@ -158,6 +158,7 @@ export default function ImprovedAiChatsVoicePage() {
 
   // === START: New Onboarding Code ===
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(1); // 1: grade/persona selection
 
   useEffect(() => {
     // Always show onboarding on page refresh, regardless of cookie
@@ -166,13 +167,19 @@ export default function ImprovedAiChatsVoicePage() {
 
   useEffect(() => {
     if (showOnboarding) {
-      const timer = setTimeout(() => {
-        setShowOnboarding(false);
-        Cookies.set("hasVisited", "true", { expires: 365 });
-      }, 2000); // 2-second delay
-      return () => clearTimeout(timer);
+      if (onboardingStep === 1) {
+        // First step: wait for user to select both grade and persona
+        if (selectedGrade && selectedStyle) {
+          // User has selected both, move to next step after a short delay
+          const timer = setTimeout(() => {
+            setShowOnboarding(false);
+            Cookies.set("hasVisited", "true", { expires: 365 });
+          }, 1000);
+          return () => clearTimeout(timer);
+        }
+      }
     }
-  }, [showOnboarding]);
+  }, [showOnboarding, onboardingStep, selectedGrade, selectedStyle]);
   // === END: New Onboarding Code ===
 
   // === START: History Slider State ===
@@ -807,12 +814,12 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
   // Floating selectors component
   const FloatingSelectors = (
     <div>
-      {/* Outer flex to hold both colored box and history button */}
-      <div
-        className="absolute z-40 flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44"
-        style={{ top: "40px" }}
-        onClick={(e) => e.stopPropagation()}
-      >
+              {/* Outer flex to hold both colored box and history button */}
+        <div
+          className="absolute z-[60] flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44"
+          style={{ top: "40px" }}
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Colored gradient box for Class & Persona */}
         <div
           className={`flex flex-row gap-3 p-4 rounded-xl transition-all duration-300 ${
@@ -877,8 +884,8 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
                   </div>
                 </button>
   
-                {showDropdown && (
-                  <div className="absolute mt-2 z-10 bg-white/95 backdrop-blur-md rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200/50 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
+                                  {showDropdown && (
+                    <div className="absolute mt-2 z-[80] bg-white/95 backdrop-blur-md rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200/50 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-gray-50 to-gray-100/80 px-4 py-3 rounded-t-xl border-b border-gray-200/50">
                       <span className="text-sm font-semibold text-gray-700">Select {label}</span>
@@ -1046,15 +1053,32 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
       )}
 
       {/* Onboarding tooltip for FloatingSelectors */}
-      {showOnboarding && (
-        <div className="fixed top-[120px] right-32 sm:right-36 lg:right-77 z-[60]">
+      {showOnboarding && onboardingStep === 1 && (
+        <div className="fixed top-[100px] right-62 sm:right-66 lg:right-100 z-[60]">
           <img
             src="/images/arrow.svg"
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
           <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
-            Choose your grade and how you&apos;d like the AI to talk to you.
+            {selectedGrade && selectedStyle ? (
+              <div>
+                <div className="mb-2">Great! You've selected:</div>
+                <div className="text-sm opacity-90">
+                  Grade: {selectedGrade} | Style: {selectedStyle}
+                </div>
+                <div className="text-xs mt-2 opacity-75">Moving to voice chat in a moment...</div>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2">Choose your grade and how you&apos;d like the AI to talk to you.</div>
+                <div className="text-xs opacity-75">
+                  {!selectedGrade && !selectedStyle && "Please select both grade and persona"}
+                  {selectedGrade && !selectedStyle && "Now select a persona"}
+                  {!selectedGrade && selectedStyle && "Now select a grade"}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

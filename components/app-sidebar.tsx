@@ -1,23 +1,18 @@
 'use client';
 import { Sidebar, SidebarContent } from '@/components/ui/sidebar';
-import { SidebarHeader } from '@/components/SidebarHeader';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import Cookies from 'js-cookie';
 import Logo from '@/public/images/logoAiDash.svg';
 import { useLogo } from '@/lib/LogoContext';
-import book from '@/public/images/book.png';
 import quizWhite from '@/public/images/quiz.svg';
 import { LayoutDashboard } from 'lucide-react';
 import PointerBlack from '@/public/images/pointerBlack.svg'
 import projectsWhite from '@/public/images/project.svg';
-import progressWhite from '@/public/images/progress.svg';
 import examsWhite from '@/public/images/exams.svg';
 import { Nunito_Sans } from 'next/font/google';
 import { MicIcon } from 'lucide-react';
-import '../app/globals.css';
 
 const DashboardIcon = ({ color = '#222' }) => (
   <LayoutDashboard style={{ color }} />
@@ -51,6 +46,7 @@ const ChevronUpDownIcon = ({ open }: { open: boolean }) => (
     }
   </svg>
 );
+
 const ChatIcon = () => (
   <svg
     width='20'
@@ -62,11 +58,6 @@ const ChatIcon = () => (
   >
     <path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' />
   </svg>
-);
-const AiIcon = () => (
-  <div className='w-7 h-7 rounded border-2 border-white flex items-center justify-center  '>
-    <span className='text-xs font-bold text-white'>AI</span>
-  </div>
 );
 
 const aiTutorSubRoutes = [
@@ -83,6 +74,7 @@ const aiTutorSubRoutes = [
     bg: 'point-ask-gradient border-t border-white/30',
   },
 ];
+
 const pointAskSubRoutes = [
   {
     label: 'Point & Ask Voice',
@@ -97,6 +89,7 @@ const pointAskSubRoutes = [
     bg: 'bg-[#5B5E6D] border-t border-white/30',
   },
 ];
+
 const quizSubRoutes = [
   {
     label: 'Take a Quiz',
@@ -111,6 +104,7 @@ const quizSubRoutes = [
     bg: 'point-ask-gradient border-t border-white/30',
   },
 ];
+
 const examSubRoutes = [
   {
     label: 'Exam Preparation',
@@ -125,6 +119,7 @@ const examSubRoutes = [
     bg: 'point-ask-gradient border-t border-white/30',
   },
 ];
+
 const projectSubRoutes = [
   {
     label: 'Create Projects',
@@ -143,85 +138,13 @@ const projectSubRoutes = [
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
   const { logoUrl } = useLogo();
-  
-  // Debug: Log logo URL
-  console.log('Sidebar received logo URL:', logoUrl);
-
-  // Admin avatar and name state
-
-  // useEffect(() => {
-  //   const fetchAdmin = async () => {
-  //     try {
-  //       const token = Cookies.get("token");
-  //       const res = await fetch(
-  //         `${process.env.NEXT_PUBLIC_BASE_URL}/admin/profile`,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //         }
-  //       );
-  //       if (!res.ok) throw new Error("Failed to fetch admin profile");
-  //       const data = await res.json();
-  //       const name = data.admin?.name || "";
-  //       if (name.length > 0) {
-  //       }
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   };
-  //   fetchAdmin();
-  // }, []);
-
-  const data = {
-    items: [
-      {
-        title: 'Dashboard',
-        url: '/',
-        icon: DashboardIcon,
-      },
-      {
-        title: 'AI Tutor Chats',
-        url: '/aichats',
-        icon: book,
-      },
-      {
-        title: 'Take a Quiz',
-        url: '/quizes',
-        icon: quizWhite,
-      },
-      {
-        title: 'Generate Quiz',
-        url: '/quizes/takeQuiz',
-        icon: quizWhite,
-      },
-      {
-        title: 'Personalised learning',
-        url: '/personalisedLearning',
-        icon: projectsWhite,
-      }
-      
-    ],
-    navMain2: [
-      {
-        title: 'Logo',
-        url: '/', // Updated URL
-        icon: Logo, // Force use default logo for now
-        isActive: true,
-      },
-    ],
-  };
-  
-  // Debug: Log the final logo being used
-  console.log('Final logo being used:', data.navMain2[0].icon);
-  console.log('Logo URL from context:', logoUrl);
-  console.log('Default Logo import:', Logo);
 
   const [aiOpen, setAiOpen] = useState(false);
   const [pointOpen, setPointOpen] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
   const [examOpen, setExamOpen] = useState(false);
   const [projectsOpen, setProjectOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close dropdowns when route changes
   useEffect(() => {
@@ -243,17 +166,6 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
     }
   }, [collapsed]);
 
-  // Close dropdowns when sidebar collapses
-  useEffect(() => {
-    if (collapsed) {
-      setAiOpen(false);
-      setPointOpen(false);
-      setQuizOpen(false);
-      setExamOpen(false);
-      setProjectOpen(false);
-    }
-  }, [collapsed]);
-
   // Check if any sub-section is active
   const isAiTutorActive = aiTutorSubRoutes.some((r) => pathname === r.href);
   const isPointAskActive = pointAskSubRoutes.some((r) => pathname === r.href);
@@ -261,11 +173,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const isExamActive = examSubRoutes.some((r) => pathname === r.href);
   const isProjectsActive = projectSubRoutes.some((r) => pathname === r.href);
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-  console.log(mobileOpen);
-
   return (
-    <div >
+    <div>
       {/* Mobile Hamburger Button */}
       <button
         className='lg:hidden fixed top-4 left-4 z-50 bg-white text-gray-700 rounded-full p-2 shadow-lg focus:outline-none border border-gray-200 hover:bg-gray-50 transition-colors'
@@ -303,18 +212,18 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             }}
           >
             <div>
-                              {/* Simple Logo Display */}
-                <div className="py-2 px-4">
-                  <Link href="/">
-                                      <Image
+              {/* Simple Logo Display */}
+              <div className="py-2 px-4">
+                <Link href="/">
+                  <Image
                     src={logoUrl || Logo}
                     alt="Logo"
                     width={100}
                     height={40}
                     className="object-contain mx-auto"
                   />
-                  </Link>
-                </div>
+                </Link>
+              </div>
               {/* Mobile close button */}
               <button
                 onClick={() => setMobileOpen(false)}
@@ -342,10 +251,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 </div>
                 {/* Dashboard */}
                 <div className='relative'>
-                  {' '}
                   {pathname === '/' && (
                     <div className='sidebar-indicator sidebar-indicator-dashboard'></div>
-                  )}{' '}
+                  )}
                   <Link
                     href='/'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 relative ${
@@ -354,10 +262,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         : 'text-[#222] hover:bg-[#FFB12133]'
                     }`}
                   >
-                    {' '}
-                    <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />{' '}
-                    <span className='text-sm'>Dashboard</span>{' '}
-                  </Link>{' '}
+                    <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />
+                    <span className='text-sm'>Dashboard</span>
+                  </Link>
                 </div>
                 {/* AI Tutor Dropdown */}
                 <div className='mb-2'>
@@ -641,61 +548,6 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     <span className='text-sm'>Personalized le..</span>
                   </Link>
                 </div>
-                {/* Section Heading for Corporates */}
-                {/* <div className='pt-6 pb-3 flex items-center gap-3'>
-                  <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
-                    For corporate
-                  </span>
-                  <div className='border-b border-gray-700 flex-1' />
-                </div>
-                
-                {/* Onboard Jobs */}
-                {/* <div className='relative'>
-                  {pathname === '/onboard-job' && (
-                    <div className='sidebar-indicator sidebar-indicator-onboard'></div>
-                  )}
-                  <Link
-                    href='/onboard-job'
-                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                      pathname === '/onboard-job'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
-                    }`}
-                  >
-                    <Image
-                      src='/images/onboardJob.svg'
-                      alt='Onboard Jobs'
-                      width={20}
-                      height={20}
-                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/onboard-job' ? '' : 'brightness-0'}`}
-                    />
-                    <span className='text-sm'>Onboard Jobs</span>
-                  </Link>
-                </div>
-                
-                {/* Mock Interview */}
-                {/* <div className='relative'>
-                  {pathname === '/mock-interview' && (
-                    <div className='sidebar-indicator sidebar-indicator-mock'></div>
-                  )}
-                  <Link
-                    href='/mock-interview'
-                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                      pathname === '/mock-interview'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
-                    }`}
-                  >
-                    <Image
-                      src='/images/speechmock.svg'
-                      alt='Mock Interview'
-                      width={20}
-                      height={20}
-                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/mock-interview' ? '' : 'brightness-0'}`}
-                    />
-                    <span className='text-sm'>Mock Interview</span>
-                  </Link>
-                </div> */}
               </nav>
             </div>
           </SidebarContent>
@@ -715,25 +567,25 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             zIndex: 1000
           }}
         >
-                      <div>
-              <div
-                className={`transition-all duration-300 ${
-                  collapsed ? 'overflow-hidden' : ''
-                }`}
-              >
-                {/* Simple Logo Display */}
-                <div className="py-2 px-4">
-                  <Link href="/">
-                    <Image
-                      src={logoUrl || Logo}
-                      alt="Logo"
-                      width={100}
-                      height={40}
-                      className="object-contain mx-auto"
-                    />
-                  </Link>
-                </div>
+          <div>
+            <div
+              className={`transition-all duration-300 ${
+                collapsed ? 'overflow-hidden' : ''
+              }`}
+            >
+              {/* Simple Logo Display */}
+              <div className="py-2 px-4">
+                <Link href="/">
+                  <Image
+                    src={logoUrl || Logo}
+                    alt="Logo"
+                    width={100}
+                    height={40}
+                    className="object-contain mx-auto"
+                  />
+                </Link>
               </div>
+            </div>
             {/* Desktop collapse button */}
             <button
               onClick={() => setCollapsed((prev) => !prev)}
@@ -769,10 +621,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
 
               {/* Dashboard */}
               <div className='relative'>
-                {' '}
                 {pathname === '/' && (
                   <div className='sidebar-indicator sidebar-indicator-dashboard'></div>
-                )}{' '}
+                )}
                 <Link
                   href='/'
                   className={`flex items-center ${
@@ -783,10 +634,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       : 'text-[#222] hover:bg-[#FFB12133]'
                   }`}
                 >
-                  {' '}
-                  <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />{' '}
-                  {!collapsed && <span className='text-sm'>Dashboard</span>}{' '}
-                </Link>{' '}
+                  <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />
+                  {!collapsed && <span className='text-sm'>Dashboard</span>}
+                </Link>
               </div>
               {/* AI Tutor Dropdown */}
               <div className='mb-2'>
@@ -801,7 +651,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isAiTutorActive
                         ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-black hover:bg-white/10'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -915,7 +765,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isQuizActive
                         ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-black hover:bg-white/10'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -979,7 +829,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isExamActive
                         ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-black hover:bg-white/10'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -1043,7 +893,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isProjectsActive
                         ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-black hover:bg-white/10'
+                        : 'text-[#222] hover:bg-[#FFB12133]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -1123,72 +973,6 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   </Link>
                 </div>
               )}
-              {/* Section Heading for Corporates */}
-              {/* {!collapsed && (
-               
-                <div className='pt-2 pb-3 flex items-center gap-3 mt-[25px]'>
-                <span className='text-xs text-gray-400 font-medium uppercase tracking-wider whitespace-nowrap'>
-                  For Corporates
-                </span>
-                <div className='border-b border-gray-700 flex-1' />
-              </div>
-              )}
-
-              {/* Onboard Jobs */}
-              {/* <div className='relative'>
-                {pathname === '/onboard-job' && (
-                  <div className='sidebar-indicator sidebar-indicator-onboard'></div>
-                )}
-                <Link
-                  href='/onboard-job'
-                  className={`flex items-center ${
-                    collapsed ? 'justify-center px-2' : 'gap-3 px-4'
-                  } py-3 rounded-md font-medium transition-all duration-200 ${
-                    pathname === '/onboard-job'
-                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                      : 'text-[#222] hover:bg-[#FFB12133]'
-                  }`}
-                >
-                  <Image
-                    src='/images/onboardJob.svg'
-                    alt='Onboard Jobs'
-                    width={20}
-                    height={20}
-                    className={`h-5 w-5 flex-shrink-0 ${pathname === '/onboard-job' ? '' : 'brightness-0'}`}
-                  />
-                  {!collapsed && (
-                    <span className='text-sm'>Onboard Jobs</span>
-                  )}
-                </Link>
-              </div>
-
-              {/* Mock Interview */}
-              {/* <div className='relative'>
-                {pathname === '/mock-interview' && (
-                  <div className='sidebar-indicator sidebar-indicator-mock'></div>
-                )}
-                <Link
-                  href='/mock-interview'
-                  className={`flex items-center ${
-                    collapsed ? 'justify-center px-2' : 'gap-3 px-4'
-                  } py-3 rounded-md font-medium transition-all duration-200 ${
-                    pathname === '/mock-interview'
-                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                      : 'text-[#222] hover:bg-[#FFB12133]'
-                  }`}
-                >
-                  <Image
-                    src='/images/speechmock.svg'
-                    alt='Mock Interview'
-                    width={20}
-                    height={20}
-                    className={`h-5 w-5 flex-shrink-0 ${pathname === '/mock-interview' ? '' : 'brightness-0'}`}
-                  />
-                  {!collapsed && (
-                    <span className='text-sm'>Mock Interview</span>
-                  )}
-                </Link>
-              </div> */}
             </nav>
           </div>
         </SidebarContent>
