@@ -176,14 +176,12 @@ const handleGoogleSignIn = () => {
               Google
             </Button> */}
 
-            <Link href="/register" className="text-center text-sm text-black">
-            
             <div className="text-center text-sm text-black">
-              Don’t have an account?{" "}
-              {/* <a href="/register" className="text-[#FFA903] font-normal underline">
-                Sign up
-              </a> */}
-            </div></Link>
+              Don't have an account?{" "}
+              <Link href="/register" className="text-[#FF4949] font-normal underline cursor-pointer">
+                Create one
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
