@@ -1187,11 +1187,11 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
                   className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.role === "user" ? (
-                    <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 point-ask-gradient text-white">
+                    <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 bg-[#DDDDDD] text-[#000000]">
                       <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
                     </div>
                   ) : (
-                    <div className="max-w-[85%] md:max-w-[75%] bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20">
+                    <div className="max-w-[85%] md:max-w-[75%] bg-[#FFEFD3] text-[#FF5146] rounded-2xl px-5 py-3">
                       <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
                     </div>
                   )}
@@ -1200,7 +1200,7 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
             )}
             {thinking && !isConversationActive && (
               <div className="flex justify-start">
-                <div className="bg-[rgba(34,34,34,0.9)] text-white rounded-2xl px-5 py-3 border border-[#007437]/20 opacity-70">
+                <div className="bg-[#FFEFD3] text-[#FF5146] rounded-2xl px-5 py-3 opacity-70">
                   <p className="text-sm md:text-base">Thinking...</p>
                 </div>
               </div>
