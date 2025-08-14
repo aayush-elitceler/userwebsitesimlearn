@@ -7,11 +7,10 @@ import {
     SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { Separator } from "@/components/ui/separator"; // Import Separator from shadcn
+import { Separator } from "@/components/ui/separator";
 import React from "react";
 import { StaticImageData } from "next/image";
 import Image from "next/image";
-
 
 export function SidebarHeader({
     items,
@@ -19,11 +18,10 @@ export function SidebarHeader({
     items: {
         title: string;
         url: string;
-        icon?: string | StaticImageData; // Image path
+        icon?: string | StaticImageData;
         isActive?: boolean;
     }[];
 }) {
-    console.log('SidebarHeader received items:', items);
     return (
         <SidebarGroup className="overflow-hidden p-0">
             <SidebarMenu>
