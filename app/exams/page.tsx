@@ -13,7 +13,10 @@ interface Teacher {
 interface Question {
   id: string;
   questionText: string;
-  // Add other fields as needed
+  questionType: string;
+  marks?: number;
+  examId: string;
+  options: any[];
 }
 
 interface Quiz {
@@ -24,7 +27,11 @@ interface Quiz {
   topic: string;
   difficulty: string;
   createdAt: string;
+  teacherId?: string | null;
   userId: string;
+  type: string;
+  isActive: boolean;
+  createdBy: string;
   completed: boolean;
   score?: number;
   date?: string;
@@ -33,9 +40,13 @@ interface Quiz {
   teacher?: string | Teacher;
   subject?: string;
   assignmentDetails?: {
-    endTime: string;
+    id: string;
+    completed: boolean;
     score?: number;
-    completed?: boolean;
+    startTime?: string | null;
+    endTime?: string | null;
+    createdAt: string;
+    updatedAt: string;
   };
 }
 type Submission = {

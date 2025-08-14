@@ -5,14 +5,25 @@ import { useParams, useRouter } from "next/navigation";
 interface Question {
   id: string;
   questionText: string;
+  questionType: string;
   marks?: number;
+  examId: string;
+  options: any[];
 }
 
 interface Exam {
   id: string;
   title: string;
-  difficulty: string;
+  instructions: string;
   timeLimitMinutes: number;
+  topic: string;
+  difficulty: string;
+  createdAt: string;
+  teacherId?: string | null;
+  userId: string;
+  type: string;
+  isActive: boolean;
+  createdBy: string;
   questions: Question[];
 }
 

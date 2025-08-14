@@ -73,7 +73,13 @@ async function submitQuiz(quiz: Quiz, selected: { [questionId: string]: string }
   });
 
   if (res.ok) {
-    alert("Quiz submitted!");
+    const data = await res.json();
+    const submissionId = data.data?.submission?.id;
+    if (submissionId) {
+      window.location.href = `/quizes/reports/${submissionId}`;
+    } else {
+      alert("Quiz submitted, but no submissionId returned.");
+    }
   } else {
     alert("Failed to submit quiz.");
   }
