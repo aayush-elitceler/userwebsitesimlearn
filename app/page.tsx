@@ -13,7 +13,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Poppins } from 'next/font/google';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { useLogo } from '@/lib/LogoContext';
@@ -53,6 +53,7 @@ interface BadgeChallenge {
   target: number;
   current: number;
   deadline: string;
+  questions: string[];
 }
 interface Subject {
   subject: string;
@@ -116,8 +117,46 @@ export default function Home() {
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
   const router = useRouter();
   const { setLogoUrl } = useLogo();
+
+  // Function to handle mission redirects based on mission type
+  const handleMissionClick = (mission: Mission) => {
+    if (mission.completed) return;
+    
+    // Determine redirect based on mission title
+    if (mission.title.toLowerCase().includes('practice') || mission.title.toLowerCase().includes('mcq')) {
+      // Practice MCQs - redirect to quiz generation
+      router.push('/quizes/generate');
+    } else if (mission.title.toLowerCase().includes('retry') || mission.title.toLowerCase().includes('mistake')) {
+      // Retry past mistakes - redirect to retry incorrect questions
+      router.push('/quizes/generate');
+    } else if (mission.title.toLowerCase().includes('doubt') || mission.title.toLowerCase().includes('chat') || mission.title.toLowerCase().includes('voice') || mission.title.toLowerCase().includes('image')) {
+      // Ask doubts - redirect to AI chat
+      router.push('/aichats/chat');
+    } else {
+      // Default fallback
+      router.push('/quizes/generate');
+    }
+  };
+
+  // Function to handle quick link redirects based on link type
+  const handleQuickLinkClick = (link: QuickLink) => {
+    if (link.status === 'Completed') return;
+    
+    // Determine redirect based on link title
+    if (link.title.toLowerCase().includes('project') || link.title.toLowerCase().includes('due')) {
+      // Projects - redirect to projects page
+      router.push('/projects/teacherproject');
+    } else if (link.title.toLowerCase().includes('revision') || link.title.toLowerCase().includes('timeline') || link.title.toLowerCase().includes('ai')) {
+      // Smart revision plan - redirect to personalised learning
+      router.push('/aichats/voice');
+    } else {
+      // Default fallback
+      router.push('/projects/teacherproject');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -289,7 +328,7 @@ export default function Home() {
           
           <button
             onClick={() => router.push('/profile')}
-            className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center text-xl'
+            className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200 flex items-center justify-center text-xl'
             title='Profile'
           >
             👤
@@ -340,7 +379,10 @@ export default function Home() {
           ))}
         </div>
 
-        <div className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-orange-200 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm'>
+        <div 
+          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-orange-200 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-orange-300 transition-all duration-200'
+          onClick={() => setShowBadgeModal(true)}
+        >
           <img src='/images/medal.svg' alt='' className='w-[50px] h-[50px]' />
           <div className='flex-1 text-orange-500 font-semibold'>
             {dashboardData.badgeChallenge.title}
@@ -349,7 +391,7 @@ export default function Home() {
             {dashboardData.badgeChallenge.current}/
             {dashboardData.badgeChallenge.target}
           </div>
-          <ArrowRight size={20} className='text-orange-500' />
+          <span className='text-orange-500 font-medium'>View</span>
         </div>
       </div>
 
@@ -393,7 +435,7 @@ export default function Home() {
             </p>
             <button
               onClick={() => router.push(card.link)}
-              className='point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto'
+              className='point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 w-full sm:w-auto hover:shadow-lg hover:scale-105'
             >
               {card.buttonText}
             </button>
@@ -425,11 +467,11 @@ export default function Home() {
                     </p>
                   </div>
                   <button
-                    onClick={() => !mission.completed && router.push('/quizes')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors text-white w-[150px] h-[40px]  ${
+                    onClick={() => handleMissionClick(mission)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-white w-[150px] h-[40px]  ${
                       mission.completed
-                        ? 'bg-[#009B41] hover:bg-[#008a3a] cursor-default'
-                        : 'point-ask-gradient hover:from-orange-600 hover:to-orange-700'
+                        ? 'bg-[#009B41] hover:bg-[#008a3a] hover:shadow-lg hover:scale-105 cursor-default'
+                        : 'point-ask-gradient hover:from-orange-600 hover:to-orange-700 hover:shadow-lg hover:scale-105'
                     }`}
                   >
                     {mission.completed ? 'Completed' : 'Complete now'}
@@ -494,11 +536,11 @@ export default function Home() {
                     <p className='text-gray-500 text-sm'>{link.description}</p>
                   </div>
                   <button
-                    onClick={() => router.push('/projects/teacherproject')}
-                    className={`px-4 py-2 rounded-lg font-medium text-white w-[150px] h-[40px] ${
+                    onClick={() => handleQuickLinkClick(link)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-white w-[150px] h-[40px] ${
                       link.status === 'Completed'
-                        ? 'bg-[#009B41] hover:bg-[#008a3a]'
-                        : 'point-ask-gradient hover:from-orange-600 hover:to-orange-700'
+                        ? 'bg-[#009B41] hover:bg-[#008a3a] hover:shadow-lg hover:scale-105'
+                        : 'point-ask-gradient hover:from-orange-600 hover:to-orange-700 hover:shadow-lg hover:scale-105'
                     }`}
                   >
                     {link.status}
@@ -532,6 +574,82 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Badge Challenge Modal */}
+      {showBadgeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <img src='/images/medal.svg' alt='' className='w-[40px] h-[40px]' />
+                  <h2 className="text-2xl font-semibold text-gray-800">Badge Challenge</h2>
+                </div>
+                <button
+                  onClick={() => setShowBadgeModal(false)}
+                  className="p-2 hover:bg-gray-100 hover:shadow-md hover:scale-110 rounded-full transition-all duration-200"
+                >
+                  <X size={24} className="text-gray-600" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  {dashboardData.badgeChallenge.title}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {dashboardData.badgeChallenge.description}
+                </p>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">Progress:</span>
+                    <span className="font-semibold text-orange-500">
+                      {dashboardData.badgeChallenge.current}/{dashboardData.badgeChallenge.target}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">Deadline:</span>
+                    <span className="font-semibold text-red-500">
+                      {dashboardData.badgeChallenge.deadline}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4">Challenge Questions:</h4>
+                <div className="space-y-4">
+                  {dashboardData.badgeChallenge.questions.map((question, index) => (
+                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <span className="bg-orange-500 text-white text-sm font-semibold rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                          {index + 1}
+                        </span>
+                        <p className="text-gray-700">{question}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => router.push('/quizes/generate')}
+                  className="flex-1 point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+                >
+                  Start Challenge
+                </button>
+                <button
+                  onClick={() => setShowBadgeModal(false)}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
