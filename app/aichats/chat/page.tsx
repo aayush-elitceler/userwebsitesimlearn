@@ -558,7 +558,7 @@ export default function AiChatsChatPage() {
 
       {/* Onboarding tooltip for FloatingSelectors */}
       {showOnboarding && onboardingStep === 1 && (
-        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-60 z-[60]">
+        <div className="fixed top-[100px] right-62 sm:right-66 lg:right-100 z-[60]">
           <img
             src="/images/arrow.svg"
             alt="onboarding"
