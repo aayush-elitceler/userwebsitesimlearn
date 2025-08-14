@@ -47,6 +47,17 @@ function QuizCard({
   submissionId?: string;
 }) {
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldTruncate, setShouldTruncate] = useState(false);
+  const description = quiz.instructions || "Learn with AI Tutor the core of grammar with help of new age solutions in your test";
+  
+  // Check if content actually overflows
+  const checkOverflow = (element: HTMLElement | null) => {
+    if (element) {
+      const isOverflowing = element.scrollHeight > element.clientHeight;
+      setShouldTruncate(isOverflowing);
+    }
+  };
 
   // Get CSS class for subject background
   const getSubjectClass = (subject: string | undefined) => {
@@ -69,7 +80,8 @@ function QuizCard({
 
   return (
     <div className="flex flex-row bg-white border border-[#DEDEDE] items-center 
-                    w-full h-[220px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5">
+                    w-full h-[280px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
+                    sm:h-[300px] md:h-[280px] lg:h-[300px] xl:h-[320px] 2xl:h-[340px]">
       <div className="flex-1 min-w-0 flex flex-col justify-between h-full overflow-hidden">
         <div className="flex-1 min-h-0">
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
@@ -78,8 +90,22 @@ function QuizCard({
           <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-2 break-words leading-tight">
             {quiz.title}
           </div>
-          <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed break-words">
-            {quiz.instructions || "Learn with AI Tutor the core of grammar with help of new age solutions in your test"}
+          <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
+            <div 
+              ref={checkOverflow}
+              className={`break-words cursor-pointer ${!isExpanded && shouldTruncate ? 'line-clamp-2' : ''}`}
+              onClick={() => shouldTruncate && setIsExpanded(!isExpanded)}
+            >
+              {description}
+            </div>
+            {shouldTruncate && (
+              <button 
+                className="text-blue-600 hover:text-blue-800 text-xs mt-1 font-medium"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? 'Show less' : 'Show more'}
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2 text-black text-xs sm:text-sm mb-3">
             <span role="img" aria-label="clock">🕒</span>

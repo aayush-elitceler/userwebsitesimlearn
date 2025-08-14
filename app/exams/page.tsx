@@ -102,13 +102,34 @@ function ExamCard({
       </div>
       <div className="ml-8 flex-shrink-0">
         <div
-          className="rounded-xl flex items-center justify-center w-56 h-36 text-white text-2xl font-bold shadow-lg"
+          className="rounded-xl flex items-center justify-center w-56 h-36 text-white text-2xl font-bold shadow-lg relative overflow-hidden"
           style={{
             background: subjectColors[exam.subject || "Default"],
             minWidth: 180,
           }}
         >
-          {exam.subject || "Subject"}
+          <span className="z-10 font-bold tracking-wide text-center px-1.5 break-words">
+            {exam.subject || "Subject"}
+          </span>
+          {/* SVG Pattern from Figma */}
+          <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
+            <svg width="134" height="133" viewBox="0 0 134 133" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="61.3397" cy="72.3504" r="5.11912" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3395" cy="72.3512" r="10.6834" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3393" cy="72.351" r="16.2477" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3391" cy="72.3508" r="21.8119" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3389" cy="72.3506" r="27.3762" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3387" cy="72.3514" r="32.9404" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3385" cy="72.3512" r="38.5047" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3403" cy="72.351" r="44.069" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3401" cy="72.3508" r="49.6332" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3399" cy="72.3506" r="55.1975" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3397" cy="72.3514" r="60.7618" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3395" cy="72.3512" r="66.326" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <circle cx="61.3393" cy="72.351" r="71.8903" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+              <line x1="61.1936" y1="72.784" x2="0.000449386" y2="72.8107" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -129,6 +150,17 @@ function QuizCard({
   submissionId?: string;
 }) {
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldTruncate, setShouldTruncate] = useState(false);
+  const description = quiz.instructions || "Learn with AI Tutor the core of grammar with help of new age solutions in your test";
+  
+  // Check if content actually overflows
+  const checkOverflow = (element: HTMLElement | null) => {
+    if (element) {
+      const isOverflowing = element.scrollHeight > element.clientHeight;
+      setShouldTruncate(isOverflowing);
+    }
+  };
 
   // Get CSS class for subject background
   const getSubjectClass = (subject: string | undefined) => {
@@ -151,12 +183,12 @@ function QuizCard({
 
   return (
     <div className="flex flex-row bg-white border border-[#DEDEDE] items-center 
-                    w-[480px] h-[220px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
-                    sm:w-[500px] sm:h-[230px] sm:p-5
-                    md:w-[420px] md:h-[200px] md:p-4
-                    lg:w-[480px] lg:h-[220px] lg:p-5
-                    xl:w-[520px] xl:h-[240px] xl:p-6
-                    2xl:w-[588px] 2xl:h-[260px] 2xl:p-6">
+                    w-[480px] h-[280px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
+                    sm:w-[500px] sm:h-[300px] sm:p-5
+                    md:w-[420px] md:h-[280px] md:p-4
+                    lg:w-[480px] lg:h-[300px] lg:p-5
+                    xl:w-[520px] xl:h-[320px] xl:p-6
+                    2xl:w-[588px] 2xl:h-[340px] 2xl:p-6">
       <div className="flex-1 min-w-0 flex flex-col justify-between h-full overflow-hidden">
         <div className="flex-1 min-h-0">
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
@@ -165,8 +197,22 @@ function QuizCard({
           <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-2 break-words leading-tight">
             {quiz.title}
           </div>
-          <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed break-words">
-            {quiz.instructions || "Learn with AI Tutor the core of grammar with help of new age solutions in your test"}
+          <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
+            <div 
+              ref={checkOverflow}
+              className={`break-words cursor-pointer ${!isExpanded && shouldTruncate ? 'line-clamp-2' : ''}`}
+              onClick={() => shouldTruncate && setIsExpanded(!isExpanded)}
+            >
+              {description}
+            </div>
+            {shouldTruncate && (
+              <button 
+                className="text-blue-600 hover:text-blue-800 text-xs mt-1 font-medium"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? 'Show less' : 'Show more'}
+              </button>
+            )}
           </div>
           {previous ? (
             <div className="flex flex-col gap-1 text-xs sm:text-sm mb-3">
