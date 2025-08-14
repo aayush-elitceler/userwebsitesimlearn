@@ -158,7 +158,7 @@ export default function ImprovedAiChatsVoicePage() {
 
   // === START: New Onboarding Code ===
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(1); // 1: grade/persona selection
+  const [onboardingStep, setOnboardingStep] = useState(1); // 1: class selection, 2: persona selection
 
   useEffect(() => {
     // Always show onboarding on page refresh, regardless of cookie
@@ -168,9 +168,18 @@ export default function ImprovedAiChatsVoicePage() {
   useEffect(() => {
     if (showOnboarding) {
       if (onboardingStep === 1) {
-        // First step: wait for user to select both grade and persona
-        if (selectedGrade && selectedStyle) {
-          // User has selected both, move to next step after a short delay
+        // First step: wait for user to select class
+        if (selectedGrade) {
+          // User has selected class, move to persona selection after a short delay
+          const timer = setTimeout(() => {
+            setOnboardingStep(2);
+          }, 1000);
+          return () => clearTimeout(timer);
+        }
+      } else if (onboardingStep === 2) {
+        // Second step: wait for user to select persona
+        if (selectedStyle) {
+          // User has selected persona, hide onboarding after a short delay
           const timer = setTimeout(() => {
             setShowOnboarding(false);
             Cookies.set("hasVisited", "true", { expires: 365 });
@@ -1052,7 +1061,7 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
         <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-50"></div>
       )}
 
-      {/* Onboarding tooltip for FloatingSelectors */}
+      {/* Onboarding tooltip for Class Selection */}
       {showOnboarding && onboardingStep === 1 && (
         <div className="fixed top-[100px] right-62 sm:right-66 lg:right-100 z-[60]">
           <img
@@ -1061,21 +1070,48 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
           <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
-            {selectedGrade && selectedStyle ? (
+            {selectedGrade ? (
               <div>
                 <div className="mb-2">Great! You've selected:</div>
                 <div className="text-sm opacity-90">
-                  Grade: {selectedGrade} | Style: {selectedStyle}
+                  Class: {selectedGrade}
                 </div>
-                <div className="text-xs mt-2 opacity-75">Moving to voice chat in a moment...</div>
+                <div className="text-xs mt-2 opacity-75">Now let's choose your persona...</div>
               </div>
             ) : (
               <div>
-                <div className="mb-2">Choose your grade and how you&apos;d like the AI to talk to you.</div>
+                <div className="mb-2">First, choose your class/grade level.</div>
                 <div className="text-xs opacity-75">
-                  {!selectedGrade && !selectedStyle && "Please select both grade and persona"}
-                  {selectedGrade && !selectedStyle && "Now select a persona"}
-                  {!selectedGrade && selectedStyle && "Now select a grade"}
+                  This helps me teach at the right level for you.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding tooltip for Persona Selection */}
+      {showOnboarding && onboardingStep === 2 && (
+        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-64 z-[60]">
+          <img
+            src="/images/arrow.svg"
+            alt="onboarding"
+            className="w-[19px] h-[59px] object-cover mx-auto mb-5"
+          />
+          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+            {selectedStyle ? (
+              <div>
+                <div className="mb-2">Perfect! You've selected:</div>
+                <div className="text-sm opacity-90">
+                  Persona: {selectedStyle}
+                </div>
+                <div className="text-xs mt-2 opacity-75">Now let's start chatting...</div>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2">Now choose how you'd like me to talk to you.</div>
+                <div className="text-xs opacity-75">
+                  Professor, Friend, or Robot - pick your style!
                 </div>
               </div>
             )}

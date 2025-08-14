@@ -158,7 +158,7 @@ export default function AiChatsChatPage() {
 
   // === START: New Onboarding Code ===
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(1); // 1: grade/persona, 2: input bar
+  const [onboardingStep, setOnboardingStep] = useState(1); // 1: class selection, 2: persona selection, 3: input bar
 
   // === START: History Slider State ===
   const [showHistorySlider, setShowHistorySlider] = useState(false);
@@ -178,16 +178,25 @@ export default function AiChatsChatPage() {
   useEffect(() => {
     if (showOnboarding) {
       if (onboardingStep === 1) {
-        // First step: wait for user to select both grade and persona
-        if (selectedGrade && selectedStyle) {
-          // User has selected both, move to next step after a short delay
+        // First step: wait for user to select class
+        if (selectedGrade) {
+          // User has selected class, move to persona selection after a short delay
           const timer = setTimeout(() => {
             setOnboardingStep(2);
           }, 1000);
           return () => clearTimeout(timer);
         }
       } else if (onboardingStep === 2) {
-        // Second step: input bar tooltip for 2 seconds
+        // Second step: wait for user to select persona
+        if (selectedStyle) {
+          // User has selected persona, move to input bar after a short delay
+          const timer = setTimeout(() => {
+            setOnboardingStep(3);
+          }, 1000);
+          return () => clearTimeout(timer);
+        }
+      } else if (onboardingStep === 3) {
+        // Third step: input bar tooltip for 2 seconds
         const timer = setTimeout(() => {
           setShowOnboarding(false);
           Cookies.set("hasVisited", "true", { expires: 365 });
@@ -556,7 +565,7 @@ export default function AiChatsChatPage() {
         <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-50"></div>
       )}
 
-      {/* Onboarding tooltip for FloatingSelectors */}
+      {/* Onboarding tooltip for Class Selection */}
       {showOnboarding && onboardingStep === 1 && (
         <div className="fixed top-[100px] right-62 sm:right-66 lg:right-100 z-[60]">
           <img
@@ -565,21 +574,48 @@ export default function AiChatsChatPage() {
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
           <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
-            {selectedGrade && selectedStyle ? (
+            {selectedGrade ? (
               <div>
                 <div className="mb-2">Great! You've selected:</div>
                 <div className="text-sm opacity-90">
-                  Grade: {selectedGrade} | Style: {selectedStyle}
+                  Class: {selectedGrade}
                 </div>
-                <div className="text-xs mt-2 opacity-75">Moving to chat in a moment...</div>
+                <div className="text-xs mt-2 opacity-75">Now let's choose your persona...</div>
               </div>
             ) : (
               <div>
-                <div className="mb-2">Choose your grade and how you&apos;d like the AI to talk to you.</div>
+                <div className="mb-2">First, choose your class/grade level.</div>
                 <div className="text-xs opacity-75">
-                  {!selectedGrade && !selectedStyle && "Please select both grade and persona"}
-                  {selectedGrade && !selectedStyle && "Now select a persona"}
-                  {!selectedGrade && selectedStyle && "Now select a grade"}
+                  This helps me teach at the right level for you.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding tooltip for Persona Selection */}
+      {showOnboarding && onboardingStep === 2 && (
+        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-54 z-[60]">
+          <img
+            src="/images/arrow.svg"
+            alt="onboarding"
+            className="w-[19px] h-[59px] object-cover mx-auto mb-5"
+          />
+          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+            {selectedStyle ? (
+              <div>
+                <div className="mb-2">Perfect! You've selected:</div>
+                <div className="text-sm opacity-90">
+                  Persona: {selectedStyle}
+                </div>
+                <div className="text-xs mt-2 opacity-75">Now let's start chatting...</div>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2">Now choose how you'd like me to talk to you.</div>
+                <div className="text-xs opacity-75">
+                  Professor, Friend, or Robot - pick your style!
                 </div>
               </div>
             )}
@@ -588,7 +624,7 @@ export default function AiChatsChatPage() {
       )}
 
       {/* Onboarding tooltip for Input Bar */}
-      {showOnboarding && onboardingStep === 2 && (
+      {showOnboarding && onboardingStep === 3 && (
         <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[60]">
           <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
             Type your question here and hit send!
@@ -749,7 +785,7 @@ export default function AiChatsChatPage() {
         onSend={handleSend}
         disabled={apiLoading || !selectedGrade || !selectedStyle}
         autoFocus
-        showOnboarding={showOnboarding}
+        showOnboarding={showOnboarding && onboardingStep === 3}
       />
     </div>
   );
@@ -783,7 +819,7 @@ const ChatInputBar = forwardRef(
       pathname === "/login/otp" ||
       pathname === "/register";
     const sidebarCollapsed = state === "collapsed";
-    const inputBarClass = `fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 bg-[rgba(255,255,255,0.1)] py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
+    const inputBarClass = `fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
       hideSidebar ? "" : sidebarCollapsed ? "sidebar-collapsed" : ""
     }`;
 
@@ -795,20 +831,22 @@ const ChatInputBar = forwardRef(
           boxShadow: "0px 4px 16px 0px #00000040",
           border: "0.96px solid #FFFFFF1F",
           borderRadius: "12px",
+          background: showOnboarding ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.1)",
+          backdropFilter: "blur(10px)",
         }}
       >
         <input
           ref={ref}
           type="text"
-          placeholder="Type your question..."
+          placeholder="Tap the mic and ask anything"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSend()}
           disabled={disabled}
           autoFocus={autoFocus}
-          className={`flex-1 bg-transparent p-3 text-black placeholder-gray-300 focus:outline-none text-sm sm:text-base font-medium rounded-full transition-all duration-300 ${
+          className={`flex-1 bg-transparent p-3 text-black placeholder-gray-500 focus:outline-none text-sm sm:text-base font-medium transition-all duration-300 ${
             showOnboarding 
-              ? "border-2 border-orange-500 shadow-lg shadow-orange-500/50" 
+              ? "border-2 border-orange-500 shadow-lg shadow-orange-500/50 rounded-full" 
               : ""
           }`}
         />
@@ -817,8 +855,32 @@ const ChatInputBar = forwardRef(
           disabled={disabled || !value.trim()}
           className="rounded-full p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
         >
-          <ArrowRight size={16} className="sm:hidden" />
-          <ArrowRight size={20} className="hidden sm:block" />
+          <svg
+            width="20"
+            height="20"
+            className="sm:hidden"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <rect x="9" y="2" width="6" height="12" rx="3" />
+            <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+            <path d="M12 19v3m-4 0h8" />
+          </svg>
+          <svg
+            width="24"
+            height="24"
+            className="hidden sm:block"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <rect x="9" y="2" width="6" height="12" rx="3" />
+            <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+            <path d="M12 19v3m-4 0h8" />
+          </svg>
         </button>
       </div>
     );
