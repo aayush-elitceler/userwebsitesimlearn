@@ -408,6 +408,10 @@ export default function QuizesPage() {
     fetchSubmissions();
   }, []);
 
+  // Filter quizzes based on completion status
+  const startQuizzes = userQuizzes.filter(quiz => !quiz.completed);
+  const completedQuizzes = userQuizzes.filter(quiz => quiz.completed);
+
   return (
     <div className="min-h-screen w-full px-4 md:px-8 lg:px-12 py-8 bg-gray-100">
       <div className="max-w-6xl mx-auto">
@@ -425,15 +429,15 @@ export default function QuizesPage() {
           AI-powered quizzes to help you perform your best. <span className="align-middle">🏅✨</span>
         </div>
        
-        {/* Institution Generated Quizzes */}
+        {/* Start Quizzes Section */}
         <div className="flex items-center justify-between mb-4 mt-8 gap-4">
-          <h3 className="text-xl font-bold text-black">Your Quizzes</h3>
+          <h3 className="text-xl font-bold text-black">Upcoming quizzes</h3>
           <a
             href="#"
             className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0"
             onClick={(e) => {
               e.preventDefault();
-              router.push('/quizes/takeQuiz/all?type=your');
+              router.push('/quizes/takeQuiz/all?type=start');
             }}
           >
             View all 
@@ -452,10 +456,49 @@ export default function QuizesPage() {
           <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 overflow-x-clip">
             {loading ? (
               <div className="text-black">Loading...</div>
-            ) : userQuizzes.length === 0 ? (
-              <div className="text-black">No quizzes available.</div>
+            ) : startQuizzes.length === 0 ? (
+              <div className="text-black">No upcoming quizzes.</div>
             ) : (
-              userQuizzes.slice(0, 2).map((quiz) => {
+              startQuizzes.slice(0, 2).map((quiz) => (
+                <QuizCard
+                  key={quiz.id}
+                  quiz={quiz}
+                  previous={false}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Completed Quizzes Section */}
+        <div className="flex items-center justify-between mb-4 mt-8 gap-4">
+          <h3 className="text-xl font-bold text-black">Previous quizzes</h3>
+          <a
+            href="#"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/quizes/takeQuiz/all?type=completed');
+            }}
+          >
+            View all 
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.627 8.75H0.5V7.25H12.627L6.93075 1.55375L8 0.5L15.5 8L8 15.5L6.93075 14.4462L12.627 8.75Z" fill="url(#paint0_linear_1309_2563)"/>
+              <defs>
+                <linearGradient id="paint0_linear_1309_2563" x1="0.5" y1="8" x2="15.5" y2="8" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#FF8015"/>
+                  <stop offset="1" stopColor="#FF9D07"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </a>
+        </div>
+        <div className="mb-10 py-4">
+          <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 overflow-x-clip">
+            {completedQuizzes.length === 0 ? (
+              <div className="text-black">No previous quizzes.</div>
+            ) : (
+              completedQuizzes.slice(0, 2).map((quiz) => {
                 const submission = submissions.find(
                   (s) => s.quizId === quiz.id
                 );
@@ -463,7 +506,7 @@ export default function QuizesPage() {
                   <QuizCard
                     key={quiz.id}
                     quiz={quiz}
-                    previous={quiz.completed}
+                    previous={true}
                     score={submission?.score}
                     date={submission?.submittedAt}
                     submissionId={submission?.id}

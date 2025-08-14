@@ -41,45 +41,6 @@ const subjectColors: Record<string, string> = {
   EVS: "#E6AF3F",
   Default: "#E6AF3F",
 };
-{/* <div className="flex flex-row bg-white rounded-2xl p-8 mb-6 shadow-lg max-w-3xl w-full items-center">
-<div className="flex-1">
-  <div className="text-black font-semibold mb-1">
-    Subject: {exam.subject || "N/A"}
-  </div>
-  <div className="text-2xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text">{exam.title}</div>
-  <div className="text-black mb-3">
-    {exam.description || exam.instructions}
-  </div>
-  <div className="text-black mb-4 flex items-center gap-2">
-    <span role="img" aria-label="clock">🕒</span>
-    Due date:{" "}
-    {exam.dueDate
-      ? new Date(exam.dueDate).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
-      : "-"}
-  </div>
-  <button
-    className="point-ask-gradient cursor-pointer text-white rounded-lg px-6 py-2 font-semibold shadow hover:bg-green-700 transition"
-    onClick={onStart}
-  >
-    {buttonText}
-  </button>
-</div>
-<div className="ml-8 flex-shrink-0">
-  <div
-    className="rounded-xl flex items-center justify-center w-56 h-36 text-white text-2xl font-bold shadow-lg"
-    style={{
-      background: subjectColors[exam.subject || "Default"],
-      minWidth: 180,
-    }}
-  >
-    {exam.subject || "Subject"}
-  </div>
-</div>
-</div> */}
 
 function QuizCard({
   quiz,
@@ -260,18 +221,14 @@ export default function QuizesPage() {
           }
         );
         const data = await res.json();
-        if (
-          data.success &&
-          data.data &&
-          data.data.institutionGeneratedQuizzes
-        ) {
-          const userObj = data.data.institutionGeneratedQuizzes;
-          setUpcomingQuizzes(
-            Array.isArray(userObj.upcoming) ? userObj.upcoming : []
-          );
-          setPreviousQuizzes(
-            Array.isArray(userObj.previous) ? userObj.previous : []
-          );
+        if (data.success && data.data) {
+          const userObj = data.data.userGeneratedQuizzes || {};
+          const userCombined = [
+            ...(Array.isArray(userObj.upcoming) ? userObj.upcoming : []),
+            ...(Array.isArray(userObj.previous) ? userObj.previous : []),
+          ];
+          setUpcomingQuizzes(userCombined);
+          setPreviousQuizzes(userCombined);
         }
       } catch (e) {
         // handle error
@@ -312,6 +269,10 @@ export default function QuizesPage() {
     fetchSubmissions();
   }, []);
 
+  // Filter quizzes based on completion status
+  const startQuizzes = upcomingQuizzes.filter(quiz => !quiz.completed);
+  const completedQuizzes = upcomingQuizzes.filter(quiz => quiz.completed);
+
   return (
     <div className="min-h-screen w-full px-4 md:px-8 lg:px-12 py-8 bg-gray-100">
       <div className="max-w-6xl mx-auto">
@@ -321,7 +282,8 @@ export default function QuizesPage() {
           🎯 Take quizzes, earn badges, and become a quiz champ!{" "}
           <span className="align-middle">🏅✨</span>
         </div>
-        {/* Upcoming Quizzes */}
+        
+        {/* Start Quizzes Section */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-4 gap-4">
             <h3 className="text-xl font-bold text-black">Upcoming quizzes</h3>
@@ -330,7 +292,7 @@ export default function QuizesPage() {
               className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0 "
               onClick={(e) => {
                 e.preventDefault();
-                router.push('/quizes/all?type=upcoming');
+                router.push('/quizes/takeQuiz/all?type=start');
               }}
             >
               View all 
@@ -349,17 +311,18 @@ export default function QuizesPage() {
             <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 overflow-x-clip">
               {loading ? (
                 <div className="text-black">Loading...</div>
-              ) : upcomingQuizzes.length === 0 ? (
+              ) : startQuizzes.length === 0 ? (
                 <div className="text-black">No upcoming quizzes.</div>
               ) : (
-                upcomingQuizzes.slice(0, 2).map((quiz) => (
+                startQuizzes.slice(0, 2).map((quiz) => (
                   <QuizCard quiz={quiz} key={quiz.id} />
                 ))
               )}
             </div>
           </div>
         </div>
-        {/* Previous Quizzes */}
+        
+        {/* Completed Quizzes Section */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-4 mt-8 gap-4">
             <h3 className="text-xl font-bold text-black">Previous quizzes</h3>
@@ -368,7 +331,7 @@ export default function QuizesPage() {
               className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0"
               onClick={(e) => {
                 e.preventDefault();
-                router.push('/quizes/all?type=previous');
+                router.push('/quizes/takeQuiz/all?type=completed');
               }}
             >
               View all 
@@ -385,10 +348,10 @@ export default function QuizesPage() {
           </div>
           <div className="mb-10 py-4">
             <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 overflow-x-clip">
-              {previousQuizzes.length === 0 ? (
+              {completedQuizzes.length === 0 ? (
                 <div className="text-black">No previous quizzes.</div>
               ) : (
-                previousQuizzes.slice(0, 2).map((quiz) => {
+                completedQuizzes.slice(0, 2).map((quiz) => {
                   const submission = submissions.find(
                     (s) => s.quizId === quiz.id
                   );
@@ -396,7 +359,7 @@ export default function QuizesPage() {
                     <QuizCard
                       key={quiz.id}
                       quiz={quiz}
-                      previous={quiz.completed}
+                      previous={true}
                       score={submission?.score}
                       date={submission?.submittedAt}
                       submissionId={submission?.id}

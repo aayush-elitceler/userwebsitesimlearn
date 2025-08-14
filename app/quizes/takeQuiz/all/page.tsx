@@ -250,9 +250,20 @@ export default function AllQuizzesPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const type = searchParams.get('type') || 'your';
+  const type = searchParams.get('type') || 'start';
 
-  const pageTitle = type === 'your' ? 'Your Quizzes' : 'All Quizzes';
+  // Filter quizzes based on type
+  const getFilteredQuizzes = () => {
+    if (type === 'start') {
+      return quizzes.filter(quiz => !quiz.completed);
+    } else if (type === 'completed') {
+      return quizzes.filter(quiz => quiz.completed);
+    }
+    return [];
+  };
+
+  const displayQuizzes = getFilteredQuizzes();
+  const pageTitle = type === 'start' ? 'Upcoming Quizzes' : 'Previous Quizzes';
 
   useEffect(() => {
     async function fetchQuizzes() {
@@ -336,13 +347,13 @@ export default function AllQuizzesPage() {
           <div className="flex items-center justify-center py-12">
             <div className="text-black">Loading...</div>
           </div>
-        ) : quizzes.length === 0 ? (
+        ) : displayQuizzes.length === 0 ? (
           <div className="flex items-center justify-center py-12">
-            <div className="text-black">No quizzes available.</div>
+            <div className="text-black">No {type} quizzes available.</div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {quizzes.map((quiz) => {
+            {displayQuizzes.map((quiz) => {
               const submission = submissions.find(
                 (s) => s.quizId === quiz.id
               );
@@ -350,7 +361,7 @@ export default function AllQuizzesPage() {
                 <QuizCard
                   key={quiz.id}
                   quiz={quiz}
-                  previous={quiz.completed}
+                  previous={type === 'completed'}
                   score={submission?.score}
                   date={submission?.submittedAt}
                   submissionId={submission?.id}

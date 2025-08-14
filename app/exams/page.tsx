@@ -34,6 +34,8 @@ interface Quiz {
   subject?: string;
   assignmentDetails?: {
     endTime: string;
+    score?: number;
+    completed?: boolean;
   };
 }
 type Submission = {
@@ -269,14 +271,14 @@ function QuizCard({
           {previous ? (
             <button
               className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={() => router.push(`/quizes/${quiz.id}/answers?submissionId=${submissionId}`)}
+              onClick={() => router.push(`/exams/reports/${quiz.id}`)}
             >
-              View answers
+              View Report
             </button>
           ) : (
             <button
               className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={() => router.push(`/quizes/${quiz.id}/start`)}
+              onClick={() => router.push(`/exams/take/${quiz.id}`)}
             >
               Start Exam
             </button>
@@ -483,15 +485,16 @@ export default function QuizesPage() {
               <div className="text-black">No previous exams.</div>
             ) : (
               previousExams.slice(0, 2).map((quiz) => (
-                <ExamCard
-                  exam={{
+                <QuizCard
+                  key={quiz.id}
+                  quiz={{
                     ...quiz,
                     subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
-                    dueDate: quiz.assignmentDetails?.endTime || quiz.createdAt,
                   }}
-                  key={quiz.id}
-                  onStart={() => router.push(`/exams/take/${quiz.id}`)}
-                  buttonText="Take exam"
+                  previous={true}
+                  score={quiz.assignmentDetails?.score || undefined}
+                  date={quiz.assignmentDetails?.endTime || quiz.createdAt}
+                  submissionId={undefined}
                 />
               ))
             )}

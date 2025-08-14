@@ -248,14 +248,14 @@ function QuizCard({
           {previous ? (
             <button
               className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={() => router.push(`/quizes/${quiz.id}/answers?submissionId=${submissionId}`)}
+              onClick={() => router.push(`/exams/reports/${quiz.id}`)}
             >
-              View answers
+              View Report
             </button>
           ) : (
             <button
               className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={() => router.push(`/exams/${quiz.id}/start`)}
+              onClick={() => router.push(`/exams/take/${quiz.id}`)}
             >
               Take Exam
             </button>

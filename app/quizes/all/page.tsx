@@ -221,10 +221,20 @@ export default function AllQuizzesPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const type = searchParams.get('type') || 'upcoming';
+  const type = searchParams.get('type') || 'start';
 
-  const pageTitle = type === 'upcoming' ? 'Upcoming Quizzes' : 'Previous Quizzes';
-  const displayQuizzes = type === 'upcoming' ? upcomingQuizzes : previousQuizzes;
+  // Filter quizzes based on type
+  const getFilteredQuizzes = () => {
+    if (type === 'start') {
+      return upcomingQuizzes.filter(quiz => !quiz.completed);
+    } else if (type === 'completed') {
+      return previousQuizzes.filter(quiz => quiz.completed);
+    }
+    return [];
+  };
+
+  const displayQuizzes = getFilteredQuizzes();
+  const pageTitle = type === 'start' ? 'Upcoming Quizzes' : 'Previous Quizzes';
 
   useEffect(() => {
     async function fetchQuizzes() {
@@ -328,7 +338,7 @@ export default function AllQuizzesPage() {
                 <QuizCard
                   key={quiz.id}
                   quiz={quiz}
-                  previous={type === 'previous'}
+                  previous={type === 'completed'}
                   score={submission?.score}
                   date={submission?.submittedAt}
                   submissionId={submission?.id}

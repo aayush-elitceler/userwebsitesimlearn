@@ -111,7 +111,7 @@ export default function CreateExamPage() {
         
         const examId = data.data?.exam?.id || data.data?.id;
         if (examId) {
-          router.push(`/exams/start/${examId}`);
+          router.push(`/exams/take/${examId}`);
         } else {
           router.push("/exams");
         }
