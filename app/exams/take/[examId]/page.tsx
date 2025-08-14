@@ -208,23 +208,23 @@ export default function TakeExamPage() {
     <div className="fixed inset-0 min-h-screen min-w-screen bg-gray-100 py-8 px-2 md:px-0 flex flex-col items-center z-10">
       {/* Warning Modal */}
       {showWarning && warningCount > 0 && warningCount < 5 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-[#181c24] rounded-2xl p-8 max-w-md w-full flex flex-col items-center shadow-lg border border-[#333]">
-            <div className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <span role="img" aria-label="alert">🛑</span>
-              You’ve Left the Exam Screen
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full flex flex-col items-center shadow-[0px_4px_16px_0px_#F9771754] border-4 border-orange-500">
+            <div className="text-xl font-bold text-black mb-4 flex items-center gap-3 text-center">
+              
+              <span className="font-['Poppins'] font-bold text-lg"> 🚨 You've Left the Exam Screen</span>
             </div>
-            <div className="text-gray-200 mb-4 text-center">
+            <div className="text-black mb-4 text-center font-['Poppins']">
               To maintain exam integrity, please stay on this page.
             </div>
-            <div className="text-lg font-semibold text-yellow-600 mb-2">
-              This is Warning {warningCount/2} of 3.
+            <div className="text-lg font-bold text-red-500 mb-2 font-['Poppins']">
+              This is Warning {Math.ceil(warningCount/2)} of 3.
             </div>
-            <div className="text-gray-300 mb-6 text-center">
+            <div className="text-black mb-6 text-center font-['Poppins']">
               If you switch again, the exam may be auto-submitted.
             </div>
             <button
-              className="bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg"
+              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-3 rounded-lg font-bold text-lg font-['Poppins'] hover:opacity-90 transition-opacity"
               onClick={() => setShowWarning(false)}
             >
               Back to exam
@@ -233,18 +233,18 @@ export default function TakeExamPage() {
         </div>
       )}
       {showFinalViolationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-[#181c24] rounded-2xl p-8 max-w-md w-full flex flex-col items-center shadow-lg border border-[#333]">
-            <div className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <span role="img" aria-label="alert">🛑</span>
-              You’ve exceeded the allowed number of screen violations.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full flex flex-col items-center shadow-[0px_4px_16px_0px_#F9771754] border-4 border-orange-500">
+            <div className="text-xl font-bold text-black mb-4 flex items-center gap-3 text-center">
+            
+              <span className="font-['Poppins'] font-bold text-lg"> 🚨 You've exceeded the allowed number of screen violations.</span>
             </div>
-            <div className="text-gray-200 mb-6 text-center">
+            <div className="text-black mb-6 text-center font-['Poppins']">
               Your exam has been submitted automatically<br />
               due to repeated tab switches or screen exits.
             </div>
             <button
-              className="bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg"
+              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-3 rounded-lg font-bold text-lg font-['Poppins'] hover:opacity-90 transition-opacity"
               onClick={() => router.push("/exams")}
             >
               Back to dashboard
