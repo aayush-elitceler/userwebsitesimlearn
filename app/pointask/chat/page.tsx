@@ -110,12 +110,7 @@ const styles = [
   },
 ];
 
-const suggestions = [
-  "What is this math problem asking?",
-  "Can you solve this equation?",
-  "Explain this diagrams.",
-  "What does this question mean?",
-];
+
 
 export default function PointAskChatPage() {
   const { state } = useSidebar();
@@ -233,13 +228,7 @@ export default function PointAskChatPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showGradeDropdown, showStyleDropdown]);
 
-  // Suggestion click handler
-  const handleSuggestion = (s: string) => {
-    setMessage(s);
-    if (selectedGrade && selectedStyle && imageFile) {
-      setTimeout(() => handleSend(s), 100);
-    }
-  };
+
 
   // === START: History Functions ===
   const fetchHistoryData = async () => {
@@ -650,26 +639,15 @@ export default function PointAskChatPage() {
               </div>
             </div>
 
-            {/* Show suggestions only if no image uploaded yet */}
-            {!image && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-8">
-                {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    className="border border-black rounded-xl py-8 px-6 text-lg text-black bg-transparent hover:bg-[#FFB12133] transition font-medium w-full"
-                    onClick={() => handleSuggestion(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
+
 
             {/* Image upload area - only show if no image uploaded */}
             {!image && (
-              <div className="flex flex-col md:flex-row gap-8 w-full justify-center mb-8">
+              <div className="flex flex-col md:flex-row gap-8 w-full justify-center mb-8 ">
                 <button
-                  className="flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-transparent text-black w-full md:w-1/2 border border-black"
+                  className="flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-gradient-to-r from-[#FF9F2733] to-[#FF514633] 
+                 transition font-medium border-none shadow-sm 
+                text-black w-full md:w-1/2 border border-black hover:bg-gradient-to-r hover:from-[#FFB31F] hover:to-[#FF4949] hover:text-white hover:border-[#FF4949] "
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <span className="point-ask-gradient rounded-full w-12 h-12 flex items-center justify-center">

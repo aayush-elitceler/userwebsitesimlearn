@@ -25,7 +25,7 @@ body {
 }
 
 .sidebar-indicator {
-  background: linear-gradient(90deg, #06783C 0%, #137F46 100%);
+  /* background: linear-gradient(90deg, #06783C 0%, #137F46 100%); */
   position: fixed;
   left: 0;
   z-index: 50;
