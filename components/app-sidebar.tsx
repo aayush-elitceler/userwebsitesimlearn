@@ -568,29 +568,29 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
           }}
         >
           <div>
-            <div
-              className={`transition-all duration-300 ${
-                collapsed ? 'overflow-hidden' : ''
-              }`}
-            >
-              {/* Simple Logo Display */}
-              <div className="py-2 px-4">
-                <Link href="/">
-                  <Image
-                    src={logoUrl || Logo}
-                    alt="Logo"
-                    width={100}
-                    height={40}
-                    className="object-contain mx-auto"
-                  />
-                </Link>
+            {!collapsed && (
+              <div
+                className={`transition-all duration-300`}
+              >
+                {/* Simple Logo Display */}
+                <div className="py-2 px-4">
+                  <Link href="/">
+                    <Image
+                      src={logoUrl || Logo}
+                      alt="Logo"
+                      width={100}
+                      height={40}
+                      className="object-contain mx-auto"
+                    />
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
             {/* Desktop collapse button */}
             <button
               onClick={() => setCollapsed((prev) => !prev)}
-              className={`absolute top-7 z-20 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 ${
-                collapsed ? 'right-2' : 'right-4'
+              className={`absolute z-20 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 ${
+                collapsed ? 'top-6 right-2' : 'top-7 right-4'
               }`}
               aria-label='Toggle sidebar'
             >
@@ -601,12 +601,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 stroke='currentColor'
                 strokeWidth='2'
               >
-                <path d={collapsed ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'} />
+                <path d={collapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} />
               </svg>
             </button>
             <nav
-              className={`flex flex-col flex-1 space-y-2 mt-4 overflow-y-auto scrollbar-hide pb-4 transition-all duration-300 ${
-                collapsed ? 'px-2' : 'px-4'
+              className={`flex flex-col flex-1 space-y-2 overflow-y-auto scrollbar-hide pb-4 transition-all duration-300 ${
+                collapsed ? 'px-2 mt-12' : 'px-4 mt-4'
               }`}
             >
               {/* Section Heading */}
@@ -968,7 +968,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       className={`h-5 w-5 flex-shrink-0 ${pathname === '/personalisedLearning' ? '' : 'brightness-0'}`}
                     />
                     {!collapsed && (
-                      <span className='text-sm'>Personalized le..</span>
+                      <span className='text-sm leading-tight'>
+                        Personalized<br />Learning
+                      </span>
                     )}
                   </Link>
                 </div>
