@@ -314,9 +314,12 @@ export default function Home() {
     <div
       className={`min-h-screen bg-gray-50 px-4 sm:px-6 md:px-8 py-6 ${poppins.className}`}
     >
-      {/* Header with Profile button and School/Class Info */}
+
+      {/* Header with greeting and School/Class Info side by side */}
       <div className='flex justify-between items-center mb-6'>
-        <div></div> {/* Empty div for spacing */}
+        <h1 className='text-2xl sm:text-3xl font-semibold text-gray-800'>
+          Hi {dashboardData.user.firstName}! 👋 Let&apos;s make today count.
+        </h1>
         <div className='flex items-center gap-3'>
           {/* School and Class Info */}
           <div className='text-sm text-gray-600 text-right'>
@@ -325,7 +328,6 @@ export default function Home() {
             )}
             <div>Self Learn AI</div>
           </div>
-          
           <button
             onClick={() => router.push('/profile')}
             className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200 flex items-center justify-center text-xl'
@@ -333,22 +335,8 @@ export default function Home() {
           >
             👤
           </button>
-          {/* <button
-            onClick={() => {
-              Cookies.remove('auth');
-              router.push('/login');
-            }}
-            className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium'
-          >
-            Logout
-          </button> */}
         </div>
       </div>
-
-      {/* Header */}
-      <h1 className='text-2xl sm:text-3xl font-semibold text-gray-800 mb-4'>
-        Hi {dashboardData.user.firstName}! 👋 Let&apos;s make today count.
-      </h1>
 
       {/* Streak + Badge */}
       <div className='flex flex-col md:flex-row gap-4 mb-6'>
