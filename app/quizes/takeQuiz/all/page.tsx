@@ -103,10 +103,14 @@ function QuizCard({
   
   return (
     <div className="flex flex-row bg-white border border-[#DEDEDE] items-center 
-                    w-full h-[240px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
-                    sm:h-[240px] md:h-[240px] lg:h-[260px] xl:h-[280px] 2xl:h-[300px]">
-      <div className="flex-1 min-w-0 flex flex-col justify-between h-full overflow-hidden">
-        <div className="flex-1 min-h-0">
+                    w-full max-w-[520px] min-w-[380px] h-[280px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] 
+                    flex-shrink-0 p-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 transform
+                    sm:max-w-[540px] sm:h-[290px] sm:p-5
+                    md:max-w-[500px] md:h-[270px] md:p-5
+                    lg:max-w-[520px] lg:h-[280px] lg:p-5
+                    xl:max-w-[560px] xl:h-[300px] xl:p-6">
+      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden pr-4">
+        <div className="flex-1 min-h-0 pb-3">
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
             Difficulty: {quiz.difficulty?.charAt(0).toUpperCase() + quiz.difficulty?.slice(1)}
           </div>
@@ -174,7 +178,7 @@ function QuizCard({
             </div>
           )}
         </div>
-        <div className="mt-auto pt-1">
+        <div className="mt-auto pt-3">
           {previous ? (
             <button
               className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from 'axios';
 
 type QuestionConfig =
   | {
@@ -95,28 +96,29 @@ export default function CreateExamPage() {
         return;
       }
       
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/generate`,
+        body,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       
-      const data = await res.json();
-      if (res.ok && data.success) {
+      if (response.data.success) {
         // Success: redirect or show message
-        console.log(data);
+        console.log(response.data);
         
-        const examId = data.data?.exam?.id || data.data?.id;
+        const examId = response.data.data?.exam?.id || response.data.data?.id;
         if (examId) {
           router.push(`/exams/take/${examId}`);
         } else {
           router.push("/exams");
         }
       } else {
-        setError(data.message || 'Failed to create exam');
+        setError(response.data.message || 'Failed to create exam');
         setShowModal(false);
       }
     } catch (err) {

@@ -47,9 +47,12 @@ const handleGoogleSignIn = () => {
           { idToken: response.credential }
         );
 
-        // Assuming backend returns token directly:
+        // Save both token and user data if available
         if (res.data?.data?.token) {
-          Cookies.set("auth", JSON.stringify({ token: res.data.data.token }), {
+          Cookies.set("auth", JSON.stringify({ 
+            token: res.data.data.token,
+            user: res.data.data.user 
+          }), {
             expires: 1,
           });
           router.push("/");
@@ -73,7 +76,12 @@ const handleGoogleSignIn = () => {
         `${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/login`,
         { email, password }
       );
-      Cookies.set("auth", JSON.stringify({ token: res.data.data.token }), {
+      
+      // Save both token and user data
+      Cookies.set("auth", JSON.stringify({ 
+        token: res.data.data.token,
+        user: res.data.data.user 
+      }), {
         expires: 1,
       });
       router.push("/");

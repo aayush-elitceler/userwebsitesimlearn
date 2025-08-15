@@ -433,7 +433,7 @@ export default function QuizesPage() {
                   }}
                   key={quiz.id}
                   onStart={() => router.push(`/exams/take/${quiz.id}`)}
-                  buttonText={quiz.assignmentDetails && 'completed' in quiz.assignmentDetails && quiz.assignmentDetails.completed ? 'Retake exam' : 'Take exam'}
+                  buttonText={quiz.assignmentDetails && 'completed' in quiz.assignmentDetails && quiz.assignmentDetails.completed ? 'Complete the Exam' : 'Take exam'}
                 />
               ))
             )}

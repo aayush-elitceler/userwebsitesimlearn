@@ -221,7 +221,7 @@ export default function AllGenerateExamsPage() {
                   dueDate: quiz.assignmentDetails?.endTime || quiz.createdAt,
                 }}
                 onStart={() => router.push(`/exams/take/${quiz.id}`)}
-                buttonText={quiz.assignmentDetails && 'completed' in quiz.assignmentDetails && quiz.assignmentDetails.completed ? 'Retake exam' : 'Take exam'}
+                buttonText={quiz.assignmentDetails && 'completed' in quiz.assignmentDetails && quiz.assignmentDetails.completed ? 'Complete exam' : 'Take exam'}
               />
             ))}
           </div>

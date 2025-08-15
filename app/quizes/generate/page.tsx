@@ -342,10 +342,10 @@ export default function GenerateQuizPage() {
           </div>
         </form>
         {/* Buttons */}
-        <div className='flex justify-end gap-4 mt-8'>
+        <div className='flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-4 border-t border-gray-300'>
           <button
             type='button'
-            className='border border-red-400 text-red-400 rounded-lg px-8 py-2 font-semibold bg-transparent hover:bg-white/10 transition'
+            className='border border-red-400 text-red-400 rounded-lg px-6 py-3 font-semibold bg-transparent hover:bg-red-50 transition-all duration-200 min-w-[120px] order-2 sm:order-1'
             onClick={() => {
               setTopic('');
               setDifficulty('medium');
@@ -361,7 +361,7 @@ export default function GenerateQuizPage() {
           <button
             type='submit'
             form='quiz-gen-form'
-            className='point-ask-gradient text-white cursor-pointer rounded-lg px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition disabled:opacity-60'
+            className='point-ask-gradient text-white cursor-pointer rounded-lg px-6 py-3 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed min-w-[140px] order-1 sm:order-2'
             disabled={loading}
             onClick={handleSubmit}
           >
