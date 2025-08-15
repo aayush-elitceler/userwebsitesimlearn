@@ -2,6 +2,7 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 
 const subjectColors: Record<string, string> = {
   Maths: "#4A90E2",

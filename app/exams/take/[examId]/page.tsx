@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import axios from 'axios';
 
 interface Question {
   id: string;
@@ -51,19 +52,21 @@ export default function TakeExamPage() {
       setLoading(true);
       try {
         const token = getTokenFromCookie();
-        const res = await fetch(
+        const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/get-by-id?examId=${examId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        const data = await res.json();
-        if (data.success && data.data && data.data.exam) {
-          setExam(data.data.exam);
-          setAnswers(Array(data.data.exam.questions.length).fill(""));
+        
+        if (response.data.success && response.data.data && response.data.data.exam) {
+          setExam(response.data.data.exam);
+          setAnswers(Array(response.data.data.exam.questions.length).fill(""));
           setStartedAt(new Date().toISOString());
-          setRemainingTime(data.data.exam.timeLimitMinutes * 60);
+          setRemainingTime(response.data.data.exam.timeLimitMinutes * 60);
         }
+      } catch (error) {
+        console.error('Error fetching exam:', error);
       } finally {
         setLoading(false);
       }
@@ -158,6 +161,17 @@ export default function TakeExamPage() {
     // eslint-disable-next-line
   }, [warningCount]);
 
+  const scrollToQuestion = (questionIndex: number) => {
+    const questionElement = document.getElementById(`question-${questionIndex}`);
+    if (questionElement) {
+      questionElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'nearest'
+      });
+    }
+  };
+
   const handleAnswerChange = (idx: number, value: string) => {
     setAnswers((prev) => {
       const copy = [...prev];
@@ -181,18 +195,22 @@ export default function TakeExamPage() {
     };
     try {
       const token = getTokenFromCookie();
-      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`,
+        body,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (!isFinalViolation) {
         router.push(`/exams/reports/${examId}`);
       }
       // else: wait for user to click Back to dashboard
+    } catch (error) {
+      console.error('Error submitting exam:', error);
     } finally {
       setSubmitting(false);
     }
@@ -220,22 +238,101 @@ export default function TakeExamPage() {
       {/* Warning Modal */}
       {showWarning && warningCount > 0 && warningCount < 5 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full flex flex-col items-center shadow-[0px_4px_16px_0px_#F9771754] border-4 border-orange-500">
-            <div className="text-xl font-bold text-black mb-4 flex items-center gap-3 text-center">
-              
-              <span className="font-['Poppins'] font-bold text-lg"> 🚨 You've Left the Exam Screen</span>
+          <div 
+            className="bg-white flex flex-col items-center justify-center border border-[#DFDFDF]"
+            style={{
+              width: '700px',
+              height: '320px',
+              borderRadius: '32px',
+              boxShadow: '0px 4px 16px 0px #F9771754',
+              padding: '40px 60px',
+            }}
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-5">
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-red-500"
+              >
+                <path 
+                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-            <div className="text-black mb-4 text-center font-['Poppins']">
+            <h2 
+              className="text-gray-900 mb-3"
+              style={{
+                fontFamily: 'Poppins',
+                fontWeight: 700,
+                fontSize: '20px',
+                lineHeight: '32px',
+                letterSpacing: '0%',
+                textAlign: 'center',
+                maxWidth: '350px',
+              }}
+            >
+              🚨 You've Left the Exam Screen
+            </h2>
+            <p 
+              className="text-gray-700 mb-3"
+              style={{
+                fontFamily: 'Poppins',
+                fontWeight: 400,
+                fontSize: '15px',
+                lineHeight: '24px',
+                textAlign: 'center',
+                maxWidth: '400px',
+              }}
+            >
               To maintain exam integrity, please stay on this page.
-            </div>
-            <div className="text-lg font-bold text-red-500 mb-2 font-['Poppins']">
+            </p>
+            <p 
+              className="text-red-600 mb-1"
+              style={{
+                fontFamily: 'Poppins',
+                fontWeight: 700,
+                fontSize: '17px',
+                lineHeight: '26px',
+                textAlign: 'center',
+                maxWidth: '300px',
+              }}
+            >
               This is Warning {Math.ceil(warningCount/2)} of 3.
-            </div>
-            <div className="text-black mb-6 text-center font-['Poppins']">
+            </p>
+            <p 
+              className="text-gray-600 mb-6"
+              style={{
+                fontFamily: 'Poppins',
+                fontWeight: 400,
+                fontSize: '15px',
+                lineHeight: '24px',
+                textAlign: 'center',
+                maxWidth: '400px',
+              }}
+            >
               If you switch again, the exam may be auto-submitted.
-            </div>
+            </p>
             <button
-              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-3 rounded-lg font-bold text-lg font-['Poppins'] hover:opacity-90 transition-opacity"
+              className="text-white font-semibold transition-all duration-200 flex items-center justify-center"
+              style={{
+                width: '336px',
+                height: '48px',
+                borderRadius: '10px',
+                padding: '12px',
+                background: 'linear-gradient(89.79deg, #FFB31F 0.11%, #F97316 95.83%)',
+                fontFamily: 'Poppins',
+                fontWeight: 600,
+                fontSize: '16px',
+                border: 'none',
+                cursor: 'pointer',
+              }}
               onClick={() => setShowWarning(false)}
             >
               Back to exam
@@ -245,17 +342,75 @@ export default function TakeExamPage() {
       )}
       {showFinalViolationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full flex flex-col items-center shadow-[0px_4px_16px_0px_#F9771754] border-4 border-orange-500">
-            <div className="text-xl font-bold text-black mb-4 flex items-center gap-3 text-center">
-            
-              <span className="font-['Poppins'] font-bold text-lg"> 🚨 You've exceeded the allowed number of screen violations.</span>
+          <div 
+            className="bg-white flex flex-col items-center justify-center border border-[#DFDFDF]"
+            style={{
+              width: '700px',
+              height: '320px',
+              borderRadius: '32px',
+              boxShadow: '0px 4px 16px 0px #F9771754',
+              padding: '50px 60px',
+            }}
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-6">
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-red-500"
+              >
+                <path 
+                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-            <div className="text-black mb-6 text-center font-['Poppins']">
-              Your exam has been submitted automatically<br />
-              due to repeated tab switches or screen exits.
-            </div>
+            <h2 
+              className="text-gray-900 mb-4"
+              style={{
+                fontFamily: 'Poppins',
+                fontWeight: 700,
+                fontSize: '20px',
+                lineHeight: '32px',
+                letterSpacing: '0%',
+                textAlign: 'center',
+                maxWidth: '400px',
+              }}
+            >
+              🚨 You've exceeded the allowed number of screen violations.
+            </h2>
+            <p 
+              className="text-gray-700 mb-8"
+              style={{
+                fontFamily: 'Poppins',
+                fontWeight: 400,
+                fontSize: '15px',
+                lineHeight: '24px',
+                textAlign: 'center',
+                maxWidth: '450px',
+              }}
+            >
+              Your exam has been submitted automatically due to repeated tab switches or screen exits.
+            </p>
             <button
-              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-3 rounded-lg font-bold text-lg font-['Poppins'] hover:opacity-90 transition-opacity"
+              className="text-white font-semibold transition-all duration-200 flex items-center justify-center"
+              style={{
+                width: '336px',
+                height: '48px',
+                borderRadius: '10px',
+                padding: '12px',
+                background: 'linear-gradient(89.79deg, #FFB31F 0.11%, #F97316 95.83%)',
+                fontFamily: 'Poppins',
+                fontWeight: 600,
+                fontSize: '16px',
+                border: 'none',
+                cursor: 'pointer',
+              }}
               onClick={() => router.push("/exams")}
             >
               Back to dashboard
@@ -263,24 +418,103 @@ export default function TakeExamPage() {
           </div>
         </div>
       )}
-      {/* Timer Bar */}
-      <div className="w-full max-w-3xl flex justify-between items-center mb-4 sticky top-0 z-20">
-        <div className="text-black font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
-        <div className="text-gray-400 text-sm">(Exam will auto-submit when time runs out)</div>
+      {/* Timer Bar and Progress */}
+      <div className="w-full max-w-3xl mb-4 sticky top-0 z-20 bg-gray-100 p-4 rounded-lg shadow-sm border">
+        <div className="flex justify-between items-center mb-3">
+          <div className="text-black font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
+          <div className="text-gray-400 text-sm">(Exam will auto-submit when time runs out)</div>
+        </div>
+        
+        {/* Progress Bar */}
+        <div className="mb-3">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-sm font-medium text-gray-700">Progress</span>
+            <span className="text-sm font-medium text-gray-700">
+              {answers.filter(answer => answer.trim() !== "").length} of {exam.questions.length} answered
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all duration-500 ease-out relative"
+              style={{ 
+                width: `${(answers.filter(answer => answer.trim() !== "").length / exam.questions.length) * 100}%` 
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Time Progress Bar */}
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs text-gray-600">Time Remaining</span>
+            <span className="text-xs text-gray-600">
+              {remainingTime ? Math.round((remainingTime / (exam.timeLimitMinutes * 60)) * 100) : 0}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div 
+              className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                remainingTime && (remainingTime / (exam.timeLimitMinutes * 60)) > 0.3 
+                  ? 'bg-gradient-to-r from-green-400 to-green-600' 
+                  : remainingTime && (remainingTime / (exam.timeLimitMinutes * 60)) > 0.1
+                  ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
+                  : 'bg-gradient-to-r from-red-400 to-red-600 animate-pulse'
+              }`}
+              style={{ 
+                width: `${remainingTime ? Math.max(0, (remainingTime / (exam.timeLimitMinutes * 60)) * 100) : 0}%` 
+              }}
+            />
+          </div>
+        </div>
       </div>
-      <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-32px)]">
+      
+      {/* Question Navigation */}
+      <div className="w-full max-w-3xl mb-4 sticky top-16 z-20 bg-gray-100 py-2">
+        <div className="flex flex-wrap gap-2 justify-center">
+          {exam.questions.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => scrollToQuestion(idx)}
+              className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                answers[idx] 
+                  ? 'bg-green-500 text-white hover:bg-green-600' 
+                  : 'bg-white text-gray-700 hover:bg-[#FFB31F] hover:text-white border border-gray-300'
+              }`}
+            >
+              {idx + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div 
+        className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-32px)]"
+        style={{
+          scrollBehavior: 'smooth',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#FFB31F #f1f1f1',
+        }}
+      >
         <div className="mb-4">
           <div className="text-black font-semibold">Difficulty: {exam.difficulty?.charAt(0).toUpperCase() + exam.difficulty?.slice(1)}</div>
           <div className="text-2xl font-bold text-black mb-2">{exam.title}</div>
         </div>
        
         {exam.questions.map((q, idx) => (
-          <div key={q.id} className="mb-8 bg-white rounded-2xl p-6">
+          <div 
+            key={q.id} 
+            id={`question-${idx}`}
+            className="mb-8 bg-white rounded-2xl p-6 transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]"
+            style={{
+              scrollMarginTop: '80px',
+            }}
+          >
             <div className="font-semibold text-black mb-4 text-lg">
               Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ""}
             </div>
             <textarea
-              className="w-full p-4 rounded bg-[#FFB12133] text-gray-700 min-h-[60px]"
+              className="w-full p-4 rounded bg-[#FFB12133] text-gray-700 min-h-[60px] transition-all duration-200 focus:bg-[#FFB12155] focus:outline-none focus:ring-2 focus:ring-[#FFB31F] focus:ring-opacity-50"
               placeholder="Type your short answer here"
               value={answers[idx]}
               onChange={(e) => handleAnswerChange(idx, e.target.value)}

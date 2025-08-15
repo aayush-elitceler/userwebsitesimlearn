@@ -17,6 +17,8 @@ import { ArrowRight, X } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { useLogo } from '@/lib/LogoContext';
+import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
+import axios from 'axios';
 
 const poppins = Poppins({ weight: ['400', '600', '700'], subsets: ['latin'] });
 
@@ -121,6 +123,22 @@ export default function Home() {
   const router = useRouter();
   const { setLogoUrl } = useLogo();
 
+  // Function to convert number to ordinal (1st, 2nd, 3rd, etc.)
+  const getOrdinal = (num: number): string => {
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) {
+      return num + "st";
+    }
+    if (j === 2 && k !== 12) {
+      return num + "nd";
+    }
+    if (j === 3 && k !== 13) {
+      return num + "rd";
+    }
+    return num + "th";
+  };
+
   // Function to handle mission redirects based on mission type
   const handleMissionClick = (mission: Mission) => {
     if (mission.completed) return;
@@ -163,9 +181,13 @@ export default function Home() {
       try {
         const authCookie = Cookies.get('auth');
         let token: string | undefined;
+        let userFromCookie: any = null;
+        
         if (authCookie) {
           try {
-            token = JSON.parse(authCookie).token;
+            const parsedAuth = JSON.parse(authCookie);
+            token = parsedAuth.token;
+            userFromCookie = parsedAuth.user;
           } catch (e) {
             console.error('Error parsing auth cookie:', e);
           }
@@ -176,8 +198,14 @@ export default function Home() {
           return;
         }
 
+        // Set user data from cookie if available
+        if (userFromCookie) {
+          setProfileData(userFromCookie);
+          console.log('User Data from Cookie:', userFromCookie);
+        }
+
         // Fetch dashboard data
-        const dashboardResponse = await fetch(
+        const dashboardResponse = await axios.get(
           `https://apisimplylearn.selflearnai.in/api/v1/users/dashboard`,
           {
             headers: {
@@ -187,11 +215,7 @@ export default function Home() {
           }
         );
 
-        if (!dashboardResponse.ok) {
-          throw new Error('Failed to fetch dashboard data');
-        }
-
-        const dashboardResult: ApiResponse = await dashboardResponse.json();
+        const dashboardResult: ApiResponse = dashboardResponse.data;
         setDashboardData(dashboardResult.data);
 
         // Set logo URL if available
@@ -202,21 +226,26 @@ export default function Home() {
           console.log('No logo found in data');
         }
 
-        // Fetch profile data to get section information
-        const profileResponse = await fetch(
-          'https://apisimplylearn.selflearnai.in/api/v1/users/auth/get-profile',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        // Only fetch profile data if not available in cookie
+        if (!userFromCookie) {
+          try {
+            const profileResponse = await axios.get(
+              'https://apisimplylearn.selflearnai.in/api/v1/users/auth/get-profile',
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
 
-        if (profileResponse.ok) {
-          const profileResult = await profileResponse.json();
-          setProfileData(profileResult.data);
-          console.log('Profile Data:', profileResult.data);
+            if (profileResponse.data.success) {
+              setProfileData(profileResponse.data.data);
+              console.log('Profile Data from API:', profileResponse.data.data);
+            }
+          } catch (profileErr) {
+            console.error('Error fetching profile:', profileErr);
+          }
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -312,39 +341,63 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen bg-gray-50 px-4 sm:px-6 md:px-8 py-6 ${poppins.className}`}
+      className={`min-h-screen bg-gray-50 px-4 sm:px-6 md:px-8 py-4 ${poppins.className}`}
     >
+      <style jsx>{pageAnimationStyles}</style>
 
       {/* Header with greeting and School/Class Info side by side */}
-      <div className='flex justify-between items-center mb-6'>
+      <div 
+        className='flex justify-between items-center mb-4'
+        style={{
+          ...getAnimationDelay(0, 150),
+          animation: 'slideInDown 0.6s ease-out forwards'
+        }}
+      >
         <h1 className='text-2xl sm:text-3xl font-semibold text-gray-800'>
           Hi {dashboardData.user.firstName}! 👋 Let&apos;s make today count.
         </h1>
         <div className='flex items-center gap-3'>
           {/* School and Class Info */}
-          <div className='text-sm text-gray-600 text-right'>
-            {profileData?.section && (
-              <div>Section {profileData.section}</div>
+          <div 
+            className='text-sm text-gray-600 text-right transform transition-all duration-300 hover:scale-105'
+            style={{
+              ...getAnimationDelay(0.5, 150),
+              animation: 'slideInRight 0.8s ease-out forwards'
+            }}
+          >
+            {profileData?.class && (
+              <div className='animate-pulse'>
+                {getOrdinal(parseInt(profileData.class))} Class
+                {profileData?.section && ` - ${profileData.section}`}
+              </div>
             )}
-            <div>Self Learn AI</div>
+            <div className='animate-pulse delay-100'>Self Learn AI</div>
           </div>
-          <button
+          <div 
             onClick={() => router.push('/profile')}
-            className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200 flex items-center justify-center text-xl'
+            className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer'
             title='Profile'
           >
             👤
-          </button>
+          </div>
         </div>
       </div>
 
       {/* Streak + Badge */}
-      <div className='flex flex-col md:flex-row gap-4 mb-6'>
+      <div 
+        className='flex flex-col md:flex-row gap-4 mb-4'
+        style={{
+          ...getAnimationDelay(1, 150),
+          animation: 'fadeInUp 0.6s ease-out forwards'
+        }}
+      >
         <div
-          className='flex-1 p-4 rounded-xl flex gap-2'
+          className='flex-1 p-4 rounded-xl flex gap-2 transform transition-all duration-300 hover:scale-[1.02]'
           style={{
             background:
               'linear-gradient(90deg, rgba(255, 179, 31, 0.12) 0%, rgba(255, 73, 73, 0.12) 100%)',
+            ...getAnimationDelay(1.2, 150),
+            animation: 'slideInLeft 0.8s ease-out forwards'
           }}
         >
           {dashboardData.dailyStreak.days.map((day, idx) => (
@@ -354,13 +407,12 @@ export default function Home() {
                 day.isActive ? 'text-orange-800' : 'text-gray-400'
               }`}
             >
-              {/* <span className="text-xl mb-1">⚡</span> */}
               <img
                 src={`${
                   day.isActive ? '/images/Thunder.svg' : '/images/Frame.svg'
                 }`}
                 alt=''
-                className={`w-[18px] h-[24px] `}
+                className={`w-[18px] h-[24px] transition-transform duration-300 ${day.isActive ? 'animate-pulse' : ''}`}
               />
               <span className='text-sm font-semibold'>{day.day}</span>
             </div>
@@ -376,15 +428,23 @@ export default function Home() {
             {dashboardData.badgeChallenge.title}
           </div>
           <div className='text-sm text-gray-600'>
-            {dashboardData.badgeChallenge.current}/
-            {dashboardData.badgeChallenge.target}
+            {dashboardData.badgeChallenge.current >= dashboardData.badgeChallenge.target ? (
+              <span className='text-green-600 font-semibold'>🎉 Earned!</span>
+            ) : (
+              <>
+                {dashboardData.badgeChallenge.current}/
+                {dashboardData.badgeChallenge.target}
+              </>
+            )}
           </div>
           <span className='text-orange-500 font-medium'>View</span>
         </div>
       </div>
 
       {/* Activities */}
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
+      <div className='mb-10 mt-6'>
+        <h2 className='text-xl font-semibold text-gray-800 mb-10 mt-10'>Your Activities</h2>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
         {[
           {
             title: 'Continue where you left off:',
@@ -415,10 +475,14 @@ export default function Home() {
         ].map((card, idx) => (
           <div
             key={idx}
-            className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'
+            className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 transform'
+            style={{
+              ...getAnimationDelay(2 + idx * 0.1, 150),
+              animation: 'fadeInUp 0.6s ease-out forwards'
+            }}
           >
             <h3 className='font-semibold text-gray-800 mb-2'>{card.title}</h3>
-            <p className='text-gray-600 text-sm mb-4 break-words line-clamp-2'>
+            <p className='text-gray-600 text-sm mb-3 break-words line-clamp-2'>
               {card.description}
             </p>
             <button
@@ -429,22 +493,29 @@ export default function Home() {
             </button>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Main Grid */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+      <div 
+        className='grid grid-cols-1 lg:grid-cols-2 gap-4'
+        style={{
+          ...getAnimationDelay(3, 150),
+          animation: 'fadeInUp 0.8s ease-out forwards'
+        }}
+      >
         {/* Left Column */}
-        <div className='space-y-6'>
+        <div className='space-y-4'>
           {/* Today's Missions */}
-          <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100 '>
-            <h2 className='text-xl font-semibold text-gray-800 mb-4'>
+          <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100 '>
+            <h2 className='text-xl font-semibold text-gray-800 mb-3'>
               Today&apos;s Missions
             </h2>
-            <div className='space-y-4 '>
+            <div className='space-y-3 '>
               {dashboardData.todaysMissions.map((mission, idx) => (
                 <div
                   key={idx}
-                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-1 border-gray-200 pb-3 last:border-b-0'
+                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b-1 border-gray-200 pb-2 last:border-b-0'
                 >
                   <div>
                     <h4 className='font-medium text-gray-800'>
@@ -471,11 +542,11 @@ export default function Home() {
 
           {/* Learning Growth */}
           {/* Learning Growth */}
-          <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'>
-            <h2 className='text-xl font-semibold text-gray-800 mb-4'>
+          <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100'>
+            <h2 className='text-xl font-semibold text-gray-800 mb-3'>
               Learning Growth
             </h2>
-            <div className='relative w-full min-h-[250px]'>
+            <div className='relative w-full min-h-[200px]'>
               {learningGrowthData && (
                 <Line
                   data={learningGrowthData}
@@ -507,17 +578,21 @@ export default function Home() {
         </div>
 
         {/* Right Column */}
-        <div className='space-y-6'>
+        <div className='space-y-4'>
           {/* Quick Links */}
-          <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'>
-            <h2 className='text-xl font-semibold text-gray-800 mb-4'>
+          <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100'>
+            <h2 className='text-xl font-semibold text-gray-800 mb-3'>
               Quick Links
             </h2>
-            <div className='space-y-4'>
+            <div className='space-y-3'>
               {dashboardData.quickLinks.map((link, idx) => (
                 <div
                   key={idx}
-                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-1 border-gray-200 pb-3 last:border-b-0'
+                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b-1 border-gray-200 pb-2 last:border-b-0 transform transition-all duration-300 hover:bg-gray-50 hover:scale-[1.01] rounded-lg px-2'
+                  style={{
+                    ...getAnimationDelay(4 + idx * 0.1, 150),
+                    animation: 'fadeInUp 0.5s ease-out forwards'
+                  }}
                 >
                   <div>
                     <h4 className='font-medium text-gray-800'>{link.title}</h4>
@@ -539,11 +614,11 @@ export default function Home() {
           </div>
 
           {/* Weekly Progress */}
-          <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-100'>
-            <h2 className='text-xl font-semibold text-gray-800 mb-4'>
+          <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100'>
+            <h2 className='text-xl font-semibold text-gray-800 mb-3'>
               Progress from last week
             </h2>
-            <div className='space-y-4'>
+            <div className='space-y-3'>
               {dashboardData.weeklyProgress.map((item, idx) => (
                 <div key={idx}>
                   <div className='flex justify-between mb-1 text-sm font-medium text-gray-700'>
@@ -588,19 +663,60 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   {dashboardData.badgeChallenge.description}
                 </p>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Progress:</span>
-                    <span className="font-semibold text-orange-500">
-                      {dashboardData.badgeChallenge.current}/{dashboardData.badgeChallenge.target}
-                    </span>
+                
+                {/* Progress Tracking Section */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Progress Tracking</h4>
+                  
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-600">Target:</span>
+                    <span className="font-semibold text-gray-800">{dashboardData.badgeChallenge.target} tasks</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Deadline:</span>
+                  
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-600">Completed:</span>
+                    <span className="font-semibold text-orange-500">{dashboardData.badgeChallenge.current} tasks</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-600">Remaining:</span>
                     <span className="font-semibold text-red-500">
-                      {dashboardData.badgeChallenge.deadline}
+                      {Math.max(0, dashboardData.badgeChallenge.target - dashboardData.badgeChallenge.current)} tasks
                     </span>
                   </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="mb-3">
+                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <span>Progress</span>
+                      <span>{Math.round((dashboardData.badgeChallenge.current / dashboardData.badgeChallenge.target) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="h-3 rounded-full transition-all duration-500"
+                        style={{ 
+                          width: `${Math.min(100, (dashboardData.badgeChallenge.current / dashboardData.badgeChallenge.target) * 100)}%`,
+                          background: dashboardData.badgeChallenge.current >= dashboardData.badgeChallenge.target 
+                            ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' 
+                            : 'linear-gradient(90deg, #FF9F27 0%, #FF5146 100%)'
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Status */}
+                  {dashboardData.badgeChallenge.current >= dashboardData.badgeChallenge.target ? (
+                    <div className="flex items-center gap-2 text-green-700 font-semibold">
+                      🎉 Badge Completed!
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">Deadline:</span>
+                      <span className="font-semibold text-red-500">
+                        {dashboardData.badgeChallenge.deadline}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -621,15 +737,19 @@ export default function Home() {
               </div>
 
               <div className="flex gap-3">
-                <button
-                  onClick={() => router.push('/quizes/generate')}
-                  className="flex-1 point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
-                >
-                  Start Challenge
-                </button>
+                {dashboardData.badgeChallenge.current < dashboardData.badgeChallenge.target && (
+                  <button
+                    onClick={() => router.push('/quizes/generate')}
+                    className="flex-1 point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+                  >
+                    Start Challenge
+                  </button>
+                )}
                 <button
                   onClick={() => setShowBadgeModal(false)}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200"
+                  className={`px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200 ${
+                    dashboardData.badgeChallenge.current >= dashboardData.badgeChallenge.target ? 'flex-1' : ''
+                  }`}
                 >
                   Close
                 </button>

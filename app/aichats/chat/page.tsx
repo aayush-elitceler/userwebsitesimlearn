@@ -13,6 +13,8 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import { fetchHistory, getFilteredHistory, HistoryItem } from "@/lib/historyService";
 import HistorySlider from "@/components/HistorySlider";
+import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
+import axios from 'axios';
 
 type StyleOption = {
   label: string;
@@ -282,19 +284,18 @@ export default function AiChatsChatPage() {
           token = JSON.parse(authCookie).token;
         } catch {}
       }
-      const res = await fetch(
+      const response = await axios.post(
         "https://apisimplylearn.selflearnai.in/api/v1/ai/chat",
+        payload,
         {
-          method: "POST",
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify(payload),
         }
       );
-      if (!res.ok) throw new Error("Failed to get response");
-      const data = await res.json();
+      
+      const data = response.data;
       const responseText = data?.data?.response || data?.response || "";
       console.log("🔍 [CHAT] Response text:", data);
       // Add AI message and trigger streaming

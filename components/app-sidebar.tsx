@@ -47,6 +47,13 @@ const ChevronUpDownIcon = ({ open }: { open: boolean }) => (
   </svg>
 );
 
+// Helper function to get icon style for active sub-routes
+const getSubRouteIconStyle = (isActive: boolean) => ({
+  filter: isActive 
+    ? 'brightness(0) saturate(100%) invert(44%) sepia(93%) saturate(1352%) hue-rotate(346deg) brightness(119%) contrast(119%)'
+    : 'brightness(0)'
+});
+
 const ChatIcon = () => (
   <svg
     width='20'
@@ -137,7 +144,7 @@ const projectSubRoutes = [
 
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
-  const { logoUrl } = useLogo();
+  const logoUrl = '/logo2.png';
 
   const [aiOpen, setAiOpen] = useState(false);
   const [pointOpen, setPointOpen] = useState(false);
@@ -218,9 +225,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   <Image
                     src={logoUrl || Logo}
                     alt="Logo"
-                    width={100}
+                    width={50}
                     height={40}
-                    className="object-contain mx-auto"
+                    className="mx-auto scale-200"
                   />
                 </Link>
               </div>
@@ -281,8 +288,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       }`}
                     >
                       <span className='flex items-center gap-3'>
-                        <div className='w-7 h-7 rounded border-2 border-[#222] flex items-center justify-center'>
-                          <span className='text-xs font-bold text-[#222]'>AI</span>
+                        <div className={`w-7 h-7 rounded border-2 flex items-center justify-center ${
+                          isAiTutorActive ? 'border-white' : 'border-[#222]'
+                        }`}>
+                          <span className={`text-xs font-bold ${
+                            isAiTutorActive ? 'text-white' : 'text-[#222]'
+                          }`}>AI</span>
                         </div>
                         <span className='text-sm'>AI Tutor</span>
                       </span>
@@ -331,7 +342,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           alt='pointer'
                           width={20}
                           height={20}
-                          className={`h-5 w-5 flex-shrink-0 ${isPointAskActive ? '' : 'brightness-0'}`}
+                          className={`h-5 w-5 flex-shrink-0 ${isPointAskActive ? 'brightness-200 invert' : 'brightness-0'}`}
                         />
                         <span className='text-sm'>Point & Ask</span>
                       </span>
@@ -378,9 +389,14 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         <Image
                           src={quizWhite}
                           alt='Quiz'
-                          width={20}
-                          height={20}
-                          className={`h-5 w-5 flex-shrink-0 ${isQuizActive ? '' : 'brightness-0'}`}
+                          width={24}
+                          height={24}
+                          className={`h-6 w-6 flex-shrink-0`}
+                          style={{
+                            filter: isQuizActive 
+                              ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
+                              : 'brightness(0)'
+                          }}
                         />
                         <span className='text-sm'>Take a quiz</span>
                       </span>
@@ -406,7 +422,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                               alt={sub.label}
                               width={20}
                               height={20}
-                              className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
+                              className="h-5 w-5 flex-shrink-0"
+                              style={getSubRouteIconStyle(isSubActive)}
                             />
                             <span>{sub.label}</span>
                           </Link>
@@ -435,7 +452,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           alt='Exams'
                           width={20}
                           height={20}
-                          className={`h-5 w-5 flex-shrink-0 ${isExamActive ? '' : 'brightness-0'}`}
+                          className={`h-5 w-5 flex-shrink-0`}
+                          style={{
+                            filter: isExamActive 
+                              ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
+                              : 'brightness(0)'
+                          }}
                         />
                         <span className='text-sm'>Exams</span>
                       </span>
@@ -461,7 +483,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                               alt={sub.label}
                               width={20}
                               height={20}
-                              className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
+                              className="h-5 w-5 flex-shrink-0"
+                              style={getSubRouteIconStyle(isSubActive)}
                             />
                             <span>{sub.label}</span>
                           </Link>
@@ -490,7 +513,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           alt='Projects'
                           width={20}
                           height={20}
-                          className={`h-5 w-5 flex-shrink-0 ${isProjectsActive ? '' : 'brightness-0'}`}
+                          className={`h-5 w-5 flex-shrink-0`}
+                          style={{
+                            filter: isProjectsActive 
+                              ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
+                              : 'brightness(0)'
+                          }}
                         />
                         <span className='text-sm'>Projects</span>
                       </span>
@@ -516,7 +544,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                               alt={sub.label}
                               width={20}
                               height={20}
-                              className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
+                              className="h-5 w-5 flex-shrink-0"
+                              style={getSubRouteIconStyle(isSubActive)}
                             />
                             <span>{sub.label}</span>
                           </Link>
@@ -543,7 +572,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       alt='Personalized Learning'
                       width={20}
                       height={20}
-                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/personalisedLearning' ? '' : 'brightness-0'}`}
+                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/personalisedLearning' ? 'brightness-0 invert' : 'brightness-0'}`}
                     />
                     <span className='text-sm'>Personalized le..</span>
                   </Link>
@@ -573,14 +602,14 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 className={`transition-all duration-300`}
               >
                 {/* Simple Logo Display */}
-                <div className="py-2 px-4">
+                <div className="">
                   <Link href="/">
                     <Image
-                      src={logoUrl || Logo}
+                      src="/logo2.png"
                       alt="Logo"
-                      width={100}
-                      height={40}
-                      className="object-contain mx-auto"
+                      width={260}
+                      height={100}
+                      className="scale-125"
                     />
                   </Link>
                 </div>
@@ -590,7 +619,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             <button
               onClick={() => setCollapsed((prev) => !prev)}
               className={`absolute z-20 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 ${
-                collapsed ? 'top-6 right-2' : 'top-7 right-4'
+                collapsed ? 'top-4 left-1/2 transform -translate-x-1/2' : 'top-8 right-4'
               }`}
               aria-label='Toggle sidebar'
             >
@@ -605,13 +634,13 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               </svg>
             </button>
             <nav
-              className={`flex flex-col flex-1 space-y-2 overflow-y-auto scrollbar-hide pb-4 transition-all duration-300 ${
-                collapsed ? 'px-2 mt-12' : 'px-4 mt-4'
+              className={`flex flex-col flex-1 space-y-1 overflow-y-auto scrollbar-hide pb-4 transition-all duration-300 ${
+                collapsed ? 'px-2 mt-12' : 'px-4 mt-2'
               }`}
             >
               {/* Section Heading */}
               {!collapsed && (
-                <div className='pt-2 pb-3 flex items-center gap-3'>
+                <div className=' pb-3 flex items-center gap-2'>
                   <span className='text-xs text-gray-500 font-semibold uppercase tracking-wider whitespace-nowrap'>
                     For students
                   </span>
@@ -660,8 +689,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         collapsed ? '' : 'gap-3'
                       }`}
                     >
-                      <div className='w-7 h-7 rounded border-2 border-[#222] flex items-center justify-center'>
-                        <span className='text-xs font-bold text-[#222]'>AI</span>
+                      <div className={`w-7 h-7 rounded border-2 flex items-center justify-center ${
+                        isAiTutorActive ? 'border-white' : 'border-[#222]'
+                      }`}>
+                        <span className={`text-xs font-bold ${
+                          isAiTutorActive ? 'text-white' : 'text-[#222]'
+                        }`}>AI</span>
                       </div>
                       {!collapsed && <span className='text-sm'>AI Tutor</span>}
                     </span>
@@ -719,7 +752,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           alt='pointer'
                           width={20}
                           height={20}
-                          className={`h-5 w-5 flex-shrink-0 ${isPointAskActive ? '' : 'brightness-0'}`}
+                          className={`h-5 w-5 flex-shrink-0 ${isPointAskActive ? 'brightness-200 invert' : 'brightness-0'}`}
                         />
                       {!collapsed && (
                         <span className='text-sm'>Point & Ask</span>
@@ -779,7 +812,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         alt='Quiz'
                         width={20}
                         height={20}
-                        className={`h-5 w-5 flex-shrink-0 ${isQuizActive ? '' : 'brightness-0'}`}
+                        className={`h-5 w-5 flex-shrink-0`}
+                        style={{
+                          filter: isQuizActive 
+                            ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
+                            : 'brightness(0)'
+                        }}
                       />
                       {!collapsed && <span className='text-sm'>Quizzes</span>}
                     </span>
@@ -807,7 +845,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             alt={sub.label}
                             width={20}
                             height={20}
-                            className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
+                            className="h-5 w-5 flex-shrink-0"
+                            style={getSubRouteIconStyle(isSubActive)}
                           />
                           <span>{sub.label}</span>
                         </Link>
@@ -843,7 +882,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         alt='Exams'
                         width={20}
                         height={20}
-                        className={`h-5 w-5 flex-shrink-0 ${isExamActive ? '' : 'brightness-0'}`}
+                        className={`h-5 w-5 flex-shrink-0`}
+                        style={{
+                          filter: isExamActive 
+                            ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
+                            : 'brightness(0)'
+                        }}
                       />
                       {!collapsed && <span className='text-sm'>Exams</span>}
                     </span>
@@ -871,7 +915,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             alt={sub.label}
                             width={20}
                             height={20}
-                            className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
+                            className="h-5 w-5 flex-shrink-0"
+                            style={getSubRouteIconStyle(isSubActive)}
                           />
                           <span>{sub.label}</span>
                         </Link>
@@ -907,7 +952,12 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         alt='projects'
                         width={20}
                         height={20}
-                        className={`h-5 w-5 flex-shrink-0 ${isProjectsActive ? '' : 'brightness-0'}`}
+                        className={`h-5 w-5 flex-shrink-0`}
+                        style={{
+                          filter: isProjectsActive 
+                            ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
+                            : 'brightness(0)'
+                        }}
                       />
                       {!collapsed && <span className='text-sm'>Projects</span>}
                     </span>
@@ -935,7 +985,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             alt={sub.label}
                             width={20}
                             height={20}
-                            className={`h-5 w-5 flex-shrink-0 ${isSubActive ? '' : 'brightness-0'}`}
+                            className="h-5 w-5 flex-shrink-0"
+                            style={getSubRouteIconStyle(isSubActive)}
                           />
                           <span>{sub.label}</span>
                         </Link>
@@ -965,7 +1016,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       alt='Personalized Learning'
                       width={20}
                       height={20}
-                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/personalisedLearning' ? '' : 'brightness-0'}`}
+                      className={`h-5 w-5 flex-shrink-0 ${pathname === '/personalisedLearning' ? 'brightness-0 invert' : 'brightness-0'}`}
                     />
                     {!collapsed && (
                       <span className='text-sm leading-tight'>

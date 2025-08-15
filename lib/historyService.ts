@@ -1,4 +1,5 @@
 import Cookies from "js-cookie";
+import axios from 'axios';
 
 // === START: History Types ===
 export interface HistoryItem {
@@ -67,24 +68,17 @@ export const fetchHistory = async (): Promise<HistoryItem[]> => {
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     });
 
-    const res = await fetch(apiUrl, {
-      method: "GET",
+    const response = await axios.get(apiUrl, {
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
 
-    console.log("🔍 [HISTORY] API response status:", res.status);
-    console.log("🔍 [HISTORY] API response headers:", Object.fromEntries(res.headers.entries()));
+    console.log("🔍 [HISTORY] API response status:", response.status);
+    console.log("🔍 [HISTORY] API response headers:", response.headers);
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.log("🔍 [HISTORY] API error response:", errorText);
-      throw new Error(`Failed to fetch history: ${res.status} ${errorText}`);
-    }
-
-    const data = await res.json();
+    const data = response.data;
     console.log("🔍 [HISTORY] API response data:", data);
     console.log("🔍 [HISTORY] API response data type:", typeof data);
     console.log("🔍 [HISTORY] API response data keys:", Object.keys(data || {}));

@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import axios from 'axios';
 
 type QuestionConfig =
   | {
@@ -26,18 +27,37 @@ type QuestionConfig =
 
 export default function CreateExamPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [form, setForm] = useState({
     subject: "",
     topic: "",
     examType: "Questions & Answers",
     level: "medium",
     questionType: "both",
-    longCount: 0,
+    quizCount: 5,
+    quizMarks: 1,
+    quizTimer: 20, // Timer in minutes for quiz
+    longCount: 3,
     longMarks: 5,
-    shortCount: 0,
+    shortCount: 2,
     shortMarks: 2,
   });
   const [loading, setLoading] = useState(false);
+
+  // Auto-populate form from URL params (but don't auto-generate)
+  useEffect(() => {
+    const subject = searchParams.get('subject');
+    const concept = searchParams.get('concept');
+
+    if (subject && concept) {
+      const formattedTopic = concept.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      setForm(prev => ({
+        ...prev,
+        subject: subject,
+        topic: formattedTopic
+      }));
+    }
+  }, [searchParams]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -51,7 +71,16 @@ export default function CreateExamPage() {
 
     // Build the questionConfig object
     let questionConfig: QuestionConfig;
-    if (form.questionType === "long" || form.questionType === "short") {
+    if (form.questionType === "quiz") {
+      // Map quiz to short for API compatibility
+      questionConfig = {
+        questionType: "short",
+        config: {
+          count: Number(form.quizCount),
+          marksPerQuestion: Number(form.quizMarks),
+        },
+      };
+    } else if (form.questionType === "long" || form.questionType === "short") {
       questionConfig = {
         questionType: form.questionType,
         config: {
@@ -86,34 +115,83 @@ export default function CreateExamPage() {
       topic: form.topic,
       examType: form.examType,
       level: form.level,
-      questionType: form.questionType,
+      questionType: form.questionType === "quiz" ? "short" : form.questionType, // Map quiz to short for API
       questionConfig,
     };
 
-    try {
-      const token = getTokenFromCookie();
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        }
-      );
-      if (res.ok) {
-        // Success: redirect or show message
-        const data = await res.json();
-        console.log(data);
+    console.log('🚀 Sending to API:', JSON.stringify(body, null, 2));
 
-        const examId = data.data?.exam?.id || data.data?.id;
-        if (examId) {
-          router.push(`/exams/start/${examId}`);
+    try {
+      const { token, user } = getAuthFromCookie();
+      
+      if (form.questionType === "quiz") {
+        // Use quiz API for quiz questions
+        const quizBody = {
+          grade: user?.class || "8", // Get grade from user cookie or default to "8"
+          persona: "teacher",
+          topic: `make a quiz on ${form.topic} for ${form.subject}`,
+          difficulty: form.level,
+          timer: Number(form.quizTimer), // Use timer from form
+          numQuestions: Number(form.quizCount)
+        };
+
+        console.log('🎯 Sending Quiz API request:', JSON.stringify(quizBody, null, 2));
+
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/ai/quiz`,
+          quizBody,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        
+        if (response.data.success) {
+          console.log('🎯 Quiz Generated:', response.data);
+
+          const quizId = response.data.data?.quiz?.id;
+          if (quizId) {
+            // Navigate to quiz start page using the correct pattern
+            router.push(`/quizes/${quizId}/start`);
+          } else {
+            router.push("/quizes");
+          }
         } else {
-          router.push("/exams");
+          throw new Error(response.data.message || 'Failed to create quiz');
         }
+      } else {
+        // Use existing exam API for long/short questions
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/generate`,
+          body,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        
+        if (response.data.success) {
+          console.log('📝 Exam Generated:', response.data);
+
+          const examId = response.data.data?.exam?.id || response.data.data?.id;
+          if (examId) {
+            router.push(`/exams/start/${examId}`);
+          } else {
+            router.push("/exams");
+          }
+        } else {
+          throw new Error(response.data.message || "Failed to create exam");
+        }
+      }
+    } catch (error) {
+      console.error('Error creating exam:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+        alert(`Failed to create exam: ${errorMessage}`);
       } else {
         alert("Failed to create exam");
       }
@@ -124,14 +202,21 @@ export default function CreateExamPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-transparent bg-white rounded-3xl p-10 w-full max-w-3xl shadow-lg"
-      >
-        <h2 className="text-3xl font-bold text-black mb-6">
-          Create Practice Sets
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {loading ? (
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500 mx-auto mb-4'></div>
+          <p className='text-gray-600'>Generating your practice questions...</p>
+          <p className='text-sm text-gray-500 mt-2'>This may take a few moments</p>
+        </div>
+      ) : (
+        <form
+          onSubmit={handleSubmit}
+          className="bg-transparent bg-white rounded-3xl p-10 w-full max-w-3xl shadow-lg"
+        >
+          <h2 className="text-3xl font-bold text-black mb-6">
+            Create Practice Sets
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-black mb-2">Topic</label>
             <input
@@ -190,6 +275,38 @@ export default function CreateExamPage() {
               ))}
             </div>
           </div>
+          {form.questionType === "quiz" && (
+            <>
+              <div>
+                <label className="block text-black mb-2">
+                  No. of Quiz Questions
+                </label>
+                <input
+                  name="quizCount"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={form.quizCount}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded bg-[#FFB12133] text-black"
+                />
+              </div>
+              <div>
+                <label className="block text-black mb-2">
+                  Timer (Minutes)
+                </label>
+                <input
+                  name="quizTimer"
+                  type="number"
+                  min={5}
+                  max={60}
+                  value={form.quizTimer}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded bg-[#FFB12133] text-black"
+                />
+              </div>
+            </>
+          )}
           {(form.questionType === "long" || form.questionType === "both") && (
             <>
               <div>
@@ -269,20 +386,21 @@ export default function CreateExamPage() {
           </button>
         </div>
       </form>
+      )}
     </div>
   );
 }
 
-// Utility to get token from 'auth' cookie
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
+// Utility to get token and user data from 'auth' cookie
+function getAuthFromCookie() {
+  if (typeof document === "undefined") return { token: null, user: null };
   const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
+  if (!match) return { token: null, user: null };
   try {
     const decoded = decodeURIComponent(match[1]);
     const parsed = JSON.parse(decoded);
-    return parsed.token;
+    return { token: parsed.token, user: parsed.user };
   } catch {
-    return null;
+    return { token: null, user: null };
   }
 }

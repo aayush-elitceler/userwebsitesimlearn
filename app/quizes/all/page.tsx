@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 
 // Update the Quiz type to match API
 interface Quiz {
@@ -87,20 +88,24 @@ function QuizCard({
 
   return (
     <div className="flex flex-row bg-white border border-[#DEDEDE] items-center 
-                    w-full h-[240px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
-                    sm:h-[240px] md:h-[240px] lg:h-[260px] xl:h-[280px] 2xl:h-[300px]">
-      <div className="flex-1 min-w-0 flex flex-col justify-between h-full overflow-hidden">
-        <div className="flex-1 min-h-0">
-          <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
+                    w-full max-w-[520px] min-w-[380px] h-[280px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] 
+                    flex-shrink-0 p-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 transform
+                    sm:max-w-[540px] sm:h-[290px] sm:p-5
+                    md:max-w-[500px] md:h-[270px] md:p-5
+                    lg:max-w-[520px] lg:h-[280px] lg:p-5
+                    xl:max-w-[560px] xl:h-[300px] xl:p-6">
+      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden pr-4">
+        <div className="flex-1 min-h-0 pb-3">
+          <div className="text-[#626262] text-xs sm:text-sm font-medium mb-2">
             Subject: {quiz.subject || "Science"}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-2 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-3 break-words leading-tight">
             {quiz.title}
           </div>
-          <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
+          <div className="text-black text-xs sm:text-sm mb-4 leading-relaxed">
             <div 
               ref={descriptionRef}
-              className={`break-words cursor-pointer ${!isExpanded ? 'line-clamp-2' : ''}`}
+              className={`break-words cursor-pointer ${!isExpanded ? 'line-clamp-3' : ''}`}
               onClick={() => shouldTruncate && setIsExpanded(!isExpanded)}
             >
               {description}
@@ -140,10 +145,10 @@ function QuizCard({
             </span>
           </div>
         </div>
-        <div className="mt-auto pt-1">
+        <div className="mt-auto pt-4 flex-shrink-0 min-h-[50px] flex items-end">
           {previous ? (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
               onClick={() =>
                 router.push(
                   `/quizes/reports/${submissionId}`
@@ -154,7 +159,7 @@ function QuizCard({
             </button>
           ) : (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
               onClick={() => router.push(`/quizes/${quiz.id}/start`)}
             >
               Start Quiz
@@ -162,17 +167,12 @@ function QuizCard({
           )}
         </div>
       </div>
-      <div className="flex-shrink-0 ml-3 sm:ml-4 lg:ml-5">
+      <div className="flex-shrink-0 ml-4">
         <div
           className={`flex items-center justify-center text-white font-bold relative overflow-hidden rounded-[9px] shadow-[0px_0.89px_6.68px_0px_#00000075]
-                      w-[120px] h-[80px] text-sm
-                      sm:w-[130px] sm:h-[85px] sm:text-base
-                      md:w-[110px] md:h-[75px] md:text-sm
-                      lg:w-[140px] lg:h-[95px] lg:text-base
-                      xl:w-[160px] xl:h-[110px] xl:text-lg
-                      2xl:w-[180px] 2xl:h-[120px] 2xl:text-xl ${getSubjectClass(quiz.subject)}`}
+                      w-[140px] h-[100px] text-base ${getSubjectClass(quiz.subject)}`}
         >
-          <span className="z-10 font-bold tracking-wide text-center px-1.5 break-words">
+          <span className="z-10 font-bold tracking-wide text-center px-2 break-words">
             {quiz.subject || "Science"}
           </span>
           {/* SVG Pattern from Figma */}

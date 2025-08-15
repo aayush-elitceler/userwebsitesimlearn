@@ -176,7 +176,7 @@ function QuizCard({
             </div>
           )}
         </div>
-        <div className="mt-auto pt-1">
+        <div className="mt-auto pt-3">
           {previous ? (
             <button
               className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
