@@ -14,14 +14,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://35.154.108.96:3000/api/v1/:path*',
-      },
-    ];
-  },
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/api/:path*',
+  //       destination: 'http://35.154.108.96:3000/api/v1/:path*',
+  //     },
+  //   ];
+  // },
 };
 
 export default nextConfig;
