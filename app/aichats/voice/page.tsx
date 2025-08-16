@@ -1,16 +1,14 @@
 "use client";
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
-import Cookies from "js-cookie";
-import { ArrowRight, ChevronDownIcon } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
-import { encode } from "gpt-tokenizer";
+
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import SpruceBall from "@/components/SpruceBall";
-import { fetchHistory, HistoryItem } from "@/lib/historyService";
 import HistorySlider from "@/components/HistorySlider";
+import { fetchHistory, HistoryItem, saveHistory } from "@/lib/historyService";
+import type { ChatMessage } from "@/lib/historyService";
+import { ChevronDownIcon } from "lucide-react";
+import Cookies from "js-cookie";
+
+// --- Constants & Types ---
 
 const grades = [
   "1st grade",
@@ -28,29 +26,6 @@ const grades = [
   "UG",
   "PG",
 ];
-
-type StyleOption = {
-  label: string;
-  value: string;
-  [key: string]: unknown; // If it might have more props
-};
-type OptionWithIcon = {
-  label: string;
-  value: string;
-  icon: React.JSX.Element;
-};
-
-type OptionType = string | OptionWithIcon;
-
-const isOptionWithIcon = (opt: OptionType): opt is OptionWithIcon =>
-  typeof opt === "object" && "label" in opt && "value" in opt;
-
-// Helper function to format grade for API calls
-const formatGradeForAPI = (grade: string): string => {
-  if (grade === "UG") return "UG";
-  if (grade === "PG") return "PG";
-  return grade.replace(/\D/g, ""); // Extract numbers for regular grades
-};
 
 const styles = [
   {
@@ -93,105 +68,61 @@ const styles = [
       </span>
     ),
   },
-  {
-    label: "Robot",
-    value: "robot",
-    icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
-        <svg
-          width="24"
-          height="24"
-          fill="none"
-          stroke="#fff"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <rect x="4" y="8" width="16" height="8" rx="4" />
-          <circle cx="8" cy="12" r="1.5" />
-          <circle cx="16" cy="12" r="1.5" />
-        </svg>
-      </span>
-    ),
-  },
 ];
 
-const suggestions = [
-  "What is gravity and why don't we float like astronauts?",
-  "How do plants make their own food using sunlight and water?",
-  "How do plants make their own food using sunlight and water?",
-  "How do plants make their own food using sunlight and water?",
-];
+type StyleOption = "professor" | "friend";
+type UiStyleOption = (typeof styles)[0];
+type OptionType = string | UiStyleOption;
 
-export default function ImprovedAiChatsVoicePage() {
-  const { state } = useSidebar();
-  const pathname = usePathname();
-  const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
-  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+const isUiStyleOption = (opt: OptionType): opt is UiStyleOption =>
+  typeof opt === "object" && "label" in opt && "value" in opt;
+
+export default function VoicebaseRealtimePage() {
+  // --- State Management ---
+  const [isActive, setIsActive] = useState(false);
+  const [status, setStatus] = useState<string>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [isDataChannelOpen, setIsDataChannelOpen] = useState(false);
+
+  // Diarization states
+  const [isUserSpeaking, setIsUserSpeaking] = useState(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [currentSpeaker, setCurrentSpeaker] = useState<"user" | "ai" | "none">("none");
+  
+  // Transcript display states
+  const [showTranscript, setShowTranscript] = useState(false);
+  const transcriptRef = useRef<HTMLDivElement>(null);
+
+  // State for user selections
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(null); // No default selection
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null); // No default selection
+  const [transcript, setTranscript] = useState<ChatMessage[]>([]);
+
+  // UI Dropdown State
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
 
-  // Speech recognition state
-  const {
-    transcript,
-    listening,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
-
-  const [inputValue, setInputValue] = useState("");
-  const [apiLoading, setApiLoading] = useState(false);
-  const [thinking, setThinking] = useState(false);
-  const [chatHistory, setChatHistory] = useState<
-    { role: "user" | "ai"; text: string }[]
-  >([]);
-  const [aiSpeaking, setAiSpeaking] = useState(false);
-  const [displayedText, setDisplayedText] = useState<string>("");
-  const [speechError, setSpeechError] = useState<string | null>(null);
-  const [microphonePermission, setMicrophonePermission] = useState<
-    "granted" | "denied" | "prompt" | "unknown"
-  >("unknown");
-  const [isConversationActive, setIsConversationActive] = useState(false);
+  // --- Refs for WebRTC Objects ---
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const dataChannelRef = useRef<RTCDataChannel | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const lastSentTranscriptRef = useRef("");
+  
+  // Audio analysis refs for diarization
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  // Accumulators for streaming text
+  const userTranscriptBufferRef = useRef<string>("");
+  const aiTextBufferRef = useRef<string>("");
+  // Prevent mic loopback from being captured as user transcript
+  const assistantSpeakingRef = useRef<boolean>(false);
 
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-
-  // === START: New Onboarding Code ===
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(1); // 1: class selection, 2: persona selection
-
-  useEffect(() => {
-    // Always show onboarding on page refresh, regardless of cookie
-    setShowOnboarding(true);
-  }, []);
-
-  useEffect(() => {
-    if (showOnboarding) {
-      if (onboardingStep === 1) {
-        // First step: wait for user to select class
-        if (selectedGrade) {
-          // User has selected class, move to persona selection after a short delay
-          const timer = setTimeout(() => {
-            setOnboardingStep(2);
-          }, 1000);
-          return () => clearTimeout(timer);
-        }
-      } else if (onboardingStep === 2) {
-        // Second step: wait for user to select persona
-        if (selectedStyle) {
-          // User has selected persona, hide onboarding after a short delay
-          const timer = setTimeout(() => {
-            setShowOnboarding(false);
-            Cookies.set("hasVisited", "true", { expires: 365 });
-          }, 1000);
-          return () => clearTimeout(timer);
-        }
-      }
-    }
-  }, [showOnboarding, onboardingStep, selectedGrade, selectedStyle]);
-  // === END: New Onboarding Code ===
-
-  // === START: History Slider State ===
+  // --- History Slider State ---
   const [showHistorySlider, setShowHistorySlider] = useState(false);
   const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -199,386 +130,508 @@ export default function ImprovedAiChatsVoicePage() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  // === END: History Slider State ===
+  const [chatHistory, setChatHistory] = useState<
+    { role: "user" | "ai"; text: string }[]
+  >([]);
 
-  // Check browser support and microphone permission on mount
+  // --- Onboarding State ---
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(1); // 1: class selection, 2: persona selection
+
+  // --- Core logic to update persona via DataChannel ---
   useEffect(() => {
-    const checkPermissions = async () => {
-      // Check if HTTPS is being used
-      if (
-        typeof window !== "undefined" &&
-        window.location.protocol !== "https:" &&
-        window.location.hostname !== "localhost"
-      ) {
-        setSpeechError("Voice recognition requires HTTPS connection");
-        return;
-      }
-
-      // Check browser support
-      if (!browserSupportsSpeechRecognition) {
-        setSpeechError("Your browser does not support speech recognition");
-        return;
-      }
-
-      // Check microphone permission
+    const authCookie = Cookies.get("auth");
+    if (authCookie) {
       try {
-        const permission = await navigator.permissions.query({
-          name: "microphone" as PermissionName,
-        });
-        setMicrophonePermission(permission.state);
-
-        permission.addEventListener("change", () => {
-          setMicrophonePermission(permission.state);
-        });
-      } catch (error) {
-        console.error("Error checking microphone permission:", error);
-        // Fallback for browsers that don't support permissions API
-        setMicrophonePermission("unknown");
+        const authData = JSON.parse(authCookie);
+        if (authData && authData.token) {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (e) {
+        console.error("Failed to parse auth cookie:", e);
+        setIsLoggedIn(false);
       }
-    };
+    }
+  }, []);
 
-    checkPermissions();
-    
+  // --- Onboarding Effect ---
+  useEffect(() => {
+    // Always show onboarding on page refresh
+    setShowOnboarding(true);
+  }, []);
 
-  }, [browserSupportsSpeechRecognition]);
+  useEffect(() => {
+    if (showOnboarding) {
+      if (onboardingStep === 1 && selectedGrade) {
+        // User has selected class, move to persona selection after a short delay
+        const timer = setTimeout(() => {
+          setOnboardingStep(2);
+        }, 1000);
+        return () => clearTimeout(timer);
+      } else if (onboardingStep === 2 && selectedStyle) {
+        // User has selected persona, end onboarding after a short delay
+        const timer = setTimeout(() => {
+          setShowOnboarding(false);
+          Cookies.set("hasVisited", "true", { expires: 365 });
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [showOnboarding, onboardingStep, selectedGrade, selectedStyle]);
 
-  // Handle clicks outside dropdowns to close them
+  // --- Audio Analysis for User Speech Detection ---
+  const setupAudioAnalysis = useCallback((stream: MediaStream) => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      microphone.connect(analyser);
+      
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      
+      const detectSpeech = () => {
+        if (!analyserRef.current) return;
+        
+        const bufferLength = analyserRef.current.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyserRef.current.getByteFrequencyData(dataArray);
+        
+        // Calculate average volume
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+        const threshold = 20; // Adjust this threshold as needed
+        
+        const speaking = average > threshold;
+        setIsUserSpeaking(speaking);
+        
+        // Update current speaker
+        if (speaking && !isAiSpeaking) {
+          setCurrentSpeaker("user");
+        } else if (isAiSpeaking && !speaking) {
+          setCurrentSpeaker("ai");
+        } else if (!speaking && !isAiSpeaking) {
+          setCurrentSpeaker("none");
+        }
+        
+        animationFrameRef.current = requestAnimationFrame(detectSpeech);
+      };
+      
+      detectSpeech();
+    } catch (error) {
+      console.error("Error setting up audio analysis:", error);
+    }
+  }, [isAiSpeaking]);
+
+  const cleanupAudioAnalysis = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+    setIsUserSpeaking(false);
+    setIsAiSpeaking(false);
+    setCurrentSpeaker("none");
+  }, []);
+
+  useEffect(() => {
+    if (!isDataChannelOpen || !selectedStyle || !dataChannelRef.current) return;
+    try {
+      const voice = selectedStyle === "professor" ? "echo" : "alloy";
+      const instructions = `You are a helpful AI assistant. You are speaking to a ${selectedGrade} learner. Adapt your language and complexity for that grade level. Your current persona is a ${selectedStyle}. When responding as a professor, be more structured and authoritative. When responding as a friend, be more encouraging and simple. Keep responses concise and conversational.`;
+      console.log(`🚀 Sending update: Style=${selectedStyle}, Voice=${voice}`);
+      
+      const sessionUpdate = {
+        type: "session.update",
+        session: { 
+          voice, 
+          instructions,
+          input_audio_transcription: {
+            model: "whisper-1"
+          },
+          turn_detection: {
+            type: "server_vad",
+            threshold: 0.5,
+            prefix_padding_ms: 300,
+            silence_duration_ms: 200
+          }
+        }
+      };
+      
+      dataChannelRef.current.send(JSON.stringify(sessionUpdate));
+    } catch (err) {
+      console.error("🔴 Failed to send session update:", err);
+      setError("Could not update the voice persona.");
+    }
+  }, [selectedStyle, selectedGrade, isDataChannelOpen]);
+
+  // --- Auto-scroll transcript and show/hide logic ---
+  useEffect(() => {
+    if (transcriptRef.current) {
+      transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
+    }
+  }, [transcript]);
+
+  useEffect(() => {
+    // Show transcript when there are messages and session is active
+    setShowTranscript(transcript.length > 0 && isActive);
+  }, [transcript.length, isActive]);
+
+  // --- Effect to close dropdowns on outside click ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showGradeDropdown || showStyleDropdown) {
         const target = event.target as Element;
-        if (!target.closest('.dropdown-container')) {
+        if (!target.closest(".dropdown-container")) {
           setShowGradeDropdown(false);
           setShowStyleDropdown(false);
         }
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showGradeDropdown, showStyleDropdown]);
 
-  const hasMountedRef = useRef(false);
+  // --- Session Management Functions ---
+  const startRealtime = useCallback(async () => {
+    setError(null);
+    setStatus("requesting-session");
+    setIsDataChannelOpen(false);
+    setTranscript([]);
+      const authCookie = Cookies.get('auth');
+      let token: string | undefined;
 
-  useEffect(() => {
-    if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
+    if (authCookie) {
+      const parsedAuth = JSON.parse(authCookie);
+      token = parsedAuth.token;
     }
-  }, [chatHistory, thinking, aiSpeaking, displayedText]);
 
-  // Send message to API with better error handling and speech synthesis integration
-  const handleSend = useCallback(async () => {
-    console.log('[DEBUG] handleSend called with transcript:', transcript.trim());
-    if (!selectedGrade || !selectedStyle || !transcript.trim()) return;
-
-    setApiLoading(true);
-    setThinking(true);
-    // Store user message temporarily but don't add to chat history yet
-    const userMessage = transcript.trim();
+    if (!authCookie) {
+      setError("You must be signed in to start a conversation.");
+      setStatus("error");
+      return;
+    }
+    try {
+      token = JSON.parse(authCookie).token;
+      if (!token) throw new Error("Token not found in auth cookie.");
+    } catch (e) {
+      setError("Invalid authentication session. Please sign in again.");
+      setStatus("error");
+      return;
+    }
 
     try {
-      const authCookie = Cookies.get("auth");
-      let token: string | undefined;
-      if (authCookie) {
-        try {
-          token = JSON.parse(authCookie).token;
-        } catch (e) {
-          console.error("Error parsing auth cookie:", e);
-        }
+      if (!selectedGrade || !selectedStyle) {
+        throw new Error("Please select a grade and persona first.");
       }
 
-      console.log('[DEBUG] handleSend API call payload:', {
-        class: formatGradeForAPI(selectedGrade),
-        style: selectedStyle.toLowerCase(),
-        message: userMessage,
-        ...(sessionId && { sessionId }), // Include sessionId if it exists
-      });
+      const localSessionId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `rt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      sessionIdRef.current = localSessionId;
+      messagesRef.current = []; // Correctly initialize as an empty array
+      console.log(`🚀 Starting real-time session: ${localSessionId}`);
 
-      const res = await fetch(
-        "https://apisimplylearn.selflearnai.in/api/v1/ai/voice-chat",
+      const sessionRes = await fetch("/api/voicebase1", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          grade: selectedGrade,
+          style: selectedStyle,
+        }),
+      });
+if (!sessionRes.ok) {
+    const errorDetails = await sessionRes.json();
+    console.error("Backend error details:", errorDetails);
+    throw new Error(`Failed to create session with the backend: ${errorDetails.details || sessionRes.statusText}`);
+}
+      const session = await sessionRes.json();
+
+      if (session?.data?.sessionId) setSessionId(session.data.sessionId);
+      else if (session?.sessionId) setSessionId(session.sessionId);
+
+      setStatus("getting-mic");
+      const mic = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      localStreamRef.current = mic;
+      
+      // Setup audio analysis for speech detection
+      setupAudioAnalysis(mic);
+      
+      setStatus("creating-peer");
+      const pc = new RTCPeerConnection();
+      pcRef.current = pc;
+      pc.onconnectionstatechange = () => {
+        if (["disconnected", "failed", "closed"].includes(pc.connectionState)) {
+          console.log("⚠ Connection ended — stopping session");
+          stopRealtime();
+        }
+      };
+
+      pc.ontrack = (event) => {
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+        }
+      };
+
+      const dc = pc.createDataChannel("oai-events");
+      dc.onopen = () => {
+        setIsDataChannelOpen(true);
+        console.log("🔗 Data channel opened");
+        
+        // Enable transcription when data channel opens
+        try {
+          const enableTranscription = {
+            type: "session.update",
+            session: {
+              input_audio_transcription: {
+                model: "whisper-1"
+              },
+              turn_detection: {
+                type: "server_vad",
+                threshold: 0.5,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 200
+              }
+            }
+          };
+          console.log("🎤 Enabling transcription...");
+          dc.send(JSON.stringify(enableTranscription));
+        } catch (error) {
+          console.error("Failed to enable transcription:", error);
+        }
+      };
+      dc.onclose = () => setIsDataChannelOpen(false);
+
+      dc.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          console.debug("[RTC] Message:", msg.type, msg);
+
+          const type: string = msg?.type || "";
+
+          // Track assistant speaking state
+          if (type.startsWith("response.")) {
+            if (type.endsWith("started") || type.endsWith("created")) {
+              assistantSpeakingRef.current = true;
+              setIsAiSpeaking(true);
+              setCurrentSpeaker("ai");
+            }
+            if (type.endsWith("stopped") || type.endsWith("completed")) {
+              assistantSpeakingRef.current = false;
+              setIsAiSpeaking(false);
+              if (!isUserSpeaking) {
+                setCurrentSpeaker("none");
+              }
+            }
+          }
+
+          // USER SPEECH TRANSCRIPTION - Multiple patterns
+          // Pattern 1: Direct transcription completion
+          if (type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
+            const userText = msg.transcript.trim();
+            if (userText) {
+              console.log("👤 User (pattern 1):", userText);
+              messagesRef.current.push({ role: "user", text: userText });
+              setTranscript([...messagesRef.current]);
+            }
+          }
+
+          // Pattern 2: Speech stopped with transcript
+          if (type === "input_audio_buffer.speech_stopped" && msg.transcript) {
+            const userText = msg.transcript.trim();
+            if (userText) {
+              console.log("👤 User (pattern 2):", userText);
+              messagesRef.current.push({ role: "user", text: userText });
+              setTranscript([...messagesRef.current]);
+            }
+          }
+
+          // Pattern 3: Any input audio transcription event
+          if (type.includes("input_audio_transcription") && msg.transcript) {
+            const userText = msg.transcript.trim();
+            if (userText) {
+              console.log("👤 User (pattern 3):", userText);
+              // Check for duplicates
+              const lastMessage = messagesRef.current[messagesRef.current.length - 1];
+              if (!lastMessage || lastMessage.text !== userText || lastMessage.role !== "user") {
+                messagesRef.current.push({ role: "user", text: userText });
+                setTranscript([...messagesRef.current]);
+              }
+            }
+          }
+
+          // Pattern 4: Streaming user transcription with delta
+          if (type.includes("input") && type.includes("transcription") && msg.delta) {
+            if (!assistantSpeakingRef.current) {
+              userTranscriptBufferRef.current += msg.delta;
+              console.log("👤 User delta:", msg.delta);
+            }
+          }
+
+          // Pattern 5: Finalize user transcription
+          if (type.includes("input") && type.includes("transcription") && type.includes("done")) {
+            const userText = userTranscriptBufferRef.current.trim();
+            if (userText) {
+              console.log("👤 User final:", userText);
+              messagesRef.current.push({ role: "user", text: userText });
+              setTranscript([...messagesRef.current]);
+            }
+            userTranscriptBufferRef.current = "";
+          }
+
+          // Pattern 6: General transcript field check
+          if (msg.transcript && typeof msg.transcript === "string") {
+            const text = msg.transcript.trim();
+            if (text && !type.includes("response") && !type.includes("output")) {
+              console.log("👤 User (general):", text);
+              const lastMessage = messagesRef.current[messagesRef.current.length - 1];
+              if (!lastMessage || lastMessage.text !== text || lastMessage.role !== "user") {
+                messagesRef.current.push({ role: "user", text });
+                setTranscript([...messagesRef.current]);
+              }
+            }
+          }
+
+          // AI RESPONSE TRANSCRIPTION
+          if (type === "response.audio_transcript.delta") {
+            aiTextBufferRef.current += msg.delta || "";
+          }
+
+          if (type === "response.text.delta") {
+            aiTextBufferRef.current += msg.delta || "";
+          }
+
+          // Finalize AI text
+          if (
+            type === "response.done" ||
+            type === "response.completed" ||
+            type === "response.audio_transcript.done"
+          ) {
+            const aiText = (msg.transcript || aiTextBufferRef.current || "").trim();
+            if (aiText) {
+              console.log("🤖 AI response:", aiText);
+              messagesRef.current.push({ role: "ai", text: aiText });
+              setTranscript([...messagesRef.current]);
+            }
+            aiTextBufferRef.current = "";
+          }
+
+        } catch (e) {
+          console.error("Failed to parse server message:", e);
+        }
+      };
+
+      dataChannelRef.current = dc;
+      mic.getTracks().forEach((t) => pc.addTrack(t, mic));
+      setStatus("creating-offer");
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false,
+      });
+      await pc.setLocalDescription(offer);
+      setStatus("exchanging-sdp");
+
+      const answerRes = await fetch(
+        `https://api.openai.com/v1/realtime?model=${encodeURIComponent(
+          session.model
+        )}`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            Authorization: `Bearer ${session.client_secret?.value}`,
+            "Content-Type": "application/sdp",
+            "OpenAI-Beta": "realtime=v1",
           },
-          body: JSON.stringify({
-            class: formatGradeForAPI(selectedGrade),
-            style: selectedStyle.toLowerCase(),
-            message: userMessage,
-            ...(sessionId && { sessionId }), // session id
-          }),
+          body: offer.sdp,
         }
       );
-     
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      if (!answerRes.ok) throw new Error("SDP exchange with API failed");
+      const answerSdp = await answerRes.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+      setIsActive(true);
+      setStatus("connected");
+    } catch (e: any) {
+      console.error(e);
+      setError(
+        e?.message || "An unknown error occurred while starting the session."
+      );
+      setStatus("error");
+      stopRealtime();
+    }
+  }, [selectedGrade, selectedStyle]);
 
-      const data = await res.json();
-      const responseText =
-        data?.data?.response || "Sorry, I couldn't process your request.";
-      
-      // Extract and store sessionId from response if it exists
-      if (data?.data?.sessionId) {
-        setSessionId(data.data.sessionId);
-      }
+  const stopRealtime = useCallback(() => {
+    setStatus("stopping");
+    setTranscript([...messagesRef.current]);
 
-      // Token/Model Logging
-      const model = "Gemini 1.0 Pro";
-      const inputTokens = encode(userMessage).length;
-      const outputTokens = encode(responseText).length;
-      const inputPricePer1K = 0.002;
-      const outputPricePer1K = 0.006;
-      const inputCost = (inputTokens / 1000) * inputPricePer1K;
-      const outputCost = (outputTokens / 1000) * outputPricePer1K;
-      const totalCost = inputCost + outputCost;
+  // Optional: Log to verify messages
+  console.log("💬 Final Transcript:", messagesRef.current);
+    
+    // Cleanup audio analysis
+    cleanupAudioAnalysis();
+    
+    if (pcRef.current) pcRef.current.close();
+    if (localStreamRef.current)
+      localStreamRef.current.getTracks().forEach((t) => t.stop());
 
-      console.log("--- AI Chat Log ---");
-      console.log("Model:", model);
-      console.log("Input tokens:", inputTokens);
-      console.log("Output tokens:", outputTokens);
-      console.log("Input cost:", inputCost.toFixed(6));
-      console.log("Output cost:", outputCost.toFixed(6));
-      console.log("Total cost:", totalCost.toFixed(6));
+    pcRef.current = null;
+    localStreamRef.current = null;
+    dataChannelRef.current = null;
+    setIsActive(false);
+    setIsDataChannelOpen(false);
+    setStatus("idle");
 
-      // Start speech synthesis immediately - this implements the ChatGPT-like behavior
-      // where the assistant starts speaking immediately after the user stops
-      setAiSpeaking(true);
-      console.log('[DEBUG] TTS utterance will start:', responseText);
-      
-// Create and configure speech synthesis based on selected persona
-const utterance = new SpeechSynthesisUtterance(responseText);
-
-// Configure voice characteristics based on selected persona
-const configureVoiceForPersona = (style: string) => {
-  const voices = window.speechSynthesis.getVoices();
-
-  const findBestVoiceForPersona = (persona: string) => {
-    if (!voices || voices.length === 0) return null;
-
-    const englishVoices = voices.filter(v => v.lang.startsWith("en"));
-    if (englishVoices.length === 0) return voices[0]; // Fallback to any voice
-
-    // Function to check for quality keywords in a voice name
-    const isHighQuality = (name: string) => {
-      const lowerName = name.toLowerCase();
-      return lowerName.includes("premium") || lowerName.includes("high quality") || lowerName.includes("natural") || lowerName.includes("expressive") || lowerName.includes("google") || lowerName.includes("microsoft");
-    };
-
-    switch (persona.toLowerCase()) {
-      case 'professor':
-        // Professor: Look for authoritative, mature, male-sounding voices
-        const professorCandidates = englishVoices.filter(v => {
-          const name = v.name.toLowerCase();
-          // Priority 1: Classic male names
-          if (name.includes("david") || name.includes("alex") || name.includes("mark") || 
-              name.includes("james") || name.includes("john") || name.includes("michael") ||
-              name.includes("robert") || name.includes("william") || name.includes("thomas") ||
-              name.includes("daniel") || name.includes("paul") || name.includes("tom")) {
-            return true;
-          }
-          // Priority 2: Male indicators
-          if (name.includes("male")) return true;
-          // Priority 3: Authoritative sounding names
-          if (name.includes("authority") || name.includes("professor") || name.includes("teacher")) return true;
-          return false;
+    if (sessionIdRef.current && messagesRef.current.length > 0) {
+      if (!messagesRef.current.find((m) => m.role === "ai")) {
+        messagesRef.current.push({
+          role: "ai",
+          text: `Ended realtime session (${selectedStyle}) for ${selectedGrade}.`,
         });
-        
-        // Return the first match or fallback to a deep-sounding voice
-        if (professorCandidates.length > 0) return professorCandidates[0];
-        
-        // Fallback: Look for voices that might sound authoritative
-        const fallbackProfessor = englishVoices.find(v => 
-          v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("english")
-        );
-        return fallbackProfessor || englishVoices[0];
-        
-        case 'robot':
-          // Robot: Look for clear, neutral, systematic voices
-          const robotCandidates = englishVoices.filter(v => {
-            const name = v.name.toLowerCase();
-            // Priority 1: System/Assistant voices
-            if (name.includes("system") || name.includes("google") || name.includes("microsoft") ||
-                name.includes("siri") || name.includes("cortana") || name.includes("alexa") ||
-                name.includes("assistant") || name.includes("tts") || name.includes("speech") ||
-                name.includes("voice") || name.includes("neutral") || name.includes("clear")) {
-              return true;
-            }
-            // Priority 2: Technical sounding names
-            if (name.includes("technical") || name.includes("digital") || name.includes("electronic")) return true;
-            // Priority 3: Clear pronunciation indicators
-            if (name.includes("clear") || name.includes("precise") || name.includes("accurate")) return true;
-            return false;
-          });
-          
-          // Return the first match or fallback to a clear-sounding voice
-          if (robotCandidates.length > 0) return robotCandidates[0];
-          
-          // Fallback: Look for voices that might sound clear and systematic
-          const fallbackRobot = englishVoices.find(v => 
-            v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("english")
-          );
-          return fallbackRobot || englishVoices[0];
-          
-          case 'friend':
-            // Friend: Prioritize high-quality, friendly, and expressive voices
-            const friendCandidates = englishVoices.filter(v => {
-              const name = v.name.toLowerCase();
-              return isHighQuality(name) || name.includes("friendly") || name.includes("chat") || name.includes("female") || name.includes("us") || name.includes("uk");
-            });
-    
-            // Smart fallback logic for friend persona
-            if (friendCandidates.length > 0) {
-              // Priority 1: Find a local, high-quality voice (best option for performance and quality)
-              const localHighQuality = friendCandidates.find(v => v.localService && isHighQuality(v.name));
-              if (localHighQuality) return localHighQuality;
-    
-              // Priority 2: Find any high-quality voice (may be network-based)
-              const anyHighQuality = friendCandidates.find(v => isHighQuality(v.name));
-              if (anyHighQuality) return anyHighQuality;
-    
-              // Priority 3: Find any local service voice
-              const anyLocal = friendCandidates.find(v => v.localService);
-              if (anyLocal) return anyLocal;
-    
-              // Priority 4: Fallback to the first available candidate
-              return friendCandidates[0];
-            }
-    
-            // Final fallback to any English voice
-            return englishVoices[0];
-     
-            default:
-        // Default: Balanced, natural voice, prioritizing premium or local US/UK voices
-        const defaultVoice = englishVoices.find(v =>
-          isHighQuality(v.name) && (v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("uk"))
-        );
-        return defaultVoice || englishVoices.find(v => (v.name.toLowerCase().includes("us") || v.name.toLowerCase().includes("uk"))) || englishVoices[0];
+      }
+      saveHistory(messagesRef.current, sessionIdRef.current);
     }
-  };
+    setSessionId(null);
+  }, [selectedGrade, selectedStyle, cleanupAudioAnalysis]); // Added cleanupAudioAnalysis dependency
 
-  // Apply persona-specific voice configuration
-  switch (style.toLowerCase()) {
-    case 'professor':
-      // Professor: Slower, deeper, more authoritative
-      utterance.rate = 0.8;        // Slower speech
-      utterance.pitch = 0.9;       // Slightly deeper pitch
-      utterance.volume = 1;
-      break;
-   case 'friend':
-      // Friend: Slightly faster, higher pitch, warm tone (more like ChatGPT's conversational style)
-      utterance.rate = 1.05; // Slightly faster, conversational pace
-      utterance.pitch = 1.1;  // Slightly higher, more energetic pitch
-      utterance.volume = 1;
-      break;
-    case 'robot':
-      // Robot: Monotone, slightly faster, robotic feel
-      utterance.rate = 1.1;        // Slightly faster
-      utterance.pitch = 0.8;       // Lower, more monotone
-      utterance.volume = 0.9;      // Slightly lower volume
-      break;
-        
-    default:
-      // Default: Balanced settings
-      utterance.rate = 1.0;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-  }
-
-  const bestVoice = findBestVoiceForPersona(style);
-  if (bestVoice) {
-    utterance.voice = bestVoice;
-  }
-};
-
-configureVoiceForPersona(selectedStyle);
-// This ensures the voices are loaded before running the configuration.
-if (window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = () => configureVoiceForPersona(selectedStyle);
-}
-      
-
-
-      // When speech ends, add both messages to chat history
-      // This implements the ChatGPT-like behavior where user messages appear only after AI responds
-      utterance.onend = () => {
-        setAiSpeaking(false);
-        // Now add both messages to chat history
-        setChatHistory((prev) => [
-          ...prev,
-          { role: "user", text: userMessage },
-          { role: "ai", text: responseText }
-        ]);
-        setDisplayedText(""); // Clear the displayed text since it's now in chat history
-        resetTranscript(); // clear transcript for next turn
-        lastSentTranscriptRef.current = "";
-      };
-
-      // If speech fails, still add messages to chat history
-      utterance.onerror = () => {
-        setAiSpeaking(false);
-        setChatHistory((prev) => [
-          ...prev,
-          { role: "user", text: userMessage },
-          { role: "ai", text: responseText }
-        ]);
-        setDisplayedText(""); // Clear the displayed text
-        resetTranscript(); // clear transcript for next turn
-        lastSentTranscriptRef.current = "";
-      };
-
-      // Start speaking
-      window.speechSynthesis.speak(utterance);
-      
-      // Store the response text for display during speech
-      setDisplayedText(responseText);
-      
-    } catch (err) {
-      console.error("API Error:", err);
-      setAiSpeaking(false);
-      // In case of error, add both messages
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "user", text: userMessage },
-        {
-          role: "ai" as const,
-          text: "Sorry, I encountered an error. Please try again.",
-        },
-      ]);
-    } finally {
-      setApiLoading(false);
-      setThinking(false);
-      setInputValue("");
-      resetTranscript();
-    }
-  }, [selectedGrade, selectedStyle, transcript, resetTranscript, sessionId]);
-
-  // === START: History Functions ===
+  // --- History Functions ---
   const fetchHistoryData = async () => {
-    console.log("🔍 [HISTORY] Starting to fetch history data...");
     setHistoryLoading(true);
-    
     try {
       const history = await fetchHistory();
       setHistoryData(history);
     } catch (err) {
-      console.error("🔍 [HISTORY] Error fetching history:", err);
+      console.error("[HISTORY] Error fetching history:", err);
     } finally {
       setHistoryLoading(false);
     }
   };
 
   const handleHistoryClick = () => {
-    console.log("🔍 [HISTORY] View history button clicked");
     setShowHistorySlider(true);
     setIsClosing(false);
     fetchHistoryData();
   };
 
   const handleCloseHistory = () => {
-    console.log("🔍 [HISTORY] Closing history slider");
     setIsClosing(true);
     setTimeout(() => {
       setShowHistorySlider(false);
@@ -586,250 +639,21 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
     }, 300);
   };
 
-  const handleViewChat = async (chatId: string, chatTitle: string) => {
-    console.log("🔍 [HISTORY] View chat clicked for:", chatId, chatTitle);
-    
-    try {
-      // Find the chat in history data to get the messages
-      const chatItem = historyData.find(item => item.id === chatId);
-      console.log("🔍 [HISTORY] Found chat item:", chatItem);
-      
-      if (chatItem && chatItem.messages && Array.isArray(chatItem.messages) && chatItem.messages.length > 0) {
-        console.log("🔍 [HISTORY] Messages found:", chatItem.messages.length);
-        
-        // Convert the messages to the chat format
-        const formattedMessages = chatItem.messages.map((msg: unknown, index: number) => {
-          // Type guard to ensure msg has the expected structure
-          if (typeof msg === 'object' && msg !== null && 'role' in msg && 'content' in msg) {
-            const typedMsg = msg as { role: string; content: string };
-            console.log(`🔍 [HISTORY] Processing message ${index}:`, typedMsg);
-            
-            const role = typedMsg.role === 'USER' ? 'user' : 'ai';
-            const text = typedMsg.content || '';
-            
-            console.log(`🔍 [HISTORY] Message ${index} - Role: ${role}, Text: ${text}`);
-            
-            return {
-              role: role as 'user' | 'ai',
-              text: text
-            };
-          } else {
-            console.warn(`🔍 [HISTORY] Invalid message format at index ${index}:`, msg);
-            return {
-              role: 'ai' as const,
-              text: 'Invalid message format'
-            };
-          }
-        });
-        
-        console.log("🔍 [HISTORY] Final formatted messages:", formattedMessages);
-        
-        // Set the chat history and close the slider
-        setChatHistory(formattedMessages);
-        setSelectedChatId(chatId);
-        handleCloseHistory();
-        
-        // Scroll to the chat area
-        setTimeout(() => {
-          chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      } else {
-        console.log("🔍 [HISTORY] No messages found. Chat item:", chatItem);
-        console.log("🔍 [HISTORY] Messages property:", chatItem?.messages);
-        console.log("🔍 [HISTORY] Is messages array:", Array.isArray(chatItem?.messages));
-        console.log("🔍 [HISTORY] Messages length:", chatItem?.messages?.length);
-        
-        // If no messages found, show an alert
-        alert(`No messages found for this chat: ${chatTitle}. Please check the console for details.`);
-      }
-    } catch (error) {
-      console.error("🔍 [HISTORY] Error loading chat:", error);
-      alert("Error loading chat messages");
-    }
+  const handleNewChat = () => {
+    handleCloseHistory();
+    setSessionId(null);
+    setSelectedChatId(null);
+    setChatHistory([]);
+    setTranscript([]); // ← Add this line
   };
 
-  const handleSearchChats = () => {
-    console.log("🔍 [HISTORY] Search chats button clicked");
-    setIsSearching(true);
-    setSearchQuery("");
-  };
-
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    console.log("🔍 [HISTORY] Search query:", query);
-  };
-  // === END: History Functions ===
-
-  // Auto-detect end of user speech and trigger assistant reply
-  useEffect(() => {
-    console.log('[DEBUG] useEffect check:', {
-      isConversationActive,
-      listening,
-      transcript,
-      aiSpeaking,
-      thinking,
-      apiLoading,
-      lastSentTranscript: lastSentTranscriptRef.current
-    });
-    if (
-      isConversationActive &&
-      !listening &&
-      transcript.trim() &&
-      !aiSpeaking &&
-      !thinking &&
-      !apiLoading &&
-      transcript.trim() !== lastSentTranscriptRef.current
-    ) {
-      console.log('[DEBUG] useEffect will call handleSend for transcript:', transcript.trim());
-      lastSentTranscriptRef.current = transcript.trim();
-      handleSend();
-    }
-  }, [isConversationActive, listening, transcript, aiSpeaking, thinking, apiLoading, handleSend]);
-
-  // After assistant finishes, auto-restart listening for next user input
-  useEffect(() => {
-    if (
-      isConversationActive &&
-      !aiSpeaking &&
-      !thinking &&
-      !apiLoading &&
-      transcript.trim() === ""
-    ) {
-      // Only restart listening if not already listening
-      if (!listening) {
-        SpeechRecognition.startListening({
-          continuous: false,
-          language: "en-US",
-        });
-      }
-    }
-  }, [isConversationActive, aiSpeaking, thinking, apiLoading, transcript, listening]);
-
-  // Enhanced start listening with permission and error handling
-  const handleStartListening = useCallback(async () => {
-    try {
-      setSpeechError(null);
-
-      // Check microphone permission first
-      if (microphonePermission === "denied") {
-        setSpeechError(
-          "Microphone access denied. Please enable microphone permissions in your browser settings."
-        );
-        return;
-      }
-
-      // Request microphone access explicitly
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (permissionError) {
-        console.error("Microphone permission error:", permissionError);
-        setSpeechError("Please allow microphone access to use voice input");
-        return;
-      }
-
-      resetTranscript();
-
-      // Start listening with enhanced options
-      await SpeechRecognition.startListening({
-        continuous: false,
-        language: "en-US",
-      });
-    } catch (error) {
-      console.error("Error starting speech recognition:", error);
-      setSpeechError("Failed to start voice recognition. Please try again.");
-    }
-  }, [microphonePermission, resetTranscript]);
-
-  // Start continuous conversation
-  const startConversation = useCallback(async () => {
-    try {
-      setSpeechError(null);
-      setIsConversationActive(true);
-      if (microphonePermission === "denied") {
-        setSpeechError(
-          "Microphone access denied. Please enable microphone permissions in your browser settings."
-        );
-        setIsConversationActive(false);
-        return;
-      }
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (permissionError) {
-        console.error("Microphone permission error:", permissionError);
-        setSpeechError("Please allow microphone access to use voice input");
-        setIsConversationActive(false);
-        return;
-      }
-      resetTranscript();
-      await SpeechRecognition.startListening({
-        continuous: false, // single utterance
-        language: "en-US",
-      });
-    } catch (error) {
-      console.error("Error starting conversation:", error);
-      setSpeechError("Failed to start conversation. Please try again.");
-      setIsConversationActive(false);
-    }
-  }, [microphonePermission, resetTranscript]);
-
-  // Stop conversation
-  const stopConversation = useCallback(() => {
-    try {
-      SpeechRecognition.stopListening();
-      setIsConversationActive(false);
-      setSpeechError(null);
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel(); // Immediately stop any ongoing TTS
-      }
-      // Reset sessionId when conversation ends
-      setSessionId(null);
-      // Do NOT trigger handleSend or TTS for any remaining transcript
-      // Only show chat bubbles for chatHistory
-    } catch (error) {
-      console.error("Error stopping conversation:", error);
-      setSpeechError("Failed to stop conversation");
-    }
-  }, [setIsConversationActive, setSpeechError]);
-
-  // Clean up speech synthesis when component unmounts
-  useEffect(() => {
-    return () => {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
-
-  // When transcript changes, update inputValue
-  useEffect(() => {
-    if (transcript) {
-      setInputValue(transcript);
-    }
-  }, [transcript]);
-
-  // Suggestion click handler
-  const handleSuggestion = (s: string) => {
-    if (!selectedGrade || !selectedStyle) {
-      setInputValue(s);
-    } else {
-      setInputValue(s);
-      setTimeout(() => handleSend(), 100);
-    }
-  };
-
-
-
-  // Floating selectors component
+  // --- Floating Selectors UI Component ---
   const FloatingSelectors = (
     <div>
-              {/* Outer flex to hold both colored box and history button */}
-        <div
-          className="absolute z-[60] flex flex-row items-center gap-[10px] right-32 sm:right-36 lg:right-44"
-          style={{ top: "40px" }}
-          onClick={(e) => e.stopPropagation()}
-        >
-        {/* Colored gradient box for Class & Persona */}
+      {/* Wrapper for selectors */}
+      <div className="fixed z-[60] flex flex-row gap-[10px] items-center" style={{ top: "40px", right: "8rem" }} onClick={(e) => e.stopPropagation()}>
+        
+        {/* Class & Persona in colored background */}
         <div
           className={`flex flex-row gap-3 p-4 rounded-xl transition-all duration-300 ${
             showOnboarding ? "z-[60] shadow-2xl" : ""
@@ -867,14 +691,25 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
                 setSelectedStyle(val);
                 setShowStyleDropdown(false);
               },
-              renderOption: (style: StyleOption) => (
+              renderOption: (style: UiStyleOption) => (
                 <div className="flex items-center gap-3 cursor-pointer">
-                  {typeof style === "string" ? style : style.label}
+                  {style.label}
                 </div>
               ),
             },
           ].map(
-            ({ label, value, onClick, options, showDropdown, onSelect, renderOption }, i) => (
+            (
+              {
+                label,
+                value,
+                onClick,
+                options,
+                showDropdown,
+                onSelect,
+                renderOption,
+              },
+              i
+            ) => (
               <div key={i} className="relative dropdown-container">
                 <button
                   className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${
@@ -892,25 +727,24 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
                     </span>
                   </div>
                 </button>
-  
-                                  {showDropdown && (
-                    <div className="absolute mt-2 z-[80] bg-white/95 backdrop-blur-md rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200/50 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
+
+                {showDropdown && (
+                  <div className="absolute mt-2 z-10 bg-white/95 backdrop-blur-md rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200/50 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-gray-50 to-gray-100/80 px-4 py-3 rounded-t-xl border-b border-gray-200/50">
                       <span className="text-sm font-semibold text-gray-700">Select {label}</span>
                     </div>
                     {/* Options */}
                     {options.map((opt: OptionType) => {
-                      const key = isOptionWithIcon(opt) ? opt.label : opt;
-                      const value = isOptionWithIcon(opt) ? opt.value : opt;
-
+                      const key = isUiStyleOption(opt) ? opt.label : opt;
+                      const val = isUiStyleOption(opt) ? opt.value : opt;
                       return (
                         <div
                           key={key}
                           className="px-4 py-3 hover:bg-blue-50/80 cursor-pointer text-sm text-gray-700 border-b border-gray-100/50 last:border-b-0 transition-all duration-150 hover:shadow-sm"
-                          onClick={() => onSelect(value)}
+                          onClick={() => onSelect(val)}
                         >
-                          {isOptionWithIcon(opt) && renderOption
+                          {isUiStyleOption(opt) && renderOption
                             ? renderOption(opt)
                             : key}
                         </div>
@@ -922,10 +756,8 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
             )
           )}
         </div>
-        
 
-  
-        {/* View History Button (outside gradient) */}
+        {/* View History Button OUTSIDE colored box */}
         <button
           onClick={handleHistoryClick}
           className="rounded-full px-3 py-2 bg-[#FFE4B5] border border-[#FF5146] text-[#FF5146] hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
@@ -937,125 +769,12 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
           />
           <span className="text-sm font-medium">View history</span>
         </button>
-        
-
       </div>
     </div>
   );
-  
-
-  // Enhanced MicInputBar with error display
-  function MicInputBar() {
-    const hideSidebar =
-      pathname === "/login" ||
-      pathname === "/login/otp" ||
-      pathname === "/register";
-    const sidebarCollapsed = state === "collapsed";
-    const inputBarClass = `fixed bottom-2 sm:bottom-4 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 bg-[rgba(255,255,255,0.1)] py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
-      hideSidebar ? "" : sidebarCollapsed ? "sidebar-collapsed" : ""
-    }`;
-
-    const canUseMicrophone =
-      browserSupportsSpeechRecognition &&
-      microphonePermission !== "denied" &&
-      !speechError &&
-      selectedGrade &&
-      selectedStyle;
-
-    return (
-      <>
-        {/* Error message display */}
-        {speechError && (
-          <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 max-w-md text-center">
-            {speechError}
-          </div>
-        )}
-
-        <div
-          className={inputBarClass}
-          style={{
-            backdropFilter: "blur(10px)",
-            borderRadius: "12px",
-            border: "0.96px solid rgba(255,255,255,0.2)",
-            height: "55px",
-          }}
-        >
-          <button
-            className={`rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl sm:text-2xl ${
-              listening
-                ? "point-ask-gradient text-black"
-                : canUseMicrophone
-                ? "bg-[#4A4A4A] text-white hover:bg-[#5A5A5A]"
-                : "bg-gray-400 text-gray-600 cursor-not-allowed"
-            } transition min-w-[40px] sm:min-w-[48px]`}
-            onClick={handleStartListening}
-            disabled={listening || thinking || apiLoading || !canUseMicrophone}
-            title={
-              !browserSupportsSpeechRecognition
-                ? "Speech recognition not supported"
-                : microphonePermission === "denied"
-                ? "Microphone access denied"
-                : speechError
-                ? speechError
-                : !selectedGrade || !selectedStyle
-                ? "Please select grade and style first"
-                : "Click to start voice input (auto-submits when done)"
-            }
-          >
-            <svg
-              width="20"
-              height="20"
-              className="sm:hidden"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <rect x="9" y="2" width="6" height="12" rx="3" />
-              <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-              <path d="M12 19v3m-4 0h8" />
-            </svg>
-            <svg
-              width="28"
-              height="28"
-              className="hidden sm:block"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <rect x="9" y="2" width="6" height="12" rx="3" />
-              <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-              <path d="M12 19v3m-4 0h8" />
-            </svg>
-          </button>
-          {/* <button
-            className="rounded-lg p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
-            onClick={handleSend}
-            disabled={
-              !inputValue.trim() ||
-              apiLoading ||
-              thinking ||
-              !selectedGrade ||
-              !selectedStyle
-            }
-          >
-            <ArrowRight size={16} className="sm:hidden" />
-            <ArrowRight size={20} className="hidden sm:block" />
-          </button> */}
-        </div>
-      </>
-    );
-  }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center relative"
-      style={{
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
+    <div className="min-h-screen flex flex-col items-center justify-center relative bg-gray-50 p-6">
       {/* Onboarding overlay */}
       {showOnboarding && (
         <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-50"></div>
@@ -1092,7 +811,7 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
 
       {/* Onboarding tooltip for Persona Selection */}
       {showOnboarding && onboardingStep === 2 && (
-        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-64 z-[60]">
+        <div className="fixed top-[100px] right-32 sm:right-36 lg:right-54 z-[60]">
           <img
             src="/images/arrow.svg"
             alt="onboarding"
@@ -1105,13 +824,13 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
                 <div className="text-sm opacity-90">
                   Persona: {selectedStyle}
                 </div>
-                <div className="text-xs mt-2 opacity-75">Now let's start chatting...</div>
+                <div className="text-xs mt-2 opacity-75">Now you can start your voice conversation...</div>
               </div>
             ) : (
               <div>
                 <div className="mb-2">Now choose how you'd like me to talk to you.</div>
                 <div className="text-xs opacity-75">
-                  Professor, Friend, or Robot - pick your style!
+                  Professor or Friend - pick your style!
                 </div>
               </div>
             )}
@@ -1120,8 +839,6 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
       )}
 
       {FloatingSelectors}
-
-      {/* History Slider */}
       <HistorySlider
         showHistorySlider={showHistorySlider}
         isClosing={isClosing}
@@ -1130,100 +847,211 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
         searchQuery={searchQuery}
         isSearching={isSearching}
         onClose={handleCloseHistory}
-        onSearchClick={handleSearchChats}
-        onSearchInputChange={handleSearchInputChange}
+        onSearchClick={() => {
+          setIsSearching(true);
+          setSearchQuery("");
+        }}
+        onSearchInputChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setSearchQuery(e.target.value)
+        }
         onSearchClose={() => {
           setIsSearching(false);
           setSearchQuery("");
         }}
-        onNewChat={() => {
-          console.log("🔍 [HISTORY] New chat button clicked");
-          handleCloseHistory();
-          setSelectedChatId(null);
-          setChatHistory([]);
-        }}
-        onViewChat={handleViewChat}
+        onNewChat={handleNewChat}
+        onViewChat={() => handleCloseHistory()}
       />
 
-      <div className="w-full px-4 lg:px-8 mt-6">
-        {/* Welcome message and suggestions - only show before chat starts and when not speaking */}
-        {chatHistory.length === 0 && !isConversationActive && (
-          <div className=" flex flex-col mt-12 items-center max-w-4xl mx-auto">
-                          <div className="mt-24 mb-4 text-center w-full">
-                <div className="text-2xl md:text-3xl font-bold text-black mb-2">
-                  <span role="img" aria-label="wave">
-                    👋
-                  </span>{" "}
-                  Got it! I&apos;ll teach you{" "}
-                  {selectedStyle ? "like a " + selectedStyle : ""}{" "}
-                  {selectedGrade
-                    ? selectedGrade === "UG" || selectedGrade === "PG"
-                      ? ` for ${selectedGrade} level`
-                      : " for Grade " + selectedGrade.replace(/\D/g, "")
-                    : ""}
+      <div className="w-full max-w-4xl mx-auto flex-grow flex flex-col items-center justify-center">
+        {!isActive ? (
+          transcript.length > 0 ? (
+            <div className="w-full max-w-2xl p-4 space-y-4 overflow-y-auto h-[60vh] flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Conversation Transcript</h3>
+                <button
+                  onClick={() => setTranscript([])}
+                  className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100 transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+              {transcript.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[85%] px-4 py-3 rounded-lg shadow-sm border ${
+                      message.role === "user"
+                        ? "bg-blue-50 text-blue-900 border-blue-200"
+                        : "bg-orange-50 text-orange-900 border-orange-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${
+                        message.role === "user" ? "text-blue-600" : "text-orange-600"
+                      }`}>
+                        {message.role === "user" ? "You" : `AI (${selectedStyle || "Assistant"})`}
+                      </span>
+                    </div>
+                    <p className="text-sm leading-relaxed">{message.text}</p>
+                  </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                <span role="img" aria-label="wave">
+                  👋
+                </span>{" "}
+                {selectedGrade && selectedStyle ? (
+                  <>
+                    Got it! I&apos;ll teach you like a {selectedStyle} for{" "}
+                    {selectedGrade === "UG" || selectedGrade === "PG"
+                      ? `${selectedGrade} level`
+                      : `grade ${selectedGrade?.replace(/\D/g, "")}`}
+                    .
+                  </>
+                ) : (
+                  "Welcome! Please select your class and persona to get started."
+                )}
+              </div>
               <div className="text-lg text-black mb-8">
-                Ask me anything when you&apos;re ready.
+                {selectedGrade && selectedStyle 
+                  ? "Ask me anything when you're ready."
+                  : "Choose your settings from the top-right corner."}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Chat area - always show during conversation */}
-        <div className="pt-24 pb-32 max-w-4xl mx-auto">
-          <div className="w-full flex flex-col gap-3">
-            {/* During conversation: show only SpruceBall/circle with current spoken text */}
-            {isConversationActive ? (
-              <div className="flex justify-center">
-                <div className="flex flex-col items-center">
-                  <SpruceBall listening={listening || aiSpeaking || isConversationActive} />
+          )
+        ) : (
+          <div className="w-full max-w-4xl flex gap-6">
+            {/* Left side - Diarization and Controls */}
+            <div className="flex-1 flex flex-col items-center justify-center">
+              {error && (
+                <p className="mb-4 text-sm text-red-600 bg-red-100 p-2 rounded-md">
+                  {error}
+                </p>
+              )}
+              
+              {/* Diarization Indicator */}
+              <div className="mb-6 flex items-center gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    currentSpeaker === "user" ? "bg-blue-500 animate-pulse" : "bg-gray-300"
+                  }`}></div>
+                  <span className={`text-sm font-medium transition-colors duration-300 ${
+                    currentSpeaker === "user" ? "text-blue-600" : "text-gray-500"
+                  }`}>
+                    You
+                  </span>
                 </div>
+                
+                <div className="w-px h-8 bg-gray-300"></div>
+                
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    currentSpeaker === "ai" ? "bg-orange-500 animate-pulse" : "bg-gray-300"
+                  }`}></div>
+                  <span className={`text-sm font-medium transition-colors duration-300 ${
+                    currentSpeaker === "ai" ? "text-orange-600" : "text-gray-500"
+                  }`}>
+                    AI {selectedStyle ? `(${selectedStyle})` : ""}
+                  </span>
+                </div>
+                
+                {currentSpeaker === "none" && (
+                  <div className="text-xs text-gray-400 ml-2">
+                    Listening...
+                  </div>
+                )}
               </div>
-            ) : (
-              // After conversation ends, show chat bubbles for both user and assistant
-              chatHistory.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              
+              <SpruceBall listening={isActive && status === "connected"} />
+            </div>
+
+            {/* Right side - Live Transcript */}
+            {/* {showTranscript && (
+              <div className="flex-1 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 max-h-[70vh] flex flex-col">
+                <div className="flex items-center justify-between mb-4 border-b pb-2">
+                  <h3 className="text-lg font-semibold text-gray-800">Live Transcript</h3>
+                  <button
+                    onClick={() => setShowTranscript(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div 
+                  ref={transcriptRef}
+                  className="flex-1 overflow-y-auto space-y-3 pr-2"
+                  style={{ scrollBehavior: 'smooth' }}
                 >
-                  {msg.role === "user" ? (
-                    <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 bg-[#DDDDDD] text-[#000000]">
-                      <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
+                  {transcript.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${
+                        message.role === "user" ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+                          message.role === "user"
+                            ? "bg-blue-100 text-blue-900 border-l-4 border-blue-500"
+                            : "bg-orange-100 text-orange-900 border-l-4 border-orange-500"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-xs font-bold uppercase tracking-wide ${
+                            message.role === "user" ? "text-blue-600" : "text-orange-600"
+                          }`}>
+                            {message.role === "user" ? "You" : "AI"}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="leading-relaxed">{message.text}</p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="max-w-[85%] md:max-w-[75%] bg-[#FFEFD3] text-[#FF5146] rounded-2xl px-5 py-3">
-                      <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
+                  ))}
+                  {/* Real-time typing indicators */}
+                  {/* {currentSpeaker === "user" && (
+                    <div className="flex justify-end">
+                      <div className="bg-blue-100 text-blue-900 px-3 py-2 rounded-lg text-sm border-l-4 border-blue-500 opacity-70">
+                        <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">You</span>
+                        <p className="italic">Speaking...</p>
+                      </div>
+                    </div>
+                  )}
+                  {currentSpeaker === "ai" && (
+                    <div className="flex justify-start">
+                      <div className="bg-orange-100 text-orange-900 px-3 py-2 rounded-lg text-sm border-l-4 border-orange-500 opacity-70">
+                        <span className="text-xs font-bold text-orange-600 uppercase tracking-wide">AI</span>
+                        <p className="italic">Speaking...</p>
+                      </div>
                     </div>
                   )}
                 </div>
-              ))
-            )}
-            {thinking && !isConversationActive && (
-              <div className="flex justify-start">
-                <div className="bg-[#FFEFD3] text-[#FF5146] rounded-2xl px-5 py-3 opacity-70">
-                  <p className="text-sm md:text-base">Thinking...</p>
-                </div>
               </div>
-            )}
-            <div ref={chatBottomRef} />
+            )} */}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Voice visualization */}
-      <div className="flex items-center justify-center mb-8">
-        {/* Remove duplicate SpruceBall here, as it is now handled in the chat area above */}
-      </div>
-
-      {/* Voice control buttons */}
-      {selectedGrade && selectedStyle && !isConversationActive && (
-        <div className="flex gap-3 justify-center mb-8">
+      <div className="flex gap-3 justify-center mb-8">
+        {!isActive ? (
           <button
-            onClick={startConversation}
-            className="point-ask-gradient cursor-pointer hover:bg-red-600 text-white px-8 py-3 rounded-full ..."
-            disabled={thinking || apiLoading}
+            onClick={startRealtime}
+            className="point-ask-gradient cursor-pointer text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-shadow disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={
+              !selectedGrade || !selectedStyle || status !== "idle" || !isLoggedIn
+            }
           >
-            {/* mic icon SVG */}
             <span className="flex items-center gap-2">
               <svg
                 width="20"
@@ -1240,30 +1068,64 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
               Start Conversation
             </span>
           </button>
-        </div>
-      )}
-      
-      {/* Stop button during conversation */}
-      {isConversationActive && (
-        <div className="flex gap-3 justify-center mb-8">
-          <button
-            onClick={stopConversation}
-            className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full transition-all duration-300"
-          >
-            <span className="flex items-center gap-2">
-              <svg
-                width="20"
-                height="20"
-                fill="currentColor"
-                viewBox="0 0 24 24"
+        ) : (
+          <div className="flex gap-3 items-center">
+            <button
+              onClick={stopRealtime}
+              className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all"
+            >
+              <span className="flex items-center gap-2">
+                <svg
+                  width="20"
+                  height="20"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                </svg>
+                Stop Conversation
+              </span>
+            </button>
+            
+            {/* {transcript.length > 0 && (
+              <button
+                onClick={() => setShowTranscript(!showTranscript)}
+                className={`px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all ${
+                  showTranscript 
+                    ? "bg-orange-500 hover:bg-orange-600 text-white" 
+                    : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
+                }`}
               >
-                <rect x="6" y="6" width="12" height="12" rx="2" />
-              </svg>
-              Stop Conversation
-            </span>
-          </button>
-        </div>
-      )}
+                <span className="flex items-center gap-2">
+                  <svg
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M9 12h6m-6-4h6m-6 8h6M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                  </svg>
+                  {showTranscript ? "Hide" : "Show"} Transcript
+                </span>
+              </button>
+            )} */}
+          </div>
+        )}
+      </div>
+
+      <audio
+        ref={remoteAudioRef}
+        autoPlay
+        playsInline
+        style={{ display: "none" }}
+      />
+      <style>{`
+        .point-ask-gradient {
+          background: linear-gradient(90deg, #ff9f27 0%, #ff5146 100%);
+        }
+      `}</style>
     </div>
   );
 }

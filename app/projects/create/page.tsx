@@ -65,7 +65,13 @@ export default function CreateProjectPage() {
         const data = await res.json();
         console.log("API Response data:", data);
         
-        const projectId = data.data?.id || data.project?.id;
+        // Open PDF in new tab if available
+        const pdfUrl = data.data?.project?.pdfUrl;
+        if (pdfUrl) {
+          window.open(pdfUrl, '_blank');
+        }
+        
+        const projectId = data.data?.project?.id || data.project?.id;
         if (projectId) {
           router.push(`/projects/${projectId}`);
         } else {
