@@ -83,12 +83,12 @@ const aiTutorSubRoutes = [
 ];
 
 const pointAskSubRoutes = [
-  // {
-  //   label: 'Point & Ask Voice',
-  //   href: '/pointask/voice',
-  //   icon: <MicIcon />,
-  //   bg: 'point-ask-gradient',
-  // },
+  {
+    label: 'Point & Ask Voice',
+    href: '/pointask/voice',
+    icon: <MicIcon />,
+    bg: 'point-ask-gradient',
+  },
   {
     label: 'Point & Ask Chat',
     href: '/pointask/chat',

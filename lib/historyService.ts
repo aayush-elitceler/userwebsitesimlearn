@@ -1,5 +1,4 @@
 import Cookies from "js-cookie";
-import axios from 'axios';
 
 // === START: History Types ===
 export interface HistoryItem {
@@ -10,6 +9,11 @@ export interface HistoryItem {
   answeredBy: string;
   messages?: unknown[]; // Added to store individual chat messages
 }
+export interface ChatMessage {
+  role: "user" | "ai";
+  text: string;
+}
+
 
 export interface RawHistoryItem {
   id?: string;
@@ -41,6 +45,55 @@ export interface HistoryActions {
   setIsSearching: (searching: boolean) => void;
 }
 // === END: History Types ===
+export const saveHistory = async (messages: ChatMessage[], sessionId: string): Promise<void> => {
+  console.log(`📝 [HISTORY] Starting to save history for session: ${sessionId}`);
+  
+  // Don't save empty conversations or those without a session
+  if (messages.length === 0 || !sessionId) {
+    console.warn("📝 [HISTORY] Aborted save: No messages or missing sessionId.");
+    return;
+  }
+
+  try {
+    const authCookie = Cookies.get("auth");
+    let token: string | undefined;
+    
+    if (authCookie) {
+      token = JSON.parse(authCookie).token;
+    }
+
+    // Prefer internal API route to avoid CORS/env mismatch; server will proxy to backend
+    const apiUrl = `/api/history`;
+    console.log("📝 [HISTORY] Calling API endpoint for saving:", apiUrl);
+
+    const res = await fetch(apiUrl, {
+      method: "POST", // Use POST method to create a new history entry
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        sessionId: sessionId,
+        messages: messages,
+        title: messages[0]?.text.substring(0, 40) + "..." || "New Chat" // Generate a title
+      }),
+    });
+
+    console.log("📝 [HISTORY] Save response status:", res.status);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to save history: ${res.status} ${errorText}`);
+    }
+
+    const data = await res.json();
+    console.log("📝 [HISTORY] Save response data:", data);
+    console.log("✅ Conversation saved successfully.");
+
+  } catch (err) {
+    console.error("📝 [HISTORY] Error saving history:", err);
+  }
+};
 
 export const fetchHistory = async (): Promise<HistoryItem[]> => {
   console.log("🔍 [HISTORY] Starting to fetch history data...");
@@ -68,17 +121,24 @@ export const fetchHistory = async (): Promise<HistoryItem[]> => {
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     });
 
-    const response = await axios.get(apiUrl, {
+    const res = await fetch(apiUrl, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
 
-    console.log("🔍 [HISTORY] API response status:", response.status);
-    console.log("🔍 [HISTORY] API response headers:", response.headers);
+    console.log("🔍 [HISTORY] API response status:", res.status);
+    console.log("🔍 [HISTORY] API response headers:", Object.fromEntries(res.headers.entries()));
 
-    const data = response.data;
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.log("🔍 [HISTORY] API error response:", errorText);
+      throw new Error(`Failed to fetch history: ${res.status} ${errorText}`);
+    }
+
+    const data = await res.json();
     console.log("🔍 [HISTORY] API response data:", data);
     console.log("🔍 [HISTORY] API response data type:", typeof data);
     console.log("🔍 [HISTORY] API response data keys:", Object.keys(data || {}));
