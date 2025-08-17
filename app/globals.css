@@ -101,6 +101,34 @@ body {
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* Tailwind scrollbar utilities */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-orange-300::-webkit-scrollbar-thumb {
+  background-color: #fdba74;
+  border-radius: 6px;
+}
+
+.scrollbar-track-orange-100::-webkit-scrollbar-track {
+  background-color: #ffedd5;
+  border-radius: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  border-radius: 6px;
+}
+
 /* Subject-specific background colors */
 .quiz-subject-maths { background-color: #4A90E2; }
 .quiz-subject-math { background-color: #4A90E2; }
