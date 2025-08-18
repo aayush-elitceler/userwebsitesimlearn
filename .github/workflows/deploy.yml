@@ -31,6 +31,8 @@ jobs:
           build-args: |
             NEXT_PUBLIC_BASE_URL=https://apisimplylearn.selflearnai.in/api/v1
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            GOOGLE_AI_API_KEY=${{ secrets.GOOGLE_AI_API_KEY }}
 
       - name: Verify Pushed Image
         run: docker pull aayushsharma100/simplylearnweb:latest
