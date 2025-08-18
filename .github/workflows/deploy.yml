@@ -52,5 +52,5 @@ jobs:
               -e NEXT_PUBLIC_BASE_URL=https://apisimplylearn.selflearnai.in/api/v1 \
               -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
               -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
-              -e GOOGLE_AI_API_KEY=${{ secrets.GOOGLE_AI_API_KEY }} \ 
+              -e GOOGLE_AI_API_KEY=${{ secrets.GOOGLE_AI_API_KEY }} \
               aayushsharma100/simplylearnweb:latest
