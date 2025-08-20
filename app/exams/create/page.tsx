@@ -42,6 +42,15 @@ export default function CreateExamPage() {
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState('');
 
+  const subjectOptions = [
+    'Math',
+    'Science', 
+    'Social studies',
+    'English',
+    'UG',
+    'PG'
+  ];
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -78,8 +87,11 @@ export default function CreateExamPage() {
       };
     }
 
+    // Use custom subject if "Custom" is selected, otherwise use selected subject
+    const finalSubject = form.subject;
+
     const body = {
-      subject: form.subject,
+      subject: finalSubject,
       topic: form.topic,
       examType: form.examType,
       level: form.level,
@@ -200,7 +212,7 @@ export default function CreateExamPage() {
         </div>
       )}
       
-      <div className='max-w-4xl w-full bg-transparent bg-gray-100 rounded-2xl shadow-lg p-8'>
+      <div className='max-w-4xl w-full bg-transparent bg-gray-100 rounded-2xl shadow-lg p-8 relative z-10'>
         <h2 className='text-2xl font-bold text-black mb-2'>Create Exam</h2>
         <hr className='border-gray-600 mb-6' />
         <form
@@ -243,14 +255,27 @@ export default function CreateExamPage() {
           
           <div className='flex flex-col'>
             <label className='text-black mb-1 font-semibold'>Subject</label>
-            <input
-              name="subject"
-              value={form.subject}
-              onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none'
-              placeholder="e.g. Math, Science, EVS, English"
-              required
-            />
+            <div className='relative'>
+              <select
+                name="subject"
+                value={form.subject}
+                onChange={handleChange}
+                className='w-full rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                required
+              >
+                <option value="">Select a subject</option>
+                {subjectOptions.map((subject) => (
+                  <option key={subject} value={subject}>
+                    {subject}
+                  </option>
+                ))}
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-4 h-4 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
           </div>
           
           <div className='flex flex-col'>

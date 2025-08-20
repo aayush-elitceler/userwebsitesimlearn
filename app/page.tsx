@@ -39,6 +39,7 @@ interface User {
   lastName: string;
   role: string;
   photoUrl: string;
+  profilePictureUrl?: string;
   section?: string;
 }
 interface DayStreak {
@@ -80,11 +81,16 @@ interface Mission {
   title: string;
   description: string;
   completed: boolean;
+  quizId?: string;
+  questionId?: string;
+  link?: string;
 }
 interface QuickLink {
   title: string;
   description: string;
   status: string;
+  link?: string;
+  projectId?: string;
   dueDate?: string;
 }
 interface LearningGrowthData {
@@ -139,39 +145,65 @@ export default function Home() {
     return num + "th";
   };
 
-  // Function to handle mission redirects based on mission type
+  // Function to handle mission redirects using API links
   const handleMissionClick = (mission: Mission) => {
     if (mission.completed) return;
     
-    // Determine redirect based on mission title
-    if (mission.title.toLowerCase().includes('practice') || mission.title.toLowerCase().includes('mcq')) {
-      // Practice MCQs - redirect to quiz generation
+    // Use the link from API if available
+    if (mission.link) {
+      if (mission.link.startsWith('http')) {
+        // External link - open in new tab
+        window.open(mission.link, '_blank');
+      } else {
+        // Transform API link format to desired format
+        let finalLink = mission.link;
+        
+        // Check if it's the quiz-by-id format and transform it
+        if (mission.link.includes('/users/quiz-by-id?id=')) {
+          const quizId = mission.link.split('id=')[1]?.split('&')[0];
+          if (quizId) {
+            finalLink = `/quizes/${quizId}`;
+          }
+        }
+        
+        // Internal route - navigate using router
+        router.push(finalLink);
+      }
+      return;
+    }
+    
+    // Fallback logic for missions without links
+    if (mission.title.toLowerCase().includes('doubt') || mission.title.toLowerCase().includes('chat') || mission.title.toLowerCase().includes('voice') || mission.title.toLowerCase().includes('image')) {
+      router.push('/aichats/chat');
+    } else if (mission.title.toLowerCase().includes('practice') || mission.title.toLowerCase().includes('mcq')) {
       router.push('/quizes/generate');
     } else if (mission.title.toLowerCase().includes('retry') || mission.title.toLowerCase().includes('mistake')) {
-      // Retry past mistakes - redirect to retry incorrect questions
       router.push('/quizes/generate');
-    } else if (mission.title.toLowerCase().includes('doubt') || mission.title.toLowerCase().includes('chat') || mission.title.toLowerCase().includes('voice') || mission.title.toLowerCase().includes('image')) {
-      // Ask doubts - redirect to AI chat
-      router.push('/aichats/chat');
     } else {
-      // Default fallback
       router.push('/quizes/generate');
     }
   };
 
-  // Function to handle quick link redirects based on link type
+  // Function to handle quick link redirects using API links
   const handleQuickLinkClick = (link: QuickLink) => {
-    if (link.status === 'Completed') return;
+    // Use the link from API if available
+    if (link.link) {
+      if (link.link.startsWith('http')) {
+        // External link - open in new tab
+        window.open(link.link, '_blank');
+      } else {
+        // Internal route - navigate using router
+        router.push(link.link);
+      }
+      return;
+    }
     
-    // Determine redirect based on link title
+    // Fallback to old logic if no link provided
     if (link.title.toLowerCase().includes('project') || link.title.toLowerCase().includes('due')) {
-      // Projects - redirect to projects page
       router.push('/projects/teacherproject');
     } else if (link.title.toLowerCase().includes('revision') || link.title.toLowerCase().includes('timeline') || link.title.toLowerCase().includes('ai')) {
-      // Smart revision plan - redirect to personalised learning
       router.push('/aichats/voice');
     } else {
-      // Default fallback
       router.push('/projects/teacherproject');
     }
   };
@@ -375,10 +407,27 @@ export default function Home() {
           </div>
           <div 
             onClick={() => router.push('/profile')}
-            className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer'
+            className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer overflow-hidden relative'
             title='Profile'
           >
-            👤
+            {dashboardData.user.profilePictureUrl ? (
+              <>
+                <img 
+                  src={dashboardData.user.profilePictureUrl} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover rounded-full"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <span className="fallback-icon hidden w-full h-full items-center justify-center">👤</span>
+              </>
+            ) : (
+              <span>👤</span>
+            )}
           </div>
         </div>
       </div>
@@ -458,7 +507,7 @@ export default function Home() {
               .slice(0, 2)
               .map(
                 (subject) =>
-                  `${subject.name!.substring(0, 20)} ${subject.percentage}%`
+                  `${(subject.name || 'Unknown Subject').substring(0, 20)} ${subject.percentage}%`
               )
               .join(' • '),
             buttonText: 'Track Progress',
@@ -606,7 +655,12 @@ export default function Home() {
                         : 'point-ask-gradient hover:from-orange-600 hover:to-orange-700 hover:shadow-lg hover:scale-105'
                     }`}
                   >
-                    {link.status}
+                    {link.status === 'Completed' 
+                      ? 'Completed' 
+                      : link.link && link.link.startsWith('http') 
+                        ? 'View PDF' 
+                        : link.status
+                    }
                   </button>
                 </div>
               ))}
@@ -622,7 +676,7 @@ export default function Home() {
               {dashboardData.weeklyProgress.map((item, idx) => (
                 <div key={idx}>
                   <div className='flex justify-between mb-1 text-sm font-medium text-gray-700'>
-                    <span className=''>{item.subject.toUpperCase()}</span>
+                    <span className=''>{(item.subject || 'Unknown Subject').toUpperCase()}</span>
                     <span>{item.percentage}%</span>
                   </div>
                   <div className='w-full bg-gray-200 rounded-full h-3'>

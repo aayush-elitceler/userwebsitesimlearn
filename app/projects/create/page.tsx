@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 
 export default function CreateProjectPage() {
   const router = useRouter();
+  const subjectOptions = ['Math', 'Science', 'Social studies', 'English', 'UG', 'PG'];
   const [form, setForm] = useState({
     title: "",
     class: "",
     persona: "Teacher",
     subject: "",
+    customSubject: "",
     description: "",
   });
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export default function CreateProjectPage() {
       title: form.title,
       class: form.class,
       persona: form.persona,
-      subject: form.subject,
+      subject: form.subject === 'other' ? form.customSubject : form.subject,
       description: form.description,
     };
 
@@ -221,14 +223,28 @@ export default function CreateProjectPage() {
           </div>
           <div className='flex flex-col'>
             <label className='text-black mb-1 font-semibold'>Subject</label>
-            <input
-              name="subject"
-              value={form.subject}
-              onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none'
-              placeholder="e.g. Physics"
-              required
-            />
+            <div className='relative'>
+              <select
+                name="subject"
+                value={form.subject}
+                onChange={handleChange}
+                className='w-full rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                aria-label="Select subject"
+                required
+              >
+                <option value="">Select Subject</option>
+                {subjectOptions.map((subject) => (
+                  <option key={subject} value={subject}>
+                    {subject}
+                  </option>
+                ))}
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-4 h-4 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
           </div>
           <div className='flex flex-col md:col-span-2'>
             <label className='text-black mb-1 font-semibold'>Description</label>

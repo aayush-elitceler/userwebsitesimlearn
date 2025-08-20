@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 const difficulties = ['easy', 'medium', 'hard'];
 const numQuestionsOptions = Array.from({length: 26}, (_, i) => i); // 0 to 25
 const timeLimits = [5, 10, 15, 20, 30, 60];
+const subjectOptions = ['Math', 'Science', 'Social studies', 'English', 'UG', 'PG'];
 
 interface Option {
   id: string;
@@ -85,7 +86,7 @@ export default function GenerateQuizPage() {
         body: JSON.stringify({
           grade: String(grade),
           persona,
-          topic,
+          topic: topic,
           difficulty,
           timer,
           numQuestions,
@@ -256,15 +257,27 @@ export default function GenerateQuizPage() {
           </div>
           {/* Topic */}
           <div className='flex flex-col'>
-            <label className='text-black mb-1 font-semibold'>Topic</label>
-            <input
-              type='text'
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black  focus:outline-none '
-              placeholder='make a quiz on force and motion for physics.'
-              required
-            />
+            <label className='text-black mb-1 font-semibold'>Subject</label>
+            <div className='relative'>
+              <select
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                className='w-full rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                required
+              >
+                <option value="">Select Subject</option>
+                {subjectOptions.map((subject) => (
+                  <option key={subject} value={subject}>
+                    {subject}
+                  </option>
+                ))}
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-4 h-4 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
           </div>
           {/* Difficulty */}
           <div className='flex flex-col'>
