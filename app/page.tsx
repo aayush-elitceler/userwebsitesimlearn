@@ -57,6 +57,9 @@ interface BadgeChallenge {
   current: number;
   deadline: string;
   questions: string[];
+  // Optional quiz wiring from API
+  quizId?: string;
+  link?: string;
 }
 interface Subject {
   subject: string;
@@ -68,6 +71,9 @@ interface Activities {
     title: string;
     remainingQuestions: number;
     lastActivity: string;
+  // Optional routing info
+  quizId?: string;
+  link?: string;
   };
   progress: {
     subjects: Subject[];
@@ -104,7 +110,8 @@ interface DashboardData {
   logo?: string;
   user: User;
   dailyStreak: DailyStreak;
-  badgeChallenge: BadgeChallenge;
+  badgeChallenge?: BadgeChallenge;
+  badgeChallenges?: BadgeChallenge[];
   activities: Activities;
   todaysMissions: Mission[];
   quickLinks: QuickLink[];
@@ -126,6 +133,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [selectedChallengeIndex, setSelectedChallengeIndex] = useState(0);
   const router = useRouter();
   const { setLogoUrl } = useLogo();
 
@@ -146,8 +154,13 @@ export default function Home() {
   };
 
   // Function to handle mission redirects using API links
-  const handleMissionClick = (mission: Mission) => {
+  const handleMissionClick = async (mission: Mission) => {
     if (mission.completed) return;
+    // Prefer explicit quizId
+    if (mission.quizId) {
+      router.push(`/quizes/${mission.quizId}/start`);
+      return;
+    }
     
     // Use the link from API if available
     if (mission.link) {
@@ -158,12 +171,16 @@ export default function Home() {
         // Transform API link format to desired format
         let finalLink = mission.link;
         
-        // Check if it's the quiz-by-id format and transform it
+  // Check if it's the quiz-by-id format and transform it
         if (mission.link.includes('/users/quiz-by-id?id=')) {
           const quizId = mission.link.split('id=')[1]?.split('&')[0];
           if (quizId) {
-            finalLink = `/quizes/${quizId}`;
+            finalLink = `/quizes/${quizId}/start`;
           }
+        }
+        // If it's already in /quizes/{id} format, ensure /start
+        if (/^\/quizes\/[A-Za-z0-9_-]+$/.test(mission.link)) {
+          finalLink = `${mission.link}/start`;
         }
         
         // Internal route - navigate using router
@@ -238,7 +255,7 @@ export default function Home() {
 
         // Fetch dashboard data
         const dashboardResponse = await axios.get(
-          `https://apisimplylearn.selflearnai.in/api/v1/users/dashboard`,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/users/dashboard`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -262,7 +279,7 @@ export default function Home() {
         if (!userFromCookie) {
           try {
             const profileResponse = await axios.get(
-              'https://apisimplylearn.selflearnai.in/api/v1/users/auth/get-profile',
+              `${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/get-profile`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -370,6 +387,14 @@ export default function Home() {
   if (!dashboardData) return null;
 
   const learningGrowthData = createLearningGrowthData();
+  // Normalize challenges into an array
+  const challenges: BadgeChallenge[] = (dashboardData.badgeChallenges && dashboardData.badgeChallenges.length > 0)
+    ? dashboardData.badgeChallenges
+    : (dashboardData.badgeChallenge ? [dashboardData.badgeChallenge] : []);
+  // Choose primary challenge as first incomplete, else first
+  const primaryChallengeIndex = Math.max(0, challenges.findIndex(c => (c.current ?? 0) < (c.target ?? 0)));
+  const primaryChallenge = challenges[primaryChallengeIndex] || null;
+  const isPrimaryCompleted = primaryChallenge ? (primaryChallenge.current >= primaryChallenge.target) : false;
 
   return (
     <div
@@ -470,23 +495,46 @@ export default function Home() {
 
         <div 
           className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-orange-200 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-orange-300 transition-all duration-200'
-          onClick={() => setShowBadgeModal(true)}
+          onClick={() => {
+            if (primaryChallenge) {
+              if (primaryChallenge.quizId) {
+                return router.push(`/quizes/${primaryChallenge.quizId}/start`);
+              }
+              if (primaryChallenge.link) {
+                const l = primaryChallenge.link;
+                if (l.includes('/users/quiz-by-id?id=')) {
+                  const qid = l.split('id=')[1]?.split('&')[0];
+                  if (qid) return router.push(`/quizes/${qid}/start`);
+                }
+                if (l.startsWith('http')) return window.open(l, '_blank');
+                return router.push(l);
+              }
+            }
+            setSelectedChallengeIndex(primaryChallengeIndex);
+            setShowBadgeModal(true);
+          }}
         >
           <img src='/images/medal.svg' alt='' className='w-[50px] h-[50px]' />
           <div className='flex-1 text-orange-500 font-semibold'>
-            {dashboardData.badgeChallenge.title}
-          </div>
-          <div className='text-sm text-gray-600'>
-            {dashboardData.badgeChallenge.current >= dashboardData.badgeChallenge.target ? (
-              <span className='text-green-600 font-semibold'>🎉 Earned!</span>
-            ) : (
-              <>
-                {dashboardData.badgeChallenge.current}/
-                {dashboardData.badgeChallenge.target}
-              </>
+            {primaryChallenge ? primaryChallenge.title : 'Badge Challenge'}
+            {challenges.length > 1 && (
+              <span className='ml-2 text-xs text-gray-600'>({challenges.length} challenges)</span>
             )}
           </div>
-          <span className='text-orange-500 font-medium'>View</span>
+          <div className='text-sm text-gray-600'>
+            {primaryChallenge ? (
+              primaryChallenge.current >= primaryChallenge.target ? (
+                <span className='text-green-600 font-semibold'>🎉 Earned!</span>
+              ) : (
+                <>
+                  {primaryChallenge.current}/{primaryChallenge.target}
+                </>
+              )
+            ) : null}
+          </div>
+          <span className='text-orange-500 font-medium'>
+            {(primaryChallenge?.quizId || primaryChallenge?.link) && !isPrimaryCompleted ? 'Start' : 'View'}
+          </span>
         </div>
       </div>
 
@@ -498,8 +546,16 @@ export default function Home() {
           {
             title: 'Continue where you left off:',
             description: dashboardData.activities.continueLearning.title,
-            buttonText: 'Resume Learning',
-            link: '/quizes',
+      buttonText: 'Resume Quiz',
+            link: dashboardData.activities.continueLearning.link
+              ? (dashboardData.activities.continueLearning.link.includes('/users/quiz-by-id?id=')
+                  ? `/quizes/${dashboardData.activities.continueLearning.link.split('id=')[1]?.split('&')[0]}/start`
+                  : (/^\/quizes\/[A-Za-z0-9_-]+$/.test(dashboardData.activities.continueLearning.link)
+                      ? `${dashboardData.activities.continueLearning.link}/start`
+                      : dashboardData.activities.continueLearning.link))
+        : (dashboardData.activities.continueLearning.quizId
+          ? `/quizes/${dashboardData.activities.continueLearning.quizId}/start`
+          : '/quizes'),
           },
           {
             title: 'View Progress:',
@@ -582,7 +638,9 @@ export default function Home() {
                         : 'point-ask-gradient hover:from-orange-600 hover:to-orange-700 hover:shadow-lg hover:scale-105'
                     }`}
                   >
-                    {mission.completed ? 'Completed' : 'Complete now'}
+                    {mission.completed
+                      ? 'Completed'
+                      : (mission.quizId || mission.link) ? 'Start quiz' : 'Complete now'}
                   </button>
                 </div>
               ))}
@@ -658,8 +716,8 @@ export default function Home() {
                     {link.status === 'Completed' 
                       ? 'Completed' 
                       : link.link && link.link.startsWith('http') 
-                        ? 'View PDF' 
-                        : link.status
+                        ? 'View project' 
+                        : (link.title.toLowerCase().includes('project') ? 'View project' : (link.status || 'Open'))
                     }
                   </button>
                 </div>
@@ -700,7 +758,7 @@ export default function Home() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <img src='/images/medal.svg' alt='' className='w-[40px] h-[40px]' />
-                  <h2 className="text-2xl font-semibold text-gray-800">Badge Challenge</h2>
+                  <h2 className="text-2xl font-semibold text-gray-800">Badge Challenges</h2>
                 </div>
                 <button
                   onClick={() => setShowBadgeModal(false)}
@@ -710,13 +768,33 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  {dashboardData.badgeChallenge.title}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {dashboardData.badgeChallenge.description}
-                </p>
+              {/* Selector if multiple challenges */}
+              {challenges.length > 1 && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select a challenge</label>
+                  <select
+                    className="w-full border rounded-lg p-2"
+                    value={selectedChallengeIndex}
+                    onChange={(e) => setSelectedChallengeIndex(parseInt(e.target.value, 10))}
+                  >
+                    {challenges.map((c, idx) => (
+                      <option key={idx} value={idx}>
+                        {c.title} {c.current >= c.target ? '(Completed)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Current challenge details */}
+              {challenges.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    {challenges[selectedChallengeIndex]?.title}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {challenges[selectedChallengeIndex]?.description}
+                  </p>
                 
                 {/* Progress Tracking Section */}
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
@@ -724,18 +802,18 @@ export default function Home() {
                   
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-gray-600">Target:</span>
-                    <span className="font-semibold text-gray-800">{dashboardData.badgeChallenge.target} tasks</span>
+                    <span className="font-semibold text-gray-800">{challenges[selectedChallengeIndex]?.target} tasks</span>
                   </div>
                   
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-gray-600">Completed:</span>
-                    <span className="font-semibold text-orange-500">{dashboardData.badgeChallenge.current} tasks</span>
+                    <span className="font-semibold text-orange-500">{challenges[selectedChallengeIndex]?.current} tasks</span>
                   </div>
                   
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-gray-600">Remaining:</span>
                     <span className="font-semibold text-red-500">
-                      {Math.max(0, dashboardData.badgeChallenge.target - dashboardData.badgeChallenge.current)} tasks
+                      {Math.max(0, (challenges[selectedChallengeIndex]?.target || 0) - (challenges[selectedChallengeIndex]?.current || 0))} tasks
                     </span>
                   </div>
                   
@@ -743,14 +821,14 @@ export default function Home() {
                   <div className="mb-3">
                     <div className="flex justify-between text-sm text-gray-600 mb-1">
                       <span>Progress</span>
-                      <span>{Math.round((dashboardData.badgeChallenge.current / dashboardData.badgeChallenge.target) * 100)}%</span>
+                      <span>{Math.round(((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div 
                         className="h-3 rounded-full transition-all duration-500"
                         style={{ 
-                          width: `${Math.min(100, (dashboardData.badgeChallenge.current / dashboardData.badgeChallenge.target) * 100)}%`,
-                          background: dashboardData.badgeChallenge.current >= dashboardData.badgeChallenge.target 
+                          width: `${Math.min(100, (((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100))}%`,
+                          background: (challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0) 
                             ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' 
                             : 'linear-gradient(90deg, #FF9F27 0%, #FF5146 100%)'
                         }}
@@ -759,41 +837,53 @@ export default function Home() {
                   </div>
                   
                   {/* Status */}
-                  {dashboardData.badgeChallenge.current >= dashboardData.badgeChallenge.target ? (
+                  {(challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0) ? (
                     <div className="flex items-center gap-2 text-green-700 font-semibold">
                       🎉 Badge Completed!
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600">Deadline:</span>
-                      <span className="font-semibold text-red-500">
-                        {dashboardData.badgeChallenge.deadline}
-                      </span>
+                      <span className="font-semibold text-red-500">{challenges[selectedChallengeIndex]?.deadline}</span>
                     </div>
                   )}
                 </div>
-              </div>
+              </div>)}
 
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold text-gray-800 mb-4">Challenge Questions:</h4>
-                <div className="space-y-4">
-                  {dashboardData.badgeChallenge.questions.map((question, index) => (
-                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <span className="bg-orange-500 text-white text-sm font-semibold rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
-                          {index + 1}
-                        </span>
-                        <p className="text-gray-700">{question}</p>
+              {challenges.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4">Challenge Questions:</h4>
+                  <div className="space-y-4">
+                    {challenges[selectedChallengeIndex]?.questions?.map((question, index) => (
+                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <span className="bg-orange-500 text-white text-sm font-semibold rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                            {index + 1}
+                          </span>
+                          <p className="text-gray-700">{question}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex gap-3">
-                {dashboardData.badgeChallenge.current < dashboardData.badgeChallenge.target && (
+                {(challenges[selectedChallengeIndex]?.current || 0) < (challenges[selectedChallengeIndex]?.target || 0) && (
                   <button
-                    onClick={() => router.push('/quizes/generate')}
+                    onClick={() => {
+                      const c = challenges[selectedChallengeIndex];
+                      if (c?.quizId) return router.push(`/quizes/${c.quizId}/start`);
+                      if (c?.link) {
+                        if (c.link.includes('/users/quiz-by-id?id=')) {
+                          const qid = c.link.split('id=')[1]?.split('&')[0];
+                          if (qid) return router.push(`/quizes/${qid}/start`);
+                        }
+                        if (c.link.startsWith('http')) return window.open(c.link, '_blank');
+                        return router.push(c.link);
+                      }
+                      router.push('/quizes/generate');
+                    }}
                     className="flex-1 point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
                   >
                     Start Challenge
@@ -802,7 +892,7 @@ export default function Home() {
                 <button
                   onClick={() => setShowBadgeModal(false)}
                   className={`px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200 ${
-                    dashboardData.badgeChallenge.current >= dashboardData.badgeChallenge.target ? 'flex-1' : ''
+                    ((challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0)) ? 'flex-1' : ''
                   }`}
                 >
                   Close

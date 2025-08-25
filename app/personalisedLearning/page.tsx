@@ -45,6 +45,9 @@ interface RecommendedTopic {
 interface MicroGoal {
   title: string;
   completion: number;
+  // Optional quiz wiring
+  quizId?: string;
+  link?: string;
 }
 
 interface PracticeSuggestion {
@@ -353,6 +356,21 @@ function PersonalisedLearningPage() {
                       {data?.microGoal?.completion || 0}%
                     </span>
                   </div>
+                  {(data?.microGoal?.quizId || data?.microGoal?.link) && (
+                    <Button
+                      className='mt-2 cursor-pointer point-ask-gradient text-white'
+                      onClick={() => {
+                        const l = data?.microGoal?.link;
+                        const qid = data?.microGoal?.quizId || (l && l.includes('/users/quiz-by-id?id=') ? l.split('id=')[1]?.split('&')[0] : undefined);
+                        if (qid) return router.push(`/quizes/${qid}/start`);
+                        if (l) {
+                          if (l.startsWith('http')) window.open(l, '_blank'); else router.push(l);
+                        }
+                      }}
+                    >
+                      Start Quiz
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
