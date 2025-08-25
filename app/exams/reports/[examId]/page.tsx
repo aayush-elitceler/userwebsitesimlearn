@@ -253,8 +253,10 @@ export default function ExamReportPage() {
   
   if (!result) return <div className="text-black p-8">Result not found.</div>;
 
-  // Calculate score percentage based on the new API structure
-  const totalPossibleMarks = result.exam.questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+  // Calculate score percentage with sensible fallbacks
+  const totalPossibleMarksRaw = result.exam.questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+  const totalQuestionsCount = result.totalQuestions || result.exam.questions.length || 0;
+  const totalPossibleMarks = totalPossibleMarksRaw > 0 ? totalPossibleMarksRaw : (totalQuestionsCount > 0 ? totalQuestionsCount : 0);
   const scorePercentage = totalPossibleMarks > 0 ? (result.score / totalPossibleMarks) * 100 : 0;
   const pointerPosition = calculatePointerPosition(scorePercentage);
   const performanceLevel = getPerformanceLevel(scorePercentage);
@@ -284,7 +286,7 @@ export default function ExamReportPage() {
           <button
             onClick={handleRefreshReport}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all point-ask-gradient hover:from-orange-600 hover:to-orange-700"
           >
             <span>🔄</span>
             <span>{loading ? 'Refreshing...' : 'Refresh Report'}</span>
