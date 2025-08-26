@@ -1,8 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronDownIcon, MonitorIcon, MicIcon, StopCircleIcon, SendIcon } from 'lucide-react';
+import { ChevronDownIcon, MicIcon, StopCircleIcon, SendIcon } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
-import AIMessage from '@/components/VoiceWave';
 import SpruceBall from '@/components/SpruceBall';
 
 // Google AI Studio style grades and personas
@@ -32,18 +31,19 @@ export default function ScreenRecorderWithAI() {
   // Screen Recording
   const [isRecording, setIsRecording] = useState(false);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
+  // Removed video recording; using screen snapshot only
 
   // Speech Recognition
   const recognitionRef = useRef<any>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const latestTranscriptRef = useRef<{final: string, interim: string}>({final: '', interim: ''});
+  const processingScheduledRef = useRef<boolean>(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [finalTranscript, setFinalTranscript] = useState('');
   const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
+  const FALLBACK_SILENCE_MS = 0; // send immediately after silence when only interim speech exists
   
   // Chat and AI
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'ai'; text: string; timestamp: number }[]>([]);
@@ -56,9 +56,9 @@ export default function ScreenRecorderWithAI() {
   // Auto-scroll to bottom
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Video size management (2MB limit)
-  const MAX_VIDEO_SIZE = 2 * 1024 * 1024; // 2MB
-  const [currentVideoSize, setCurrentVideoSize] = useState(0);
+  // Removed video size management; snapshot only
+  // Canvas for snapshot capture
+  const snapshotCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // === START: New Onboarding Code ===
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -105,9 +105,10 @@ export default function ScreenRecorderWithAI() {
       const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       
-      recognitionRef.current.continuous = false; // Stop after a single utterance or silence
+  recognitionRef.current.continuous = false; // single utterance; we restart manually
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
+  recognitionRef.current.maxAlternatives = 1;
 
       recognitionRef.current.onstart = () => {
         console.log('🎤 Speech recognition started');
@@ -132,79 +133,49 @@ export default function ScreenRecorderWithAI() {
         }
         setSilenceCountdown(null);
 
-        let interimTranscript = '';
-        let finalTranscript = '';
+  let interimTranscript = '';
+  let justFinalized = false;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
+          const t = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcript;
+            justFinalized = true;
+            setFinalTranscript(prev => {
+              const newFinal = (prev + t).trim();
+              latestTranscriptRef.current.final = newFinal;
+              return newFinal;
+            });
           } else {
-            interimTranscript += transcript;
+            interimTranscript += t;
           }
         }
-
         setTranscript(interimTranscript);
-        if (finalTranscript) {
-          setFinalTranscript(prev => {
-            const newFinal = prev + finalTranscript;
-            latestTranscriptRef.current.final = newFinal;
-            return newFinal;
-          });
-        }
         
         // Update the ref with current transcripts
         latestTranscriptRef.current.interim = interimTranscript;
 
-        // Start patience timer (2 seconds for comfortable speaking) - only if auto-send is enabled and not processing
-        if (autoSendEnabled && !isProcessing) {
-          setSilenceCountdown(2);
-          
-          // Update countdown every second
-          let currentCount = 2;
-          countdownTimerRef.current = setInterval(() => {
-            currentCount--;
-            setSilenceCountdown(currentCount);
-            
-            if (currentCount <= 0) {
-              if (countdownTimerRef.current) {
-                clearInterval(countdownTimerRef.current);
-                countdownTimerRef.current = null;
-              }
-            }
-          }, 1000);
-          
+        // If a final result just arrived, process immediately for minimal latency
+        if (justFinalized && autoSendEnabled && isRecording && !isProcessing && !processingScheduledRef.current) {
+          processingScheduledRef.current = true;
+          try { recognitionRef.current?.stop(); } catch {}
+          setIsListening(false);
+          setSilenceCountdown(null);
+          if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current); countdownTimerRef.current = null; }
+          if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+          setTimeout(() => handleProcessSpeech(), 120);
+        } else if (autoSendEnabled && !isProcessing && !processingScheduledRef.current) {
+          // Fallback: very short silence window for interim speech
+          setSilenceCountdown(null);
+          if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current); countdownTimerRef.current = null; }
           silenceTimerRef.current = setTimeout(() => {
-            console.log('🔇 Detected 3 seconds of silence, processing speech...');
-            
-            // Clear countdown
-            setSilenceCountdown(null);
-            if (countdownTimerRef.current) {
-              clearInterval(countdownTimerRef.current);
-              countdownTimerRef.current = null;
-            }
-            
-            // Get current transcript from ref
             const currentTranscript = (latestTranscriptRef.current.final + ' ' + latestTranscriptRef.current.interim).trim();
-            console.log('Current transcript for processing:', currentTranscript);
-            
             if (currentTranscript && isRecording && !isProcessing) {
-              // Stop recognition first
-              if (recognitionRef.current && isListening) {
-                try {
-                  recognitionRef.current.stop();
-                } catch (err) {
-                  console.log('Stop recognition error (ignored):', err);
-                }
-              }
+              processingScheduledRef.current = true;
+              try { recognitionRef.current?.stop(); } catch {}
               setIsListening(false);
-              
-              // Process the speech
-              setTimeout(() => {
-                handleProcessSpeech();
-              }, 300);
+              handleProcessSpeech();
             }
-          }, 1000);
+          }, FALLBACK_SILENCE_MS);
         }
         // End of onresult handler
       };
@@ -226,13 +197,10 @@ export default function ScreenRecorderWithAI() {
         
         // Check if we have transcript content to process (only auto-process if auto-send is enabled)
         const currentTranscript = (latestTranscriptRef.current.final + ' ' + latestTranscriptRef.current.interim).trim();
-        
-        if (currentTranscript && isRecording && !isProcessing && selectedGrade && selectedStyle && autoSendEnabled) {
+
+        if (!processingScheduledRef.current && currentTranscript && isRecording && !isProcessing && selectedGrade && selectedStyle && autoSendEnabled) {
           console.log('🚀 Processing transcript on recognition end:', currentTranscript);
-          // Process the accumulated transcript
-          setTimeout(() => {
-            handleProcessSpeech();
-          }, 500);
+          handleProcessSpeech();
         } else if (isRecording && !isProcessing && !currentTranscript && autoSendEnabled) {
           // Only restart if we don't have pending transcript and we're still recording and auto-send is on
           console.log('🔄 Auto-restarting speech recognition (no transcript)...');
@@ -300,7 +268,6 @@ export default function ScreenRecorderWithAI() {
       setScreenStream(stream);
       setIsRecording(true);
 
-      setupMediaRecorder(stream);
       startSpeechRecognition();
 
       console.log('✅ Screen Recording Active');
@@ -310,45 +277,8 @@ export default function ScreenRecorderWithAI() {
     }
   };
 
-  // Setup media recorder with 2MB management
-  const setupMediaRecorder = (stream: MediaStream) => {
-    console.log('🎥 Setting up media recorder...');
-    recordedChunksRef.current = [];
-    setCurrentVideoSize(0);
-    
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp8,opus'
-    });
-
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data && event.data.size > 0) {
-        console.log('📹 Video chunk received:', event.data.size, 'bytes');
-        
-        // Check if adding this chunk would exceed 2MB
-        const newSize = currentVideoSize + event.data.size;
-        
-        if (newSize > MAX_VIDEO_SIZE) {
-          console.log('⚠️ Video size would exceed 2MB, removing old chunks');
-          // Remove oldest chunks until we can fit the new one
-          let removedSize = 0;
-          while (recordedChunksRef.current.length > 0 && (currentVideoSize + event.data.size - removedSize) > MAX_VIDEO_SIZE) {
-            const removedChunk = recordedChunksRef.current.shift();
-            if (removedChunk) {
-              removedSize += removedChunk.size;
-            }
-          }
-          setCurrentVideoSize(prev => prev - removedSize + event.data.size);
-        } else {
-          setCurrentVideoSize(newSize);
-        }
-        
-        recordedChunksRef.current.push(event.data);
-      }
-    };
-
-    mediaRecorder.start(1000); // Record in 1-second chunks
-    mediaRecorderRef.current = mediaRecorder;
-  };
+  // Removed media recorder; snapshot-only workflow
+  // (no-op)
 
   // Restart speech recognition with error handling
   const restartSpeechRecognition = () => {
@@ -415,12 +345,10 @@ export default function ScreenRecorderWithAI() {
     console.log('⏹️ Stopping Screen Recording...');
     
     if (screenStream) {
-      screenStream.getTracks().forEach(track => track.stop());
+      screenStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
     }
     
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
+  // No media recorder to stop
 
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
@@ -438,7 +366,97 @@ export default function ScreenRecorderWithAI() {
     
   };
 
-  // Process speech and send to Gemini (updated to handle manual input)
+  // Capture a still frame from screen stream for faster requests
+  const captureSnapshot = useCallback(async (): Promise<Blob | null> => {
+    try {
+      if (!screenStream) return null;
+      const track = screenStream.getVideoTracks()[0];
+      if (!track || track.readyState !== 'live') return null;
+
+      // Helper: detect if a canvas is mostly dark/black
+      const isCanvasMostlyDark = (canvas: HTMLCanvasElement) => {
+        try {
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return false;
+          const { width, height } = canvas;
+          const step = 8; // sample every 8px for speed
+          let darkCount = 0;
+          let total = 0;
+          const data = ctx.getImageData(0, 0, width, height).data;
+          for (let y = 0; y < height; y += step) {
+            for (let x = 0; x < width; x += step) {
+              const i = (y * width + x) * 4;
+              const r = data[i], g = data[i + 1], b = data[i + 2];
+              const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+              if (lum < 8) darkCount++;
+              total++;
+            }
+          }
+          return total > 0 && darkCount / total > 0.9; // >90% dark
+        } catch {
+          return false;
+        }
+      };
+
+      // Prefer ImageCapture when available
+      const canvas = snapshotCanvasRef.current || document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      // @ts-ignore - ImageCapture may not be in lib DOM
+      if (typeof ImageCapture !== 'undefined') {
+        try {
+          // @ts-ignore
+          const ic = new ImageCapture(track);
+          // @ts-ignore
+          const bitmap: ImageBitmap = await ic.grabFrame();
+          const maxW = 1024;
+          const scale = Math.min(1, maxW / bitmap.width);
+          canvas.width = Math.max(1, Math.floor(bitmap.width * scale));
+          canvas.height = Math.max(1, Math.floor(bitmap.height * scale));
+          ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          if (isCanvasMostlyDark(canvas)) return null;
+          const blob: Blob | null = await new Promise((resolve) => canvas.toBlob((b: Blob | null) => resolve(b), 'image/jpeg', 0.7));
+          return blob;
+        } catch (e) {
+          console.log('ImageCapture failed, fallback to video element:', e);
+        }
+      }
+
+      // Fallback: use a HTMLVideoElement and wait for a real frame
+      const videoEl = document.createElement('video');
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      videoEl.srcObject = new MediaStream([track]);
+      await new Promise<void>((resolve) => {
+        const done = () => resolve();
+        // Prefer requestVideoFrameCallback when available
+        // @ts-ignore
+        if (videoEl.requestVideoFrameCallback) {
+          // @ts-ignore
+          videoEl.requestVideoFrameCallback(() => done());
+        } else {
+          videoEl.onloadeddata = () => done();
+        }
+        videoEl.play().catch(() => done());
+      });
+      const vw = videoEl.videoWidth || 1024;
+      const vh = videoEl.videoHeight || 768;
+      const width = Math.min(1024, vw);
+      const height = Math.round(vh * (width / vw));
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(videoEl, 0, 0, width, height);
+      if (isCanvasMostlyDark(canvas)) return null;
+  const blob: Blob | null = await new Promise((resolve) => canvas.toBlob((b: Blob | null) => resolve(b), 'image/jpeg', 0.7));
+      return blob;
+    } catch (e) {
+      console.log('Snapshot capture failed, will fallback to video:', e);
+      return null;
+    }
+  }, [screenStream]);
+
+  // Process speech and send to Gemini using a screen snapshot
   const handleProcessSpeech = async (manualText?: string) => {
     const currentTranscript = manualText || (finalTranscript + ' ' + transcript).trim();
     
@@ -464,7 +482,7 @@ export default function ScreenRecorderWithAI() {
     }
 
     console.log('✅ Processing speech:', currentTranscript);
-    setIsProcessing(true);
+  setIsProcessing(true);
 
     // Clear any pending silence timer and countdown
     if (silenceTimerRef.current) {
@@ -478,20 +496,13 @@ export default function ScreenRecorderWithAI() {
     setSilenceCountdown(null);
 
     try {
-      // Create video blob from recorded chunks
-      const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-      console.log('📹 Video blob size:', videoBlob.size, 'bytes');
+  // Take a single snapshot (no video fallback)
+  const snapshotBlob = await captureSnapshot();
+  console.log('📷 Snapshot size:', snapshotBlob?.size || 0, 'bytes');
       
-      if (videoBlob.size > 0) {
-        // Add user message to chat
-        setChatHistory(prev => [...prev, {
-          role: 'user',
-          text: currentTranscript,
-          timestamp: Date.now()
-        }]);
-
-        // Send to Gemini
-        await sendVideoToGemini(videoBlob, currentTranscript);
+  if (snapshotBlob && snapshotBlob.size > 0) {
+  // Send to Gemini (snapshot only)
+  await sendImageToGemini(snapshotBlob, currentTranscript);
         
         // Clear transcripts and manual input after successful processing
         setTranscript('');
@@ -517,10 +528,11 @@ export default function ScreenRecorderWithAI() {
       latestTranscriptRef.current = {final: '', interim: ''};
       
     } finally {
-      setIsProcessing(false);
+  setIsProcessing(false);
+  processingScheduledRef.current = false;
       
       // Restart speech recognition after processing is complete (only if auto-send is enabled)
-      setTimeout(() => {
+  setTimeout(() => {
         if (isRecording && autoSendEnabled) {
           restartSpeechRecognition();
         }
@@ -558,20 +570,26 @@ export default function ScreenRecorderWithAI() {
   };
 
   // Send video to Gemini API
-  const sendVideoToGemini = async (videoBlob: Blob, userPrompt: string) => {
+  const sendImageToGemini = async (mediaBlob: Blob, userPrompt: string) => {
     try {
       console.log('🤖 Sending to Gemini...');
 
       const formData = new FormData();
-      formData.append('video', videoBlob, 'screen-recording.webm');
+      formData.append('image', mediaBlob, 'screen-snapshot.jpg');
+      formData.append('model', 'gemini-1.5-flash');
       formData.append('prompt', createGeminiPrompt(userPrompt));
       formData.append('grade', selectedGrade || '');
       formData.append('style', selectedStyle || '');
 
+      // Add a timeout to avoid hanging
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
       const response = await fetch('/api/gemini-video', {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       const data = await response.json();
 
@@ -590,7 +608,7 @@ export default function ScreenRecorderWithAI() {
 
     } catch (err: any) {
       console.error('❌ Gemini API error:', err);
-      setError(`AI Error: ${err.message}`);
+  setError(`AI Error: ${err.name === 'AbortError' ? 'Request timeout, please try again' : err.message}`);
     }
   };
 
@@ -643,6 +661,12 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
         currentAudioRef.current = null;
       }
 
+      // Pause recognition while TTS is speaking to avoid capturing AI voice
+      if (recognitionRef.current && isListening) {
+        try { recognitionRef.current.stop(); } catch {}
+        setIsListening(false);
+      }
+
       const response = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -656,10 +680,14 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
         
         audio.onended = () => {
           currentAudioRef.current = null;
+          // Resume recognition quickly if recording and auto-send is enabled
+          if (isRecording && autoSendEnabled && !isProcessing) {
+            setTimeout(() => restartSpeechRecognition(), 200);
+          }
         };
         
         // Start audio immediately without await
-        audio.play().catch(err => {
+  audio.play().catch(err => {
           console.error('Audio play failed:', err);
           currentAudioRef.current = null;
         });
@@ -761,389 +789,109 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
         </div>
       )}
 
-      {/* Only show floating selectors during recording */}
-      {isRecording && (
-        <div className='fixed z-50 flex flex-row items-center gap-3 right-4 sm:right-8 lg:right-12 top-6 pointer-events-auto'>
-          <div className='flex flex-row gap-3 p-3 rounded-2xl bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-2xl'>
-            <div className='flex items-center gap-2 text-sm text-gray-700'>
-              <span className='font-medium'>{selectedGrade}</span>
-              <span>•</span>
-              <span className='font-medium'>{selectedStyle}</span>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Floating Class & Persona selectors (aichat style) */}
+      <div className='fixed z-50 flex flex-row items-center gap-3 right-4 sm:right-8 lg:right-12 top-6 pointer-events-auto'>
+        <div className='flex flex-row gap-3 p-4 rounded-xl bg-gradient-to-r from-orange-500/10 to-red-500/10'>
+          {[
+            {
+              label: 'Class',
+              value: selectedGrade,
+              onClick: () => {
+                setShowGradeDropdown((v) => !v);
+                setShowStyleDropdown(false);
+              },
+              options: grades,
+              showDropdown: showGradeDropdown,
+              onSelect: (val: string) => {
+                setSelectedGrade(val);
+                setShowGradeDropdown(false);
+                // Auto-start when both selected
+                if (selectedStyle && !isRecording) {
+                  startScreenRecording();
+                }
+              },
+            },
+            {
+              label: 'Persona',
+              value: selectedStyle,
+              onClick: () => {
+                setShowStyleDropdown((v) => !v);
+                setShowGradeDropdown(false);
+              },
+              options: styles,
+              showDropdown: showStyleDropdown,
+              onSelect: (val: string) => {
+                setSelectedStyle(val);
+                setShowStyleDropdown(false);
+                // Auto-start when both selected
+                if (selectedGrade && !isRecording) {
+                  startScreenRecording();
+                }
+              },
+            },
+          ].map(({ label, value, onClick, options, showDropdown, onSelect }, i) => (
+            <div key={i} className="relative dropdown-container">
+              <button
+                className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${
+                  value
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25'
+                    : 'bg-white hover:bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:shadow-md shadow-sm'
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onClick();
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium whitespace-nowrap flex items-center">
+                    <span className="mr-1">{label}:</span>
+                    <span className="font-semibold">{value || 'Select'}</span>
+                    <ChevronDownIcon className={`ml-2 size-4 shrink-0 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
+                  </span>
+                </div>
+              </button>
 
-      <div className='w-full px-4 lg:px-8 pt-20'>
-        {/* Enhanced Welcome & Onboarding */}
-        {!isRecording && chatHistory.length === 0 && (
-          <div className='flex flex-col items-center max-w-6xl mx-auto mb-8 mt-8'>
-            {/* Top Selectors */}
-            <div className="w-full flex justify-end mb-8">
-              <div className="flex flex-row items-center gap-[10px]">
-                {/* Class & Style selectors inside gradient */}
-                <div
-                  className="flex flex-row gap-3 p-4 rounded-xl"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, rgba(255, 159, 39, 0.08) 0%, rgba(255, 81, 70, 0.08) 100%)",
-                  }}
-                >
-                  {[
-                    {
-                      label: "Class",
-                      value: selectedGrade,
-                      onClick: () => {
-                        setShowGradeDropdown((v) => !v);
-                        setShowStyleDropdown(false);
-                      },
-                      options: grades,
-                      showDropdown: showGradeDropdown,
-                      onSelect: (val: string) => {
-                        setSelectedGrade(val);
-                        setShowGradeDropdown(false);
-                      },
-                    },
-                    {
-                      label: "Style",
-                      value: selectedStyle,
-                      onClick: () => {
-                        setShowStyleDropdown((v) => !v);
-                        setShowGradeDropdown(false);
-                      },
-                      options: styles,
-                      showDropdown: showStyleDropdown,
-                      onSelect: (val: string) => {
-                        setSelectedStyle(val);
-                        setShowStyleDropdown(false);
-                      },
-                    },
-                  ].map(({ label, value, onClick, options, showDropdown, onSelect }, i) => (
-                    <div key={i} className="relative dropdown-container">
-                      <button
-                        className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${
-                          value
-                            ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25"
-                            : "bg-white hover:bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:shadow-md shadow-sm"
-                        }`}
+              {showDropdown && (
+                <div className="absolute mt-2 z-50 bg-white rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 rounded-t-xl border-b border-gray-200">
+                    <span className="text-sm font-semibold text-gray-700">Select {label}</span>
+                  </div>
+                  {/* Options */}
+                  {options.map((opt: any) => {
+                    const key = typeof opt === 'string' ? opt : opt.label;
+                    const optValue = typeof opt === 'string' ? opt : opt.value;
+
+                    return (
+                      <div
+                        key={key}
+                        className="px-4 py-3 hover:bg-orange-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-b-0 transition-all duration-150 hover:shadow-sm"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          onClick();
+                          onSelect(optValue);
                         }}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium whitespace-nowrap flex items-center">
-                            <span className="mr-1">{label}:</span>
-                            <span className="font-semibold">{value || "Select"}</span>
-                            <ChevronDownIcon className={`ml-2 size-4 shrink-0 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
-                          </span>
-                        </div>
-                      </button>
-
-                      {showDropdown && (
-                        <div className="absolute mt-2 z-50 bg-white rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
-                          {/* Header */}
-                          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 rounded-t-xl border-b border-gray-200">
-                            <span className="text-sm font-semibold text-gray-700">Select {label}</span>
-                          </div>
-                          {/* Options */}
-                          {options.map((opt: any) => {
-                            const key = typeof opt === 'string' ? opt : opt.label;
-                            const optValue = typeof opt === 'string' ? opt : opt.value;
-
-                            return (
-                              <div
-                                key={key}
-                                className="px-4 py-3 hover:bg-orange-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-b-0 transition-all duration-150 hover:shadow-sm"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  onSelect(optValue);
-                                }}
-                              >
-                                {key}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        {key}
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              )}
             </div>
+          ))}
+        </div>
+      </div>
 
-            {/* Hero Section */}
-            <div className='relative text-center mb-12 px-6'>
-              <div className='absolute inset-0 bg-gradient-to-r from-orange-400/20 to-red-400/20 blur-3xl rounded-full'></div>
-              <div className='relative'>
-                <div className='inline-flex items-center gap-2 bg-gradient-to-r from-orange-100 to-red-100 px-4 py-2 rounded-full text-sm font-medium text-orange-700 mb-6'>
-                  <span className='w-2 h-2 bg-orange-500 rounded-full animate-pulse'></span>
-                  AI-Powered Screen Assistant
-                </div>
-                <h1 className='text-4xl md:text-6xl font-bold bg-gradient-to-r from-orange-600 via-red-600 to-purple-600 bg-clip-text text-transparent mb-6 leading-tight'>
-                  Smart Learning
-                  <br />
-                  <span className='text-3xl md:text-5xl'>with Voice & Vision</span>
-                </h1>
-                <p className='text-xl text-gray-700 mb-4 max-w-2xl mx-auto leading-relaxed'>
-                  Share your screen, ask questions naturally, and get instant AI-powered help tailored to your learning level
-                </p>
-                <div className='flex flex-wrap justify-center gap-2 text-sm text-gray-600'>
-                  <span className='bg-white/80 px-3 py-1 rounded-full'>Real-time Analysis</span>
-                  <span className='bg-white/80 px-3 py-1 rounded-full'>Voice Commands</span>
-                  <span className='bg-white/80 px-3 py-1 rounded-full'>Personalized Learning</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 1: Settings Selection */}
-            {(!selectedGrade || !selectedStyle) && (
-              <div className='w-full max-w-4xl mb-12'>
-                <div className='text-center mb-8'>
-                  <h2 className='text-2xl font-bold text-gray-800 mb-2'>Step 1: Choose Your Learning Profile</h2>
-                  <p className='text-gray-600'>Select your grade level and preferred interaction style to get personalized assistance</p>
-                  {/* Arrow pointing to selectors */}
-                  <div className='flex justify-center mt-4'>
-                    <div className='relative'>
-                      <div className='text-4xl animate-bounce'>👆</div>
-                      <div className='absolute -top-8 left-1/2 transform -translate-x-1/2 text-sm font-medium text-orange-600 whitespace-nowrap'>
-                        Start here
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Settings Selectors */}
-                <div className='flex flex-col md:flex-row gap-6 justify-center items-center mb-8'>
-                  {/* Grade Selector */}
-                  <div className='relative dropdown-container'>
-                    <button
-                      className={`flex items-center transition-all duration-300 rounded-xl px-6 py-4 min-w-[200px] justify-between font-medium text-base ${
-                        selectedGrade
-                          ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
-                          : 'bg-white text-gray-700 border-2 border-orange-300 hover:border-orange-400 hover:bg-orange-50 shadow-lg animate-pulse'
-                      }`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowGradeDropdown(!showGradeDropdown);
-                        setShowStyleDropdown(false);
-                      }}
-                    >
-                      <div className='flex items-center gap-3'>
-                        <div className={`w-3 h-3 rounded-full ${selectedGrade ? 'bg-white' : 'bg-orange-400'}`}></div>
-                        <span>
-                          {selectedGrade || 'Select Your Grade Level'}
-                        </span>
-                      </div>
-                      <ChevronDownIcon className={`ml-2 h-5 w-5 transition-transform duration-200 ${showGradeDropdown ? 'rotate-180' : ''}`} />
-                    </button>
-                    {showGradeDropdown && (
-                      <div className='absolute mt-3 z-[9999] bg-white rounded-2xl shadow-2xl max-h-[300px] overflow-y-auto w-full border border-gray-200'>
-                        <div className='p-3'>
-                          <div className='text-xs font-semibold text-gray-500 px-3 py-2 uppercase tracking-wide'>Select Your Grade</div>
-                          {grades.map((grade) => (
-                            <div
-                              key={grade}
-                              className={`px-4 py-3 hover:bg-orange-50 cursor-pointer text-sm rounded-xl mx-1 transition-colors duration-150 flex items-center justify-between ${
-                                selectedGrade === grade ? 'bg-orange-100 text-orange-700 font-medium' : 'text-gray-700'
-                              }`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setSelectedGrade(grade);
-                                setShowGradeDropdown(false);
-                              }}
-                            >
-                              <span>{grade}</span>
-                              {selectedGrade === grade && (
-                                <svg className='w-4 h-4 text-orange-600' fill='currentColor' viewBox='0 0 20 20'>
-                                  <path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
-                                </svg>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Style Selector */}
-                  <div className='relative dropdown-container'>
-                    <button
-                      className={`flex items-center transition-all duration-300 rounded-xl px-6 py-4 min-w-[200px] justify-between font-medium text-base ${
-                        selectedStyle
-                          ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
-                          : 'bg-white text-gray-700 border-2 border-green-300 hover:border-green-400 hover:bg-green-50 shadow-lg animate-pulse'
-                      }`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowStyleDropdown(!showStyleDropdown);
-                        setShowGradeDropdown(false);
-                      }}
-                    >
-                      <div className='flex items-center gap-3'>
-                        <div className={`w-3 h-3 rounded-full ${selectedStyle ? 'bg-white' : 'bg-green-400'}`}></div>
-                        <span>
-                          {selectedStyle ? styles.find(s => s.value === selectedStyle)?.label : 'Select Interaction Style'}
-                        </span>
-                      </div>
-                      <ChevronDownIcon className={`ml-2 h-5 w-5 transition-transform duration-200 ${showStyleDropdown ? 'rotate-180' : ''}`} />
-                    </button>
-                    {showStyleDropdown && (
-                      <div className='absolute mt-3 z-[9999] bg-white rounded-2xl shadow-2xl max-h-[200px] overflow-y-auto w-full border border-gray-200'>
-                        <div className='p-3'>
-                          <div className='text-xs font-semibold text-gray-500 px-3 py-2 uppercase tracking-wide'>Interaction Style</div>
-                          {styles.map((style) => (
-                            <div
-                              key={style.value}
-                              className={`px-4 py-4 hover:bg-green-50 cursor-pointer text-sm rounded-xl mx-1 transition-colors duration-150 ${
-                                selectedStyle === style.value ? 'bg-green-100 text-green-700 font-medium' : 'text-gray-700'
-                              }`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setSelectedStyle(style.value);
-                                setShowStyleDropdown(false);
-                              }}
-                            >
-                              <div className='flex items-center justify-between'>
-                                <div className='flex items-center gap-3'>
-                                  <span className='text-lg'>
-                                    {style.value === 'professor' ? '🎓' : '😊'}
-                                  </span>
-                                  <div>
-                                    <div className='font-medium'>{style.label}</div>
-                                    <div className='text-xs text-gray-500'>
-                                      {style.value === 'professor' ? 'Formal, detailed explanations' : 'Casual, friendly conversations'}
-                                    </div>
-                                  </div>
-                                </div>
-                                {selectedStyle === style.value && (
-                                  <svg className='w-4 h-4 text-green-600' fill='currentColor' viewBox='0 0 20 20'>
-                                    <path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Auto-Send Settings */}
-            {selectedGrade && selectedStyle && (
-              <div className='w-full max-w-4xl mb-12'>
-                <div className='text-center mb-8'>
-                  <h2 className='text-2xl font-bold text-gray-800 mb-2'>Step 2: Configure Voice Settings</h2>
-                  <p className='text-gray-600'>Choose how you want to interact with the AI assistant</p>
-                </div>
-                
-                <div className='bg-white rounded-2xl p-6 shadow-lg border border-gray-200 mb-8'>
-                  <div className='flex items-center justify-between mb-4'>
-                    <div className='flex items-center gap-3'>
-                      <div className={`w-12 h-6 rounded-full transition-colors duration-300 relative ${autoSendEnabled ? 'bg-green-500' : 'bg-gray-300'}`}>
-                        <div 
-                          className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform duration-300 ${autoSendEnabled ? 'translate-x-6' : 'translate-x-0.5'}`}
-                        ></div>
-                      </div>
-                      <div>
-                        <h3 className='font-semibold text-gray-800'>Auto-Send Mode</h3>
-                        <p className='text-sm text-gray-600'>
-                          {autoSendEnabled ? 'Questions sent automatically after 3 seconds of silence' : 'Manual control - you decide when to send'}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setAutoSendEnabled(!autoSendEnabled)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                        autoSendEnabled 
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {autoSendEnabled ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
-                  
-                  <div className='grid md:grid-cols-2 gap-4 text-sm'>
-                    <div className={`p-4 rounded-xl border-2 transition-all ${autoSendEnabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
-                      <div className='flex items-center gap-2 mb-2'>
-                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                        <span className='font-medium text-green-700'>Auto-Send ON</span>
-                      </div>
-                      <ul className='text-gray-600 space-y-1'>
-                        <li>• Speak naturally and pause</li>
-                        <li>• AI responds after 3 seconds</li>
-                        <li>• Perfect for fluid conversations</li>
-                        <li>• Hands-free experience</li>
-                      </ul>
-                    </div>
-                    
-                    <div className={`p-4 rounded-xl border-2 transition-all ${!autoSendEnabled ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
-                      <div className='flex items-center gap-2 mb-2'>
-                        <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
-                        <span className='font-medium text-blue-700'>Auto-Send OFF</span>
-                      </div>
-                      <ul className='text-gray-600 space-y-1'>
-                        <li>• Edit your transcript before sending</li>
-                        <li>• Type additional text if needed</li>
-                        <li>• Manual send button control</li>
-                        <li>• Perfect for complex questions</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                <div className='flex flex-col items-center gap-4'>
-                  <button
-                    onClick={startScreenRecording}
-                    className='group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-12 py-4 rounded-2xl text-lg font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 flex items-center gap-3'
-                  >
-                    <div className='relative'>
-                      <MonitorIcon className='w-6 h-6 group-hover:animate-pulse' />
-                      <div className='absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping'></div>
-                    </div>
-                    Start Learning Session
-                  </button>
-                  <p className='text-sm text-gray-600 max-w-md text-center'>
-                    Your session will be personalized for <span className='font-medium text-orange-600'>{selectedGrade}</span> level with a <span className='font-medium text-green-600'>{selectedStyle}</span> interaction style
-                    {autoSendEnabled ? ' and auto-send enabled' : ' with manual control'}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Feature Highlights - Only show if settings not selected */}
-            {(!selectedGrade || !selectedStyle) && (
-              <div className='max-w-5xl mx-auto mt-16 grid md:grid-cols-3 gap-8'>
-                <div className='group p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl shadow-sm border border-blue-100 hover:shadow-lg transition-all duration-300'>
-                  <div className='text-4xl mb-4 group-hover:scale-110 transition-transform duration-300'>🎥</div>
-                  <h3 className='font-bold mb-3 text-gray-800 text-lg'>Intelligent Screen Analysis</h3>
-                  <p className='text-gray-600 leading-relaxed'>AI analyzes your screen content in real-time, understanding context and providing relevant help for your current task</p>
-                </div>
-                <div className='group p-8 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl shadow-sm border border-green-100 hover:shadow-lg transition-all duration-300'>
-                  <div className='text-4xl mb-4 group-hover:scale-110 transition-transform duration-300'>🎤</div>
-                  <h3 className='font-bold mb-3 text-gray-800 text-lg'>Natural Voice Interaction</h3>
-                  <p className='text-gray-600 leading-relaxed'>Speak naturally and get instant responses. No need for specific commands - just ask questions as you would to a human tutor</p>
-                </div>
-                <div className='group p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl shadow-sm border border-purple-100 hover:shadow-lg transition-all duration-300'>
-                  <div className='text-4xl mb-4 group-hover:scale-110 transition-transform duration-300'>🎯</div>
-                  <h3 className='font-bold mb-3 text-gray-800 text-lg'>Personalized Learning</h3>
-                  <p className='text-gray-600 leading-relaxed'>Responses are tailored to your grade level and learning style, ensuring optimal comprehension and engagement</p>
-                </div>
-              </div>
-            )}
+      <div className='w-full px-4 lg:px-8 pt-20'>
+        {/* Minimal landing – only selectors remain (fixed above) */}
+        {!isRecording && chatHistory.length === 0 && (
+          <div className='flex flex-col items-center max-w-6xl mx-auto mb-8 mt-8'>
+            {/* Intentionally left minimal as per request */}
           </div>
         )}
+        
 
         {/* Screen Recording Interface - Status Only */}
         {isRecording && (
@@ -1164,7 +912,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
               </div>
               <div className='flex items-center gap-2 bg-white/80 px-3 py-1.5 rounded-full'>
                 <div className={`w-2 h-2 rounded-full ${autoSendEnabled ? 'bg-orange-500' : 'bg-gray-500'}`}></div>
-                <span className='text-gray-700'>{autoSendEnabled ? '3-sec auto-send' : 'Manual send'}</span>
+                <span className='text-gray-700'>{autoSendEnabled ? 'Auto-send on pause' : 'Manual send'}</span>
               </div>
             </div>
             {/* Control Buttons */}
@@ -1427,7 +1175,6 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                 <div
                   key={idx}
                   className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}
-                  style={{ animationDelay: `${idx * 100}ms` }}
                 >
                   {/* AI Avatar & Info */}
                   {msg.role === 'ai' && (

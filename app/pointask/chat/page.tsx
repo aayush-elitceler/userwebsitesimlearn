@@ -459,10 +459,41 @@ export default function PointAskChatPage() {
     </div>
   );
   
+  // Utility: downscale and compress an image for faster uploads
+  const compressImage = async (file: File, maxDim = 1024, quality = 0.75): Promise<File> => {
+    try {
+      const img = document.createElement('img');
+      const objectUrl = URL.createObjectURL(file);
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = (e) => reject(e);
+        img.src = objectUrl;
+      });
+      const ratio = Math.min(1, maxDim / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+      const targetW = Math.round((img.naturalWidth || img.width) * ratio) || 1024;
+      const targetH = Math.round((img.naturalHeight || img.height) * ratio) || 768;
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas not supported');
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+      const blob: Blob = await new Promise((resolve, reject) =>
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Compression failed'))), 'image/jpeg', quality)
+      );
+      URL.revokeObjectURL(objectUrl);
+      return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+    } catch (e) {
+      console.warn('Image compression failed, using original:', e);
+      return file;
+    }
+  };
+
   // Image upload/capture logic
-  const handleImageUpload = (file: File) => {
-    setImageFile(file);
-    setImage(URL.createObjectURL(file));
+  const handleImageUpload = async (file: File) => {
+    const compressed = await compressImage(file);
+    setImageFile(compressed);
+    setImage(URL.createObjectURL(compressed));
   };
 
   // Send message to API
@@ -515,14 +546,18 @@ export default function PointAskChatPage() {
         imageFile: imageFile.name,
       });
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
       const res = await fetch(
         "https://apisimplylearn.selflearnai.in/api/v1/ai/image-chat",
         {
           method: "POST",
           headers,
           body: formData,
+          signal: controller.signal,
         }
       );
+      clearTimeout(timeout);
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -548,9 +583,8 @@ export default function PointAskChatPage() {
       });
     } catch (err) {
       console.error("Error in handleSend:", err);
-      setApiError(
-        err instanceof Error ? err.message : "Failed to get response"
-      );
+      const msg = err instanceof Error ? (err.name === 'AbortError' ? 'Request timed out. Please try again.' : err.message) : 'Failed to get response';
+      setApiError(msg);
     } finally {
       setApiLoading(false);
     }

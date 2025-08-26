@@ -253,8 +253,10 @@ export default function ExamReportPage() {
   
   if (!result) return <div className="text-black p-8">Result not found.</div>;
 
-  // Calculate score percentage based on the new API structure
-  const totalPossibleMarks = result.exam.questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+  // Calculate score percentage with sensible fallbacks
+  const totalPossibleMarksRaw = result.exam.questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+  const totalQuestionsCount = result.totalQuestions || result.exam.questions.length || 0;
+  const totalPossibleMarks = totalPossibleMarksRaw > 0 ? totalPossibleMarksRaw : (totalQuestionsCount > 0 ? totalQuestionsCount : 0);
   const scorePercentage = totalPossibleMarks > 0 ? (result.score / totalPossibleMarks) * 100 : 0;
   const pointerPosition = calculatePointerPosition(scorePercentage);
   const performanceLevel = getPerformanceLevel(scorePercentage);

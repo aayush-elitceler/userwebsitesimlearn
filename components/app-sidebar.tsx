@@ -89,12 +89,12 @@ const pointAskSubRoutes = [
     icon: <MicIcon />,
     bg: 'point-ask-gradient',
   },
-  {
-    label: 'Point & Ask Chat',
-    href: '/pointask/chat',
-    icon: <ChatIcon />,
-    bg: 'bg-[#5B5E6D] border-t border-white/30',
-  },
+  // {
+  //   label: 'Point & Ask Chat',
+  //   href: '/pointask/chat',
+  //   icon: <ChatIcon />,
+  //   bg: 'bg-[#5B5E6D] border-t border-white/30',
+  // },
 ];
 
 const quizSubRoutes = [

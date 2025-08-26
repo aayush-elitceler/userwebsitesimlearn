@@ -68,7 +68,7 @@ export default function QuizAnswersPage() {
       <div className="max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-black mb-2">{result.quizTitle}</h2>
         <div className="text-lg text-black mb-4">
-          Score: {result.score} / {result.totalQuestions * 20} | Correct: {result.correctAnswers} / {result.totalQuestions}
+          Correct: {result.correctAnswers} / {result.totalQuestions} | Percentage: {Math.round((result.correctAnswers / Math.max(1, result.totalQuestions)) * 100)}%
         </div>
         <div className="text-black mb-8">
           Submitted at: {new Date(result.submittedAt).toLocaleString()}
@@ -90,9 +90,9 @@ export default function QuizAnswersPage() {
                       ${!opt.isCorrect && !isUserSelected ? "bg-[#FFB12133] text-[#646464]" : ""}
                     `}
                   >
-                    {opt.optionText}
-                    {opt.isCorrect }
-                    {isUserSelected && <span className="ml-2"> (Your answer)</span>}
+                    <span className="mr-2">{opt.isCorrect ? '✅' : isUserSelected ? '❌' : '⬜'}</span>
+                    <span>{opt.optionText}</span>
+                    {isUserSelected && <span className="ml-2">(Your answer)</span>}
                   </div>
                 );
               })}

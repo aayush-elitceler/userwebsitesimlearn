@@ -106,8 +106,10 @@ export default function QuizReportPage() {
   if (loading) return <div className="text-black p-8">Loading...</div>;
   if (!result) return <div className="text-black p-8">Result not found.</div>;
 
-  // Calculate score percentage
-  const scorePercentage = result.totalQuestions > 0 ? (result.score / (result.totalQuestions * 20)) * 100 : 0;
+  // Calculate score percentage based on correct answers instead of fixed per-question marks
+  const scorePercentage = result.totalQuestions > 0
+    ? (result.correctAnswers / result.totalQuestions) * 100
+    : 0;
   const performanceLevel = getPerformanceLevel(scorePercentage);
   const pointerPosition = calculatePointerPosition(scorePercentage);
 
