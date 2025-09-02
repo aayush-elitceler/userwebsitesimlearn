@@ -71,7 +71,7 @@ export const pageAnimationStyles = `
 
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #FF9E27 #f1f1f1;
+    scrollbar-color: #006a3d #f1f1f1;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -84,12 +84,12 @@ export const pageAnimationStyles = `
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #FF9E27, #FF7A00);
+    background: linear-gradient(180deg, #006a3d, #006a3d);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #FF7A00, #FF5500);
+    background: linear-gradient(180deg, #006a3d, #006a3d);
   }
 
   .animate-fade-in-up {

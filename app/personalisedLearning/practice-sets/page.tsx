@@ -204,7 +204,7 @@ export default function CreateExamPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       {loading ? (
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500 mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-green-700 mx-auto mb-4'></div>
           <p className='text-gray-600'>Generating your practice questions...</p>
           <p className='text-sm text-gray-500 mt-2'>This may take a few moments</p>
         </div>
@@ -266,8 +266,8 @@ export default function CreateExamPage() {
                   onClick={() => setForm({ ...form, questionType: type.value })}
                   className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
                     form.questionType === type.value
-                      ? "bg-gradient-to-r from-orange-400 to-orange-500 text-white"
-                      : "bg-orange-100 text-gray-700 hover:bg-orange-200"
+                      ? "bg-gradient-to-r from-green-700 to-orange-500 text-white"
+                      : "bg-green-100 text-gray-700 hover:bg-orange-200"
                   }`}
                 >
                   {type.label}

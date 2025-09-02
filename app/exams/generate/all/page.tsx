@@ -171,7 +171,8 @@ export default function AllGenerateExamsPage() {
         const data = await res.json();
         if (data.success && data.data) {
           const teacherGen = data.data.teacherAssignedExams || {};
-          setTeacherExams([...(teacherGen.upcoming || []), ...(teacherGen.previous || [])]);
+          // Reverse the array to show newest first
+          setTeacherExams([...(teacherGen.upcoming || []), ...(teacherGen.previous || [])].reverse());
         }
       } catch (e) {
         // handle error

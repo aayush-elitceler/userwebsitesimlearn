@@ -128,8 +128,8 @@ export default function CreateProjectPage() {
 
                 {/* Project Details */}
                 <div className='flex flex-col gap-3 mb-8'>
-                  <div className='flex items-center gap-3 bg-orange-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/>
                       <polyline points='14,2 14,8 20,8'/>
                       <line x1='16' y1='13' x2='8' y2='13'/>
@@ -139,8 +139,8 @@ export default function CreateProjectPage() {
                     <span className='text-black font-medium'>{form.subject || 'Subject'}</span>
                   </div>
                   
-                  <div className='flex items-center gap-3 bg-orange-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M9 12l2 2 4-4'/>
                       <path d='M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z'/>
                       <path d='M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z'/>
@@ -150,8 +150,8 @@ export default function CreateProjectPage() {
                     <span className='text-black font-medium'>{form.persona}</span>
                   </div>
                   
-                  <div className='flex items-center gap-3 bg-orange-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'/>
                     </svg>
                     <span className='text-black font-medium'>Class {form.class}</span>
@@ -185,7 +185,7 @@ export default function CreateProjectPage() {
               name="title"
               value={form.title}
               onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none'
+              className='rounded px-3 py-2 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none'
               placeholder="e.g. Law of Motion"
               required
             />
@@ -196,7 +196,7 @@ export default function CreateProjectPage() {
               name="class"
               value={form.class}
               onChange={handleChange}
-              className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+              className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
               aria-label="Select class"
               required
             >
@@ -214,7 +214,7 @@ export default function CreateProjectPage() {
               name="persona"
               value={form.persona}
               onChange={handleChange}
-              className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+              className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
               aria-label="Select persona"
             >
               <option value="Teacher">Teacher</option>
@@ -228,7 +228,7 @@ export default function CreateProjectPage() {
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
-                className='w-full rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                className='w-full rounded px-3 py-2 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
                 aria-label="Select subject"
                 required
               >
@@ -252,7 +252,7 @@ export default function CreateProjectPage() {
               name="description"
               value={form.description}
               onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none'
+              className='rounded px-3 py-2 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none'
               rows={4}
               placeholder="Describe the topic..."
               required

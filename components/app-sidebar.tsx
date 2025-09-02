@@ -265,8 +265,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 relative ${
                       pathname === '/'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
+                        ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                        : 'text-[#222] hover:bg-[#006a3d33]'
                     }`}
                   >
                     <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />
@@ -283,8 +283,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setAiOpen(!aiOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isAiTutorActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                          : 'text-[#222] hover:bg-[#FFB12133]'
+                          ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                          : 'text-[#222] hover:bg-[#006a3d33]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
@@ -310,8 +310,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFB12133] text-[#FF4949]'
-                                : 'text-[#222] hover:bg-[#FFB12133]'
+                                ? 'bg-[#006a3d33] text-[#006a3d]'
+                                : 'text-[#222] hover:bg-[#006a3d33]'
                             }`}
                           >
                             <div className='flex-shrink-0'>{sub.icon}</div>
@@ -332,8 +332,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setPointOpen(!pointOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isPointAskActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                          : 'text-[#222] hover:bg-[#FFB12133]'
+                          ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                          : 'text-[#222] hover:bg-[#006a3d33]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
@@ -359,8 +359,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFB12133] text-[#FF4949]'
-                                : 'text-[#222] hover:bg-[#FFB12133]'
+                                ? 'bg-[#006a3d33] text-[#006a3d]'
+                                : 'text-[#222] hover:bg-[#006a3d33]'
                             }`}
                           >
                             <div className='flex-shrink-0'>{sub.icon}</div>
@@ -381,8 +381,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setQuizOpen(!quizOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isQuizActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                          : 'text-[#222] hover:bg-[#FFB12133]'
+                          ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                          : 'text-[#222] hover:bg-[#006a3d33]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
@@ -413,8 +413,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFB12133] text-[#FF4949]'
-                                : 'text-[#222] hover:bg-[#FFB12133]'
+                                ? 'bg-[#006a3d33] text-[#006a3d]'
+                                : 'text-[#222] hover:bg-[#006a3d33]'
                             }`}
                           >
                             <Image
@@ -442,8 +442,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setExamOpen(!examOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isExamActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                          : 'text-[#222] hover:bg-[#FFB12133]'
+                          ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                          : 'text-[#222] hover:bg-[#006a3d33]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
@@ -474,8 +474,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFB12133] text-[#FF4949]'
-                                : 'text-[#222] hover:bg-[#FFB12133]'
+                                ? 'bg-[#006a3d33] text-[#006a3d]'
+                                : 'text-[#222] hover:bg-[#006a3d33]'
                             }`}
                           >
                             <Image
@@ -503,8 +503,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setProjectOpen(!projectsOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isProjectsActive
-                          ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                          : 'text-[#222] hover:bg-[#FFB12133]'
+                          ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                          : 'text-[#222] hover:bg-[#006a3d33]'
                       }`}
                     >
                       <span className='flex items-center gap-3'>
@@ -535,8 +535,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                             href={sub.href}
                             className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                               isSubActive
-                                ? 'bg-[#FFB12133] text-[#FF4949]'
-                                : 'text-[#222] hover:bg-[#FFB12133]'
+                                ? 'bg-[#006a3d33] text-[#006a3d]'
+                                : 'text-[#222] hover:bg-[#006a3d33]'
                             }`}
                           >
                             <Image
@@ -563,8 +563,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/personalisedLearning'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/personalisedLearning'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
+                        ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                        : 'text-[#222] hover:bg-[#006a3d33]'
                     }`}
                   >
                     <Image
@@ -659,8 +659,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                   } py-3 rounded-md font-medium transition-all duration-200 relative ${
                     pathname === '/'
-                      ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                      : 'text-[#222] hover:bg-[#FFB12133]'
+                      ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                      : 'text-[#222] hover:bg-[#006a3d33]'
                   }`}
                 >
                   <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />
@@ -679,8 +679,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isAiTutorActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
+                        ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                        : 'text-[#222] hover:bg-[#006a3d33]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -713,8 +713,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFB12133] text-[#FF4949]'
-                              : 'text-[#222] hover:bg-[#FFB12133]'
+                              ? 'bg-[#006a3d33] text-[#006a3d]'
+                              : 'text-[#222] hover:bg-[#006a3d33]'
                           }`}
                         >
                           <div className='flex-shrink-0'>{sub.icon}</div>
@@ -737,8 +737,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isPointAskActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
+                        ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                        : 'text-[#222] hover:bg-[#006a3d33]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -773,8 +773,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFB12133] text-[#FF4949]'
-                              : 'text-[#222] hover:bg-[#FFB12133]'
+                              ? 'bg-[#006a3d33] text-[#006a3d]'
+                              : 'text-[#222] hover:bg-[#006a3d33]'
                           }`}
                         >
                           <div className='flex-shrink-0'>{sub.icon}</div>
@@ -797,8 +797,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isQuizActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
+                        ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                        : 'text-[#222] hover:bg-[#006a3d33]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -836,8 +836,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFB12133] text-[#FF4949]'
-                              : 'text-[#222] hover:bg-[#FFB12133]'
+                              ? 'bg-[#006a3d33] text-[#006a3d]'
+                              : 'text-[#222] hover:bg-[#006a3d33]'
                           }`}
                         >
                           <Image
@@ -867,8 +867,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isExamActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
+                        ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                        : 'text-[#222] hover:bg-[#006a3d33]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -906,8 +906,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFB12133] text-[#FF4949]'
-                              : 'text-[#222] hover:bg-[#FFB12133]'
+                              ? 'bg-[#006a3d33] text-[#006a3d]'
+                              : 'text-[#222] hover:bg-[#006a3d33]'
                           }`}
                         >
                           <Image
@@ -937,8 +937,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isProjectsActive
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
+                        ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                        : 'text-[#222] hover:bg-[#006a3d33]'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
@@ -976,8 +976,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           href={sub.href}
                           className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
                             isSubActive
-                              ? 'bg-[#FFB12133] text-[#FF4949]'
-                              : 'text-[#222] hover:bg-[#FFB12133]'
+                              ? 'bg-[#006a3d33] text-[#006a3d]'
+                              : 'text-[#222] hover:bg-[#006a3d33]'
                           }`}
                         >
                           <Image
@@ -1007,8 +1007,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/personalisedLearning'
-                        ? 'bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white shadow-md'
-                        : 'text-[#222] hover:bg-[#FFB12133]'
+                        ? 'bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white shadow-md'
+                        : 'text-[#222] hover:bg-[#006a3d33]'
                     }`}
                   >
                     <Image

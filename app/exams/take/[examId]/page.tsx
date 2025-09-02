@@ -189,7 +189,7 @@ export default function TakeExamPage() {
       completedAt,
       violations,
       answers: exam?.questions.map((q, i) => ({
-        question: q.questionText,
+        question: q.id,
         answer: answers[i],
       })),
     };
@@ -326,7 +326,7 @@ export default function TakeExamPage() {
                 height: '48px',
                 borderRadius: '10px',
                 padding: '12px',
-                background: 'linear-gradient(89.79deg, #FFB31F 0.11%, #F97316 95.83%)',
+                background: 'linear-gradient(89.79deg, #006a3d 0.11%, #006a3d 95.83%)',
                 fontFamily: 'Poppins',
                 fontWeight: 600,
                 fontSize: '16px',
@@ -404,7 +404,7 @@ export default function TakeExamPage() {
                 height: '48px',
                 borderRadius: '10px',
                 padding: '12px',
-                background: 'linear-gradient(89.79deg, #FFB31F 0.11%, #F97316 95.83%)',
+                background: 'linear-gradient(89.79deg, #006a3d 0.11%, #006a3d 95.83%)',
                 fontFamily: 'Poppins',
                 fontWeight: 600,
                 fontSize: '16px',
@@ -435,7 +435,7 @@ export default function TakeExamPage() {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all duration-500 ease-out relative"
+              className="h-full bg-gradient-to-r from-green-700 to-green-900 rounded-full transition-all duration-500 ease-out relative"
               style={{ 
                 width: `${(answers.filter(answer => answer.trim() !== "").length / exam.questions.length) * 100}%` 
               }}
@@ -480,7 +480,7 @@ export default function TakeExamPage() {
               className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 answers[idx] 
                   ? 'bg-green-500 text-white hover:bg-green-600' 
-                  : 'bg-white text-gray-700 hover:bg-[#FFB31F] hover:text-white border border-gray-300'
+                  : 'bg-white text-gray-700 hover:bg-[#006a3d] hover:text-white border border-gray-300'
               }`}
             >
               {idx + 1}
@@ -493,7 +493,7 @@ export default function TakeExamPage() {
         style={{
           scrollBehavior: 'smooth',
           scrollbarWidth: 'thin',
-          scrollbarColor: '#FFB31F #f1f1f1',
+          scrollbarColor: '#006a3d #f1f1f1',
         }}
       >
         <div className="mb-4">
@@ -514,7 +514,7 @@ export default function TakeExamPage() {
               Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ""}
             </div>
             <textarea
-              className="w-full p-4 rounded bg-[#FFB12133] text-gray-700 min-h-[60px] transition-all duration-200 focus:bg-[#FFB12155] focus:outline-none focus:ring-2 focus:ring-[#FFB31F] focus:ring-opacity-50"
+              className="w-full p-4 rounded bg-[#006a3d33] text-gray-700 min-h-[60px] transition-all duration-200 focus:bg-[#006a3d55] focus:outline-none focus:ring-2 focus:ring-[#006a3d] focus:ring-opacity-50"
               placeholder="Type your short answer here"
               value={answers[idx]}
               onChange={(e) => handleAnswerChange(idx, e.target.value)}

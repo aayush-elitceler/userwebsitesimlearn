@@ -125,7 +125,7 @@ const ExamViolationModal: React.FC<ExamViolationModalProps> = ({
             {isWarning ? (
               <Button
                 onClick={onBackToExam}
-                className="w-full bg-gradient-to-r from-[#FFB31F] to-[#FF4949] hover:from-[#FF9500] hover:to-[#FF3333] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="w-full bg-gradient-to-r from-[#006a3d] to-[#006a3d] hover:from-[#005030] hover:to-[#005030] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                 style={{
                   fontFamily: 'Poppins',
                   fontWeight: 600,
@@ -137,7 +137,7 @@ const ExamViolationModal: React.FC<ExamViolationModalProps> = ({
             ) : (
               <Button
                 onClick={onBackToDashboard}
-                className="w-full bg-gradient-to-r from-[#FFB31F] to-[#FF4949] hover:from-[#FF9500] hover:to-[#FF3333] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="w-full bg-gradient-to-r from-[#006a3d] to-[#006a3d] hover:from-[#005030] hover:to-[#005030] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                 style={{
                   fontFamily: 'Poppins',
                   fontWeight: 600,

@@ -342,11 +342,11 @@ export default function Home() {
         {
           label: 'Learning Growth',
           data: allMonths.map((month) => dataMap.get(month) || 0),
-          borderColor: '#F97316',
+          borderColor: '#006a3d',
           backgroundColor: 'rgba(249, 115, 22, 0.1)',
           tension: 0.4,
           fill: true,
-          pointBackgroundColor: '#F97316',
+          pointBackgroundColor: '#006a3d',
           pointRadius: 4,
         },
       ],
@@ -359,7 +359,7 @@ export default function Home() {
         className={`min-h-screen flex items-center justify-center bg-gray-50 ${poppins.className}`}
       >
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-20 w-20 border-b-2 border-orange-500 mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-20 w-20 border-b-2 border-green-700 mx-auto mb-4'></div>
           <p className='text-gray-600'>Loading dashboard...</p>
         </div>
       </div>
@@ -375,7 +375,7 @@ export default function Home() {
           <p className='text-red-600 text-lg mb-4'>{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className='px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600'
+            className='px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800'
           >
             Retry
           </button>
@@ -478,7 +478,7 @@ export default function Home() {
             <div
               key={idx}
               className={`flex-1 flex flex-col items-center py-2 rounded-xl ${
-                day.isActive ? 'text-orange-800' : 'text-gray-400'
+                day.isActive ? 'text-green-800' : 'text-gray-400'
               }`}
             >
               <img
@@ -494,7 +494,7 @@ export default function Home() {
         </div>
 
         <div 
-          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-orange-200 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-orange-300 transition-all duration-200'
+          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-green-200 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-green-300 transition-all duration-200'
           onClick={() => {
             if (primaryChallenge) {
               if (primaryChallenge.quizId) {
@@ -515,7 +515,7 @@ export default function Home() {
           }}
         >
           <img src='/images/medal.svg' alt='' className='w-[50px] h-[50px]' />
-          <div className='flex-1 text-orange-500 font-semibold'>
+          <div className='flex-1 text-green-700 font-semibold'>
             {primaryChallenge ? primaryChallenge.title : 'Badge Challenge'}
             {challenges.length > 1 && (
               <span className='ml-2 text-xs text-gray-600'>({challenges.length} challenges)</span>
@@ -532,7 +532,7 @@ export default function Home() {
               )
             ) : null}
           </div>
-          <span className='text-orange-500 font-medium'>
+          <span className='text-green-700 font-medium'>
             {(primaryChallenge?.quizId || primaryChallenge?.link) && !isPrimaryCompleted ? 'Start' : 'View'}
           </span>
         </div>
@@ -567,7 +567,7 @@ export default function Home() {
               )
               .join(' • '),
             buttonText: 'Track Progress',
-            link: '/quizes',
+            link: '/personalisedLearning',
           },
           {
             title: 'Projects:',
@@ -592,7 +592,7 @@ export default function Home() {
             </p>
             <button
               onClick={() => router.push(card.link)}
-              className='point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 w-full sm:w-auto hover:shadow-lg hover:scale-105'
+              className='point-ask-gradient hover:from-green-800 hover:to-green-900 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 w-full sm:w-auto hover:shadow-lg hover:scale-105'
             >
               {card.buttonText}
             </button>
@@ -635,7 +635,7 @@ export default function Home() {
                     className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-white w-[150px] h-[40px]  ${
                       mission.completed
                         ? 'bg-[#009B41] hover:bg-[#008a3a] hover:shadow-lg hover:scale-105 cursor-default'
-                        : 'point-ask-gradient hover:from-orange-600 hover:to-orange-700 hover:shadow-lg hover:scale-105'
+                        : 'point-ask-gradient hover:from-green-800 hover:to-green-900 hover:shadow-lg hover:scale-105'
                     }`}
                   >
                     {mission.completed
@@ -710,7 +710,7 @@ export default function Home() {
                     className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-white w-[150px] h-[40px] ${
                       link.status === 'Completed'
                         ? 'bg-[#009B41] hover:bg-[#008a3a] hover:shadow-lg hover:scale-105'
-                        : 'point-ask-gradient hover:from-orange-600 hover:to-orange-700 hover:shadow-lg hover:scale-105'
+                        : 'point-ask-gradient hover:from-green-800 hover:to-green-900 hover:shadow-lg hover:scale-105'
                     }`}
                   >
                     {link.status === 'Completed' 
@@ -807,7 +807,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-gray-600">Completed:</span>
-                    <span className="font-semibold text-orange-500">{challenges[selectedChallengeIndex]?.current} tasks</span>
+                    <span className="font-semibold text-green-700">{challenges[selectedChallengeIndex]?.current} tasks</span>
                   </div>
                   
                   <div className="flex items-center justify-between mb-3">
@@ -830,7 +830,7 @@ export default function Home() {
                           width: `${Math.min(100, (((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100))}%`,
                           background: (challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0) 
                             ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' 
-                            : 'linear-gradient(90deg, #FF9F27 0%, #FF5146 100%)'
+                            : 'linear-gradient(90deg, #006a3d 0%, #006a3d 100%)'
                         }}
                       ></div>
                     </div>
@@ -857,7 +857,7 @@ export default function Home() {
                     {challenges[selectedChallengeIndex]?.questions?.map((question, index) => (
                       <div key={index} className="bg-gray-50 p-4 rounded-lg">
                         <div className="flex items-start gap-3">
-                          <span className="bg-orange-500 text-white text-sm font-semibold rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
+                          <span className="bg-green-700 text-white text-sm font-semibold rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-1">
                             {index + 1}
                           </span>
                           <p className="text-gray-700">{question}</p>
@@ -884,7 +884,7 @@ export default function Home() {
                       }
                       router.push('/quizes/generate');
                     }}
-                    className="flex-1 point-ask-gradient hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+                    className="flex-1 point-ask-gradient hover:from-green-800 hover:to-green-900 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
                   >
                     Start Challenge
                   </button>

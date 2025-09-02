@@ -51,7 +51,7 @@ export default function HistorySlider({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#FF5146] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-[#006a3d] flex items-center justify-center">
               <svg width="20" height="20" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -70,9 +70,9 @@ export default function HistorySlider({
         <div className="p-6 space-y-3">
           <button 
             onClick={onNewChat}
-            className="w-full rounded-md px-4 py-3 bg-[#FFE4B5] border border-[#FF5146] text-black hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-3 justify-center"
+            className="w-full rounded-md px-4 py-3 bg-[#90ee90] border border-[#006a3d] text-black hover:bg-[#87ceeb] transition-all duration-150 flex items-center gap-3 justify-center"
           >
-            <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+            <svg width="20" height="20" fill="none" stroke="#006a3d" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
             <span className="font-medium">New chat</span>
@@ -81,9 +81,9 @@ export default function HistorySlider({
           {!isSearching ? (
             <button 
               onClick={onSearchClick}
-              className="w-full rounded-md px-4 py-3 bg-[#FFE4B5] border border-[#FF5146] text-black hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-3 justify-center"
+              className="w-full rounded-md px-4 py-3 bg-[#90ee90] border border-[#006a3d] text-black hover:bg-[#87ceeb] transition-all duration-150 flex items-center gap-3 justify-center"
             >
-              <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+              <svg width="20" height="20" fill="none" stroke="#006a3d" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <span className="font-medium">Search chats</span>
@@ -96,7 +96,7 @@ export default function HistorySlider({
                   placeholder="Search by query or type..."
                   value={searchQuery}
                   onChange={onSearchInputChange}
-                  className="w-full px-4 py-3 border border-[#FF5146] rounded-md focus:outline-none focus:ring-2 focus:ring-[#FF5146] focus:ring-opacity-50"
+                  className="w-full px-4 py-3 border border-[#006a3d] rounded-md focus:outline-none focus:ring-2 focus:ring-[#006a3d] focus:ring-opacity-50"
                   autoFocus
                 />
                 <button
@@ -121,7 +121,7 @@ export default function HistorySlider({
           
           {historyLoading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5146] mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006a3d] mx-auto"></div>
               <p className="text-gray-500 mt-2">Loading history...</p>
             </div>
           ) : (
@@ -133,17 +133,17 @@ export default function HistorySlider({
                       {/* Icon based on type */}
                       <div className="w-5 h-5 mt-0.5 flex-shrink-0">
                         {item.type === "Image" && (
-                          <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                          <svg width="20" height="20" fill="none" stroke="#006a3d" strokeWidth="2" viewBox="0 0 24 24">
                             <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         )}
                         {item.type === "Chat" && (
-                          <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                          <svg width="20" height="20" fill="none" stroke="#006a3d" strokeWidth="2" viewBox="0 0 24 24">
                             <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                           </svg>
                         )}
                         {item.type === "Voice" && (
-                          <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                          <svg width="20" height="20" fill="none" stroke="#006a3d" strokeWidth="2" viewBox="0 0 24 24">
                             <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
                             <path d="M19 10v2a7 7 0 01-14 0v-2" />
                             <line x1="12" y1="19" x2="12" y2="23" />
@@ -152,7 +152,7 @@ export default function HistorySlider({
                         )}
                         {/* Default icon for unknown types */}
                         {!["Image", "Chat", "Voice"].includes(item.type) && (
-                          <svg width="20" height="20" fill="none" stroke="#FF5146" strokeWidth="2" viewBox="0 0 24 24">
+                          <svg width="20" height="20" fill="none" stroke="#006a3d" strokeWidth="2" viewBox="0 0 24 24">
                             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         )}
@@ -176,7 +176,7 @@ export default function HistorySlider({
                       {/* View chat link */}
                       <button 
                         onClick={() => onViewChat(item.id as string, item.query)}
-                        className="text-[#FF5146] text-xs font-medium hover:underline flex-shrink-0"
+                        className="text-[#006a3d] text-xs font-medium hover:underline flex-shrink-0"
                       >
                         View
                       </button>

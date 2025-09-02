@@ -446,7 +446,7 @@ export default function PointAskChatPage() {
         {/* View History Button outside gradient */}
         <button
           onClick={handleHistoryClick}
-          className="rounded-full px-4 py-2 bg-[#FFE4B5] border border-[#FF5146] text-[#FF5146] hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
+          className="rounded-full px-4 py-2 bg-[#90ee90] border border-[#006a3d] text-[#006a3d] hover:bg-[#87ceeb] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
         >
           <img
             src="/images/history.svg"
@@ -715,9 +715,9 @@ export default function PointAskChatPage() {
             {!image && (
               <div className="flex flex-col md:flex-row gap-8 w-full justify-center mb-8 ">
                 <button
-                  className="flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-gradient-to-r from-[#FF9F2733] to-[#FF514633] 
+                  className="flex items-center justify-center gap-4 rounded-xl px-8 py-6 text-lg font-medium bg-gradient-to-r from-[#FF9F2733] to-[#006a3d33] 
                  transition font-medium border-none shadow-sm 
-                text-black w-full md:w-1/2 border border-black hover:bg-gradient-to-r hover:from-[#FFB31F] hover:to-[#FF4949] hover:text-white hover:border-[#FF4949] "
+                text-black w-full md:w-1/2 border border-black hover:bg-gradient-to-r hover:from-[#006a3d] hover:to-[#006a3d] hover:text-white hover:border-[#006a3d] "
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <span className="point-ask-gradient rounded-full w-12 h-12 flex items-center justify-center">
@@ -928,7 +928,7 @@ export default function PointAskChatPage() {
                     className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.role === "user"
                         ? "bg-[#DDDDDD] text-[#000000]"
-                        : "bg-[#FFEFD3] text-[#FF5146]"
+                        : "bg-[#FFEFD3] text-[#006a3d]"
                     }`}
                   >
                     {/* Show image with the user's first message */}
@@ -974,7 +974,7 @@ export default function PointAskChatPage() {
                   <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                     AI
                   </div>
-                  <div className="bg-[#FFEFD3] text-[#FF5146] rounded-2xl px-4 py-3 opacity-70 shadow-sm">
+                  <div className="bg-[#FFEFD3] text-[#006a3d] rounded-2xl px-4 py-3 opacity-70 shadow-sm">
                     <p className="text-sm md:text-base">Thinking...</p>
                   </div>
                 </div>

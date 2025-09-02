@@ -760,7 +760,7 @@ if (!sessionRes.ok) {
         {/* View History Button OUTSIDE colored box */}
         <button
           onClick={handleHistoryClick}
-          className="rounded-full px-3 py-2 bg-[#FFE4B5] border border-[#FF5146] text-[#FF5146] hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
+          className="rounded-full px-3 py-2 bg-[#90ee90] border border-[#006a3d] text-[#006a3d] hover:bg-[#87ceeb] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
         >
           <img
             src="/images/history.svg"
@@ -886,12 +886,12 @@ if (!sessionRes.ok) {
                     className={`max-w-[85%] px-4 py-3 rounded-lg shadow-sm border ${
                       message.role === "user"
                         ? "bg-blue-50 text-blue-900 border-blue-200"
-                        : "bg-orange-50 text-orange-900 border-orange-200"
+                        : "bg-green-50 text-orange-900 border-green-200"
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-xs font-semibold uppercase tracking-wide ${
-                        message.role === "user" ? "text-blue-600" : "text-orange-600"
+                        message.role === "user" ? "text-blue-600" : "text-green-700"
                       }`}>
                         {message.role === "user" ? "You" : `AI (${selectedStyle || "Assistant"})`}
                       </span>
@@ -953,10 +953,10 @@ if (!sessionRes.ok) {
                 
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    currentSpeaker === "ai" ? "bg-orange-500 animate-pulse" : "bg-gray-300"
+                    currentSpeaker === "ai" ? "bg-green-700 animate-pulse" : "bg-gray-300"
                   }`}></div>
                   <span className={`text-sm font-medium transition-colors duration-300 ${
-                    currentSpeaker === "ai" ? "text-orange-600" : "text-gray-500"
+                    currentSpeaker === "ai" ? "text-green-700" : "text-gray-500"
                   }`}>
                     AI {selectedStyle ? `(${selectedStyle})` : ""}
                   </span>
@@ -1002,12 +1002,12 @@ if (!sessionRes.ok) {
                         className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
                           message.role === "user"
                             ? "bg-blue-100 text-blue-900 border-l-4 border-blue-500"
-                            : "bg-orange-100 text-orange-900 border-l-4 border-orange-500"
+                            : "bg-green-100 text-orange-900 border-l-4 border-green-700"
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`text-xs font-bold uppercase tracking-wide ${
-                            message.role === "user" ? "text-blue-600" : "text-orange-600"
+                            message.role === "user" ? "text-blue-600" : "text-green-700"
                           }`}>
                             {message.role === "user" ? "You" : "AI"}
                           </span>
@@ -1030,8 +1030,8 @@ if (!sessionRes.ok) {
                   )}
                   {currentSpeaker === "ai" && (
                     <div className="flex justify-start">
-                      <div className="bg-orange-100 text-orange-900 px-3 py-2 rounded-lg text-sm border-l-4 border-orange-500 opacity-70">
-                        <span className="text-xs font-bold text-orange-600 uppercase tracking-wide">AI</span>
+                      <div className="bg-green-100 text-orange-900 px-3 py-2 rounded-lg text-sm border-l-4 border-green-700 opacity-70">
+                        <span className="text-xs font-bold text-green-700 uppercase tracking-wide">AI</span>
                         <p className="italic">Speaking...</p>
                       </div>
                     </div>
@@ -1092,7 +1092,7 @@ if (!sessionRes.ok) {
                 onClick={() => setShowTranscript(!showTranscript)}
                 className={`px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all ${
                   showTranscript 
-                    ? "bg-orange-500 hover:bg-orange-600 text-white" 
+                    ? "bg-green-700 hover:bg-green-800 text-white" 
                     : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
                 }`}
               >
@@ -1123,7 +1123,7 @@ if (!sessionRes.ok) {
       />
       <style>{`
         .point-ask-gradient {
-          background: linear-gradient(90deg, #ff9f27 0%, #ff5146 100%);
+          background: linear-gradient(90deg, #ff9f27 0%, #006a3d 100%);
         }
       `}</style>
     </div>

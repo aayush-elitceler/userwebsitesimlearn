@@ -99,7 +99,7 @@ function QuizCard({
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-2">
             Subject: {quiz.subject || "Science"}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-3 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text mb-3 break-words leading-tight">
             {quiz.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-4 leading-relaxed">
@@ -148,7 +148,7 @@ function QuizCard({
         <div className="mt-auto pt-4 flex-shrink-0 min-h-[50px] flex items-end">
           {previous ? (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
+              className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
               onClick={() =>
                 router.push(
                   `/quizes/reports/${submissionId}`
@@ -159,7 +159,7 @@ function QuizCard({
             </button>
           ) : (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
+              className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] cursor-pointer text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
               onClick={() => router.push(`/quizes/${quiz.id}/start`)}
             >
               Start Quiz
@@ -260,11 +260,12 @@ export default function AllQuizzesPage() {
           data.data.institutionGeneratedQuizzes
         ) {
           const userObj = data.data.institutionGeneratedQuizzes;
+          // Reverse the arrays to show newest first
           setUpcomingQuizzes(
-            Array.isArray(userObj.upcoming) ? userObj.upcoming : []
+            Array.isArray(userObj.upcoming) ? userObj.upcoming.reverse() : []
           );
           setPreviousQuizzes(
-            Array.isArray(userObj.previous) ? userObj.previous : []
+            Array.isArray(userObj.previous) ? userObj.previous.reverse() : []
           );
         }
       } catch (e) {
