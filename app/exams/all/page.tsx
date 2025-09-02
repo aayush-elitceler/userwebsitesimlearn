@@ -112,7 +112,7 @@ function QuizCard({
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
             Difficulty: {quiz.difficulty?.charAt(0).toUpperCase() + quiz.difficulty?.slice(1)}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-2 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text mb-2 break-words leading-tight">
             {quiz.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
@@ -179,14 +179,14 @@ function QuizCard({
         <div className="mt-auto pt-3">
           {previous ? (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={() => router.push(`/exams/reports/${quiz.id}`)}
             >
               View Report
             </button>
           ) : (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={() => router.push(`/exams/take/${quiz.id}`)}
             >
               Take Exam
@@ -294,11 +294,12 @@ export default function AllExamsPage() {
           data.data.userGeneratedExams
         ) {
           const userObj = data.data.userGeneratedExams;
+          // Reverse the arrays to show newest first
           setUpcomingExams(
-            Array.isArray(userObj.upcoming) ? userObj.upcoming : []
+            Array.isArray(userObj.upcoming) ? userObj.upcoming.reverse() : []
           );
           setPreviousExams(
-            Array.isArray(userObj.previous) ? userObj.previous : []
+            Array.isArray(userObj.previous) ? userObj.previous.reverse() : []
           );
         }
       } catch (e) {

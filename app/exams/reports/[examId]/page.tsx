@@ -286,9 +286,8 @@ export default function ExamReportPage() {
           <button
             onClick={handleRefreshReport}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all point-ask-gradient hover:from-orange-600 hover:to-orange-700"
+            className="flex items-center gap-2 px-4 py-2 bg-[#FFB121] text-white rounded-lg hover:bg-[#FFB121] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <span>🔄</span>
             <span>{loading ? 'Refreshing...' : 'Refresh Report'}</span>
           </button>
         </div>
@@ -297,7 +296,7 @@ export default function ExamReportPage() {
           {result.exam.title} &nbsp; • &nbsp; Difficulty - {result.exam.difficulty || "N/A"}
         </div>
         <div className="text-black mb-4">
-          You received a score of <span className="text-yellow-400 font-bold">{result.score}</span> / {totalPossibleMarks} ({result.totalQuestions} questions).
+          You received a score of <span className="text-black ">{result.score}</span> / {totalPossibleMarks} ({result.totalQuestions} questions).
         </div>
         
         {/* Score Breakdown */}
@@ -310,15 +309,15 @@ export default function ExamReportPage() {
             </div>
             <div>
               <span className="text-sm text-gray-600">Total Possible:</span>
-              <span className="ml-2 font-bold text-blue-600">{totalPossibleMarks}</span>
+              <span className="ml-2 font-bold text-green-600">{totalPossibleMarks}</span>
             </div>
             <div>
               <span className="text-sm text-gray-600">Percentage:</span>
-              <span className="ml-2 font-bold text-purple-600">{Math.round(scorePercentage)}%</span>
+              <span className="ml-2 font-bold text-green-600">{Math.round(scorePercentage)}%</span>
             </div>
             <div>
               <span className="text-sm text-gray-600">Performance:</span>
-              <span className="ml-2 font-bold text-orange-600">{performanceLevel}</span>
+              <span className="ml-2 font-bold text-green-600">{performanceLevel}</span>
             </div>
           </div>
         </div>
@@ -328,6 +327,7 @@ export default function ExamReportPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <h3 className="text-lg font-semibold text-blue-800 mb-2">Overall Feedback</h3>
             <div className="text-blue-700 whitespace-pre-line">{result.overallFeedback}</div>
+            
           </div>
         )}
         
@@ -480,8 +480,8 @@ export default function ExamReportPage() {
                     {/* Key Points */}
                     {q.gradingResult.keyPoints && q.gradingResult.keyPoints.length > 0 && (
                       <div className="mb-3">
-                        <h5 className="text-sm font-semibold text-blue-700 mb-1">Key Points:</h5>
-                        <ul className="list-disc list-inside text-sm text-blue-600">
+                        <h5 className="text-sm font-semibold text-red-700 mb-1">Key Points:</h5>
+                        <ul className="list-disc list-inside text-sm text-red-600">
                           {q.gradingResult.keyPoints.map((point, i) => (
                             <li key={i}>{point}</li>
                           ))}
@@ -492,15 +492,15 @@ export default function ExamReportPage() {
                     {/* Suggestions */}
                     {q.gradingResult.suggestions && (
                       <div>
-                        <h5 className="text-sm font-semibold text-purple-700 mb-1">Suggestions:</h5>
+                        <h5 className="text-sm font-semibold text-green-500 mb-1">Suggestions:</h5>
                         {Array.isArray(q.gradingResult.suggestions) ? (
-                          <ul className="list-disc list-inside text-sm text-purple-600">
+                          <ul className="list-disc list-inside text-sm text-green-400">
                             {q.gradingResult.suggestions.map((suggestion, i) => (
                               <li key={i}>{suggestion}</li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-sm text-purple-600">{q.gradingResult.suggestions}</p>
+                          <p className="text-sm text-green-400">{q.gradingResult.suggestions}</p>
                         )}
                       </div>
                     )}

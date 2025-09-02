@@ -99,7 +99,7 @@ function ExamCard({
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-2">
             Subject: {exam.subject || "N/A"}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-3 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text mb-3 break-words leading-tight">
             {exam.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-4 leading-relaxed break-words line-clamp-3">
@@ -121,7 +121,7 @@ function ExamCard({
         </div>
         <div className="mt-auto pt-4 flex-shrink-0 min-h-[50px] flex items-end">
           <button
-            className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
+            className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] cursor-pointer text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
             onClick={onStart}
           >
             {buttonText}
@@ -192,7 +192,7 @@ function QuizCard({
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-2">
             Subject: {quiz.subject || "Science"}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-3 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text mb-3 break-words leading-tight">
             {quiz.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-4 leading-relaxed break-words line-clamp-3">
@@ -227,14 +227,14 @@ function QuizCard({
         <div className="mt-auto pt-4 flex-shrink-0 min-h-[50px] flex items-end">
           {previous ? (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
+              className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
               onClick={() => router.push(`/exams/reports/${quiz.id}`)}
             >
               View Report
             </button>
           ) : (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
+              className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] cursor-pointer text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
               onClick={() => router.push(`/exams/take/${quiz.id}`)}
             >
               Start Exam
@@ -313,8 +313,9 @@ export default function QuizesPage() {
         );
         const data = await res.json();
         if (data.success && data.data && data.data.userGeneratedExams) {
-          setUpcomingExams(data.data.userGeneratedExams.upcoming || []);
-          setPreviousExams(data.data.userGeneratedExams.previous || []);
+          // Reverse the arrays to show newest first
+          setUpcomingExams((data.data.userGeneratedExams.upcoming || []).reverse());
+          setPreviousExams((data.data.userGeneratedExams.previous || []).reverse());
         }
       } catch (e) {
         // handle error
@@ -364,7 +365,7 @@ export default function QuizesPage() {
         >
           <div className="flex justify-end">
             <button
-              className="flex items-center gap-2 bg-gradient-to-r from-[#FFB31F] to-[#FF4949] hover:opacity-90 transition-opacity text-white cursor-pointer font-semibold px-5 py-3 rounded-lg shadow"
+              className="flex items-center gap-2 bg-gradient-to-r from-[#006a3d] to-[#006a3d] hover:opacity-90 transition-opacity text-white cursor-pointer font-semibold px-5 py-3 rounded-lg shadow"
               onClick={() => router.push("/exams/create")}
             >
               <Plus size={20} />
@@ -386,7 +387,7 @@ export default function QuizesPage() {
           <h3 className="text-xl font-bold text-black">Upcoming Exams</h3>
           <a
             href="#"
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#006a3d] to-[#006a3d] flex-shrink-0"
             onClick={(e) => {
               e.preventDefault();
               router.push('/exams/all?type=upcoming');
@@ -397,8 +398,8 @@ export default function QuizesPage() {
               <path d="M12.627 8.75H0.5V7.25H12.627L6.93075 1.55375L8 0.5L15.5 8L8 15.5L6.93075 14.4462L12.627 8.75Z" fill="url(#paint0_linear_1309_2561)"/>
               <defs>
                 <linearGradient id="paint0_linear_1309_2561" x1="0.5" y1="8" x2="15.5" y2="8" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF8015"/>
-                  <stop offset="1" stopColor="#FF9D07"/>
+                  <stop stopColor="#006a3d"/>
+                  <stop offset="1" stopColor="#006a3d"/>
                 </linearGradient>
               </defs>
             </svg>
@@ -441,7 +442,7 @@ export default function QuizesPage() {
           <h3 className="text-xl font-bold text-black">Previous Exams</h3>
           <a
             href="#"
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#006a3d] to-[#006a3d] flex-shrink-0"
             onClick={(e) => {
               e.preventDefault();
               router.push('/exams/all?type=previous');
@@ -452,8 +453,8 @@ export default function QuizesPage() {
               <path d="M12.627 8.75H0.5V7.25H12.627L6.93075 1.55375L8 0.5L15.5 8L8 15.5L6.93075 14.4462L12.627 8.75Z" fill="url(#paint0_linear_1309_2563)"/>
               <defs>
                 <linearGradient id="paint0_linear_1309_2563" x1="0.5" y1="8" x2="15.5" y2="8" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF8015"/>
-                  <stop offset="1" stopColor="#FF9D07"/>
+                  <stop stopColor="#006a3d"/>
+                  <stop offset="1" stopColor="#006a3d"/>
                 </linearGradient>
               </defs>
             </svg>

@@ -77,10 +77,12 @@ export default function ProjectsPage() {
 
         if (data.success && data.data) {
           if (data.data.teacherAssigned) {
-            setTeacherProjects(data.data.teacherAssigned);
+            // Reverse the array to show newest first
+            setTeacherProjects(data.data.teacherAssigned.reverse());
           }
           if (data.data["user-generated"]) {
-            setUserProjects(data.data["user-generated"]);
+            // Reverse the array to show newest first
+            setUserProjects(data.data["user-generated"].reverse());
           }
         }
       } catch (e) {
@@ -178,7 +180,7 @@ function ProjectCard({
         <div className="text-black font-semibold text-sm mb-1">
           Subject: {subject || "-"}
         </div>
-        <div className="text-2xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text">
+        <div className="text-2xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text">
           {title}
         </div>
         <div className="text-black mb-2">{description}</div>

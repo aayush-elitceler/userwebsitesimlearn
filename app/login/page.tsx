@@ -115,7 +115,7 @@ const handleGoogleSignIn = () => {
         <Card className="w-full max-w-md border-none shadow-none">
           <CardHeader className="text-left mb-4">
             <h1 className="text-[45px] font-bold text-black leading-tight font-">
-              SIGN IN TO YOUR <span className="text-[#FFA902]">ADVENTURE!</span>
+              SIGN IN TO YOUR <span className="text-[#006a3d]">ADVENTURE!</span>
             </h1>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -186,7 +186,7 @@ const handleGoogleSignIn = () => {
 
             <div className="text-center text-sm text-black">
               Don't have an account?{" "}
-              <Link href="/register" className="text-[#FF4949] font-normal underline cursor-pointer">
+              <Link href="/register" className="text-[#006a3d] font-normal underline cursor-pointer">
                 Create one
               </Link>
             </div>

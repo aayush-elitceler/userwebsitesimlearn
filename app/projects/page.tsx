@@ -62,7 +62,7 @@ function ProjectCard({
         <div className="text-black font-semibold mb-1">
           Subject: {project.subject || "N/A"}
         </div>
-        <div className="text-2xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text">
+        <div className="text-2xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text">
           {project.title}
         </div>
         <div className="text-black mb-3">
@@ -161,7 +161,8 @@ export default function ProjectsPage() {
 
           if (data.success && data.data) {
             if (data.data["user-generated"]) {
-              setUserProjects(data.data["user-generated"]);
+              // Reverse the array to show newest first
+              setUserProjects(data.data["user-generated"].reverse());
             }
           }
         } else {
@@ -191,7 +192,7 @@ export default function ProjectsPage() {
         <div className="w-full px-4 md:px-0 mb-6">
           <div className="flex justify-end">
             <button
-              className="flex items-center gap-2 bg-gradient-to-r from-[#FFB31F] to-[#FF4949] hover:opacity-90 transition-opacity text-white cursor-pointer font-semibold px-5 py-3 rounded-lg shadow"
+              className="flex items-center gap-2 bg-gradient-to-r from-[#006a3d] to-[#006a3d] hover:opacity-90 transition-opacity text-white cursor-pointer font-semibold px-5 py-3 rounded-lg shadow"
               onClick={() => router.push("/projects/create")}
             >
               <Plus size={20} />
@@ -209,7 +210,7 @@ export default function ProjectsPage() {
           <h3 className="text-xl font-bold text-black">Your Created Projects</h3>
           <a
             href="#"
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#006a3d] to-[#006a3d] flex-shrink-0"
             onClick={(e) => {
               e.preventDefault();
               router.push('/projects/all');
@@ -220,8 +221,8 @@ export default function ProjectsPage() {
               <path d="M12.627 8.75H0.5V7.25H12.627L6.93075 1.55375L8 0.5L15.5 8L8 15.5L6.93075 14.4462L12.627 8.75Z" fill="url(#paint0_linear_1309_2563)"/>
               <defs>
                 <linearGradient id="paint0_linear_1309_2563" x1="0.5" y1="8" x2="15.5" y2="8" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF8015"/>
-                  <stop offset="1" stopColor="#FF9D07"/>
+                  <stop stopColor="#006a3d"/>
+                  <stop offset="1" stopColor="#006a3d"/>
                 </linearGradient>
               </defs>
             </svg>
@@ -231,7 +232,7 @@ export default function ProjectsPage() {
           <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 overflow-x-clip">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mr-3"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mr-3"></div>
                 <span className="text-black">Loading your projects...</span>
               </div>
             ) : userProjects.length === 0 ? (

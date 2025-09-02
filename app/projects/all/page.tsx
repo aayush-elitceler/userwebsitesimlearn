@@ -40,7 +40,7 @@ function ProjectCard({
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
             Subject: {project.subject || "Subject"}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-2 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text mb-2 break-words leading-tight">
             {project.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed break-words">
@@ -59,7 +59,7 @@ function ProjectCard({
         </div>
         <div className="mt-auto pt-1">
           <button
-            className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+            className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
             onClick={onDownload}
           >
             Download Project
@@ -158,7 +158,8 @@ export default function AllProjectsPage() {
           console.log("Projects API Response data:", data);
 
           if (data.success && data.data && data.data["user-generated"]) {
-            setUserProjects(data.data["user-generated"]);
+            // Reverse the array to show newest first
+            setUserProjects(data.data["user-generated"].reverse());
           }
         } else {
           console.error("Failed to fetch projects:", res.status, res.statusText);
@@ -200,7 +201,7 @@ export default function AllProjectsPage() {
         {/* Grid layout for all project cards */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mr-3"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mr-3"></div>
             <span className="text-black">Loading your projects...</span>
           </div>
         ) : userProjects.length === 0 ? (
@@ -211,7 +212,7 @@ export default function AllProjectsPage() {
               <div className="text-gray-600 mb-4">Start creating your first project!</div>
               <button
                 onClick={() => router.push("/projects/create")}
-                className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
               >
                 Create Your First Project
               </button>

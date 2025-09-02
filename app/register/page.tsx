@@ -249,7 +249,7 @@ export default function Register() {
         <Card className="w-full max-w-md border-none shadow-none">
           <CardHeader className="text-left mb-4">
             <h1 className="text-[45px] font-bold text-black leading-tight">
-              SIGN UP TO YOUR <span className="text-[#FFA902]">ADVENTURE!</span>
+              SIGN UP TO YOUR <span className="text-[#006a3d]">ADVENTURE!</span>
             </h1>
           </CardHeader>
 
@@ -278,17 +278,17 @@ export default function Register() {
                           className={`w-8 h-8 flex items-center justify-center rounded-full border-2 text-sm font-medium
                           ${
                             isActive
-                              ? "border-[#FF5146] bg-white text-[#FF5146]"
+                              ? "border-[#006a3d] bg-white text-[#006a3d]"
                               : isCompleted
-                              ? "border-[#FF5146] bg-[#FF5146] text-white"
-                              : "border-[#FF5146] bg-white text-[#FF5146]"
+                              ? "border-[#006a3d] bg-[#006a3d] text-white"
+                              : "border-[#006a3d] bg-white text-[#006a3d]"
                           }`}
                         >
                           {stepNumber}
                         </span>
                         <span
                           className={`text-xs mt-2 px-1 ${
-                            isActive || isCompleted ? "text-[#FF5146] font-medium" : "text-gray-600"
+                            isActive || isCompleted ? "text-[#006a3d] font-medium" : "text-gray-600"
                           }`}
                           style={{
                             fontSize: 'clamp(10px, 2vw, 12px)',
@@ -507,7 +507,7 @@ export default function Register() {
                  </label>
                  <label
                    htmlFor="photo"
-                   className="w-48 h-48 border-2 border-dashed border-orange-300 rounded-full flex items-center justify-center cursor-pointer"
+                   className="w-48 h-48 border-2 border-dashed border-green-300 rounded-full flex items-center justify-center cursor-pointer"
                  >
                    {formData.photo ? (
                      <img
@@ -533,7 +533,7 @@ export default function Register() {
                  />
                  <Button
                    variant="outline"
-                   className="mt-4 bg-[#FF5146] text-white hover:bg-red-600 rounded-full px-6"
+                   className="mt-4 bg-[#006a3d] text-white hover:bg-red-600 rounded-full px-6"
                  >
                    Add photo
                  </Button>
@@ -555,7 +555,7 @@ export default function Register() {
                  <Button
                    type="button"
                    onClick={handleNextStep}
-                   className={`bg-gradient-to-r from-orange-400 to-red-400 text-white py-6 px-6 rounded-lg ${step === 1 ? 'w-full' : 'flex-1'}`}
+                   className={`bg-gradient-to-r from-green-700 to-green-900 text-white py-6 px-6 rounded-lg ${step === 1 ? 'w-full' : 'flex-1'}`}
                    disabled={loading}
                  >
                    {loading ? "Loading..." : "Next"}
@@ -565,7 +565,7 @@ export default function Register() {
                 <Button
                   type="button"
                   onClick={handleFinalSubmit}
-                  className="w-full bg-gradient-to-r from-orange-400 to-red-400 text-white py-6 rounded-lg"
+                  className="w-full bg-gradient-to-r from-green-700 to-green-900 text-white py-6 rounded-lg"
                   disabled={loading}
                 >
                   {loading ? "Saving..." : "Sign up"}
@@ -575,7 +575,7 @@ export default function Register() {
 
             <div className="text-center text-sm text-black">
               Already have an account?{" "}
-              <span onClick={() => router.push("/login")} className="text-[#FF6B6B] cursor-pointer">
+              <span onClick={() => router.push("/login")} className="text-[#006a3d] cursor-pointer">
                 Sign In
               </span>
             </div>

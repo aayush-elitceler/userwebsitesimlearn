@@ -60,7 +60,7 @@ export default function ForgotPassword() {
         <Card className="w-full max-w-md border-none shadow-none">
           <CardHeader className="text-left mb-4">
             <h1 className="text-[45px] font-bold text-black leading-tight">
-              FORGOT YOUR <span className="text-[#FFA902]">PASSWORD?</span>
+              FORGOT YOUR <span className="text-[#006a3d]">PASSWORD?</span>
             </h1>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -121,7 +121,7 @@ export default function ForgotPassword() {
               Don’t have an account?{" "}
               <span
                 onClick={() => router.push("/register")}
-                className="text-[#FF6B6B] cursor-pointer"
+                className="text-[#006a3d] cursor-pointer"
               >
                 Sign Up
               </span>

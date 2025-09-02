@@ -537,7 +537,7 @@ export default function AiChatsChatPage() {
         {/* View History Button OUTSIDE colored box */}
         <button
           onClick={handleHistoryClick}
-          className="rounded-full px-3 py-2 bg-[#FFE4B5] border border-[#FF5146] text-[#FF5146] hover:bg-[#FFDAB9] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
+          className="rounded-full px-3 py-2 bg-[#90ee90] border border-[#006a3d] text-[#006a3d] hover:bg-[#87ceeb] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
         >
           <img
             src="/images/history.svg"
@@ -691,14 +691,14 @@ export default function AiChatsChatPage() {
               {suggestions.map((s, i) => (
                 <button
                   key={i}
-                  className="rounded-xl bg-gradient-to-r from-[#FF9F2733] to-[#FF514633] 
+                  className="rounded-xl bg-gradient-to-r from-[#FF9F2733] to-[#006a3d33] 
                  transition font-medium border-none shadow-sm 
                  flex items-center justify-center text-center 
                  w-full h-[110px]"
                   onClick={() => handleSuggestion(s)}
                 >
                   <span
-                    className="bg-gradient-to-r from-[#FF9F27] to-[#FF5146] 
+                    className="bg-gradient-to-r from-[#FF9F27] to-[#006a3d] 
                        bg-clip-text text-transparent font-semibold"
                   >
                     {s}
@@ -732,7 +732,7 @@ export default function AiChatsChatPage() {
                     className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.role === "user"
                         ? "bg-[#DDDDDD] text-[#000000]"
-                        : "bg-[#FFEFD3] text-[#FF5146]"
+                        : "bg-[#FFEFD3] text-[#006a3d]"
                     }`}
                   >
                     <p className="text-sm md:text-base leading-relaxed">
@@ -768,7 +768,7 @@ export default function AiChatsChatPage() {
                   <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                     AI
                   </div>
-                  <div className="bg-[#FFEFD3] text-[#FF5146] rounded-2xl px-4 py-3 opacity-70 shadow-sm">
+                  <div className="bg-[#FFEFD3] text-[#006a3d] rounded-2xl px-4 py-3 opacity-70 shadow-sm">
                     <p className="text-sm md:text-base">Thinking...</p>
                   </div>
                 </div>
@@ -847,7 +847,7 @@ const ChatInputBar = forwardRef(
           autoFocus={autoFocus}
           className={`flex-1 bg-transparent p-3 text-black placeholder-gray-500 focus:outline-none text-sm sm:text-base font-medium transition-all duration-300 ${
             showOnboarding 
-              ? "border-2 border-orange-500 shadow-lg shadow-orange-500/50 rounded-full" 
+              ? "border-2 border-green-700 shadow-lg shadow-orange-500/50 rounded-full" 
               : ""
           }`}
         />

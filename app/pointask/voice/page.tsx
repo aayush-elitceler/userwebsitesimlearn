@@ -866,7 +866,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                     return (
                       <div
                         key={key}
-                        className="px-4 py-3 hover:bg-orange-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-b-0 transition-all duration-150 hover:shadow-sm"
+                        className="px-4 py-3 hover:bg-green-50 cursor-pointer text-sm text-gray-700 border-b border-gray-100 last:border-b-0 transition-all duration-150 hover:shadow-sm"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -911,7 +911,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                 <span className='text-gray-700'>{isProcessing ? 'Processing...' : 'AI Ready'}</span>
               </div>
               <div className='flex items-center gap-2 bg-white/80 px-3 py-1.5 rounded-full'>
-                <div className={`w-2 h-2 rounded-full ${autoSendEnabled ? 'bg-orange-500' : 'bg-gray-500'}`}></div>
+                <div className={`w-2 h-2 rounded-full ${autoSendEnabled ? 'bg-green-700' : 'bg-gray-500'}`}></div>
                 <span className='text-gray-700'>{autoSendEnabled ? 'Auto-send on pause' : 'Manual send'}</span>
               </div>
             </div>
@@ -930,12 +930,12 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                 onClick={() => setAutoSendEnabled(!autoSendEnabled)}
                 className={`px-6 py-2.5 rounded-xl transition-colors flex items-center gap-2 shadow-lg ${
                   autoSendEnabled 
-                    ? 'bg-orange-500 hover:bg-orange-600 text-white' 
+                    ? 'bg-green-700 hover:bg-green-800 text-white' 
                     : 'bg-gray-500 hover:bg-gray-600 text-white'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${autoSendEnabled ? 'bg-white' : ''}`}>
-                  {autoSendEnabled && <div className='w-2 h-2 bg-orange-500 rounded-full'></div>}
+                  {autoSendEnabled && <div className='w-2 h-2 bg-green-700 rounded-full'></div>}
                 </div>
                 Auto-send {autoSendEnabled ? 'ON' : 'OFF'}
               </button>
@@ -1003,8 +1003,8 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                     </span>
                     <div className='flex items-center gap-2'>
                       {!showManualInput && autoSendEnabled && silenceCountdown !== null && !isProcessing && (
-                        <span className='text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full flex items-center gap-1'>
-                          <div className='w-1 h-1 bg-orange-500 rounded-full animate-pulse'></div>
+                        <span className='text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1'>
+                          <div className='w-1 h-1 bg-green-700 rounded-full animate-pulse'></div>
                           Auto-send in {silenceCountdown}s
                         </span>
                       )}
@@ -1029,7 +1029,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                     onClick={() => setAutoSendEnabled(!autoSendEnabled)}
                     className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                       autoSendEnabled 
-                        ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' 
+                        ? 'bg-green-100 text-orange-700 hover:bg-orange-200' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -1111,7 +1111,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                         <span className='text-gray-600 ml-1'>{transcript}</span>
                       )}
                       {isListening && (
-                        <span className='inline-block w-0.5 h-4 bg-orange-500 ml-1 animate-pulse'></span>
+                        <span className='inline-block w-0.5 h-4 bg-green-700 ml-1 animate-pulse'></span>
                       )}
                       {!finalTranscript && !transcript && (
                         <span className='text-gray-400 italic'>
@@ -1140,10 +1140,10 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
         {chatHistory.length > 0 && (
           <div className='max-w-5xl mx-auto pb-40'>
             {/* Chat Header */}
-            <div className='sticky top-0 z-30 bg-gradient-to-r from-orange-50/90 to-red-50/90 backdrop-blur-md border-b border-orange-200/50 rounded-t-2xl p-6 mb-6'>
+            <div className='sticky top-0 z-30 bg-gradient-to-r from-orange-50/90 to-red-50/90 backdrop-blur-md border-b border-green-200/50 rounded-t-2xl p-6 mb-6'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
-                  <div className='w-10 h-10 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center'>
+                  <div className='w-10 h-10 bg-gradient-to-r from-green-700 to-green-900 rounded-full flex items-center justify-center'>
                     <span className='text-white font-bold text-sm'>AI</span>
                   </div>
                   <div>
@@ -1179,7 +1179,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                   {/* AI Avatar & Info */}
                   {msg.role === 'ai' && (
                     <div className='flex flex-col items-center gap-2 flex-shrink-0'>
-                      <div className='w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-red-400 flex items-center justify-center shadow-lg'>
+                      <div className='w-10 h-10 rounded-full bg-gradient-to-r from-green-700 to-green-900 flex items-center justify-center shadow-lg'>
                         <span className='text-white font-bold text-sm'>AI</span>
                       </div>
                       <div className='text-xs text-gray-500 text-center max-w-[60px]'>
@@ -1200,7 +1200,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                       className={`rounded-2xl px-5 py-4 shadow-sm transition-all duration-200 hover:shadow-md ${
                         msg.role === 'user'
                           ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white ml-auto'
-                          : 'bg-white text-gray-800 border border-gray-200 hover:border-orange-200'
+                          : 'bg-white text-gray-800 border border-gray-200 hover:border-green-200'
                       }`}
                     >
                       <div className='prose prose-sm max-w-none'>
@@ -1269,10 +1269,10 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
 
             {/* Session Summary */}
             {chatHistory.length > 5 && (
-              <div className='mt-8 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-200'>
+              <div className='mt-8 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-green-200'>
                 <div className='flex items-center gap-3 mb-3'>
-                  <div className='w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center'>
-                    <svg className='w-4 h-4 text-orange-600' fill='currentColor' viewBox='0 0 20 20'>
+                  <div className='w-8 h-8 bg-green-100 rounded-full flex items-center justify-center'>
+                    <svg className='w-4 h-4 text-green-700' fill='currentColor' viewBox='0 0 20 20'>
                       <path fillRule='evenodd' d='M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z' clipRule='evenodd' />
                     </svg>
                   </div>
@@ -1280,7 +1280,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                 </div>
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm'>
                   <div className='text-center p-3 bg-white/60 rounded-xl'>
-                    <div className='font-bold text-lg text-orange-600'>{chatHistory.length}</div>
+                    <div className='font-bold text-lg text-green-700'>{chatHistory.length}</div>
                     <div className='text-gray-600'>Messages</div>
                   </div>
                   <div className='text-center p-3 bg-white/60 rounded-xl'>

@@ -193,7 +193,7 @@ function QuizCard({
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
             Difficulty: {quiz.difficulty?.charAt(0).toUpperCase() + quiz.difficulty?.slice(1)}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-transparent bg-clip-text mb-2 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text mb-2 break-words leading-tight">
             {quiz.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
@@ -260,14 +260,14 @@ function QuizCard({
         <div className="mt-auto pt-1">
           {previous ? (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={() => router.push(`/exams/reports/${quiz.id}`)}
             >
               View Report
             </button>
           ) : (
             <button
-              className="bg-gradient-to-r from-[#FFB31F] to-[#FF4949] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={() => router.push(`/exams/take/${quiz.id}`)}
             >
               Take Exam
@@ -372,8 +372,9 @@ export default function QuizesPage() {
         if (data.success && data.data) {
           const userGen = data.data.userGeneratedExams || {};
           const teacherGen = data.data.teacherAssignedExams || {};
-          setUserExams([...(userGen.upcoming || []), ...(userGen.previous || [])]);
-          setTeacherExams([...(teacherGen.upcoming || []), ...(teacherGen.previous || [])]);
+          // Reverse the arrays to show newest first
+          setUserExams([...(userGen.upcoming || []), ...(userGen.previous || [])].reverse());
+          setTeacherExams([...(teacherGen.upcoming || []), ...(teacherGen.previous || [])].reverse());
         }
       } catch (e) {
         // handle error
@@ -403,15 +404,15 @@ export default function QuizesPage() {
               e.preventDefault();
               router.push('/exams/generate/all');
             }}
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#FF8015] to-[#FF9D07] flex-shrink-0 bg-transparent border-none cursor-pointer"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-[#006a3d] to-[#006a3d] flex-shrink-0 bg-transparent border-none cursor-pointer"
           >
             View all 
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12.627 8.75H0.5V7.25H12.627L6.93075 1.55375L8 0.5L15.5 8L8 15.5L6.93075 14.4462L12.627 8.75Z" fill="url(#paint0_linear_1309_2561)"/>
               <defs>
                 <linearGradient id="paint0_linear_1309_2561" x1="0.5" y1="8" x2="15.5" y2="8" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF8015"/>
-                  <stop offset="1" stopColor="#FF9D07"/>
+                  <stop stopColor="#006a3d"/>
+                  <stop offset="1" stopColor="#006a3d"/>
                 </linearGradient>
               </defs>
             </svg>

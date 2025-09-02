@@ -135,16 +135,16 @@ export default function GenerateQuizPage() {
 
                 {/* Quiz Details */}
                 <div className='flex flex-col gap-3 mb-8'>
-                  <div className='flex items-center gap-3 bg-orange-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <circle cx='12' cy='12' r='10'/>
                       <polyline points='12,6 12,12 16,14'/>
                     </svg>
                     <span className='text-black font-medium'>Takes {timer} mins</span>
                   </div>
                   
-                  <div className='flex items-center gap-3 bg-orange-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/>
                       <polyline points='14,2 14,8 20,8'/>
                       <line x1='16' y1='13' x2='8' y2='13'/>
@@ -154,8 +154,8 @@ export default function GenerateQuizPage() {
                     <span className='text-black font-medium'>{numQuestions} Questions</span>
                   </div>
                   
-                  <div className='flex items-center gap-3 bg-orange-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M9 12l2 2 4-4'/>
                       <path d='M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z'/>
                       <path d='M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z'/>
@@ -187,7 +187,7 @@ export default function GenerateQuizPage() {
                 <button
                   className='text-white cursor-pointer rounded-lg px-8 py-3 font-semibold shadow hover:opacity-90 transition'
                   style={{
-                    background: 'linear-gradient(90deg, #FF9F27 0%, #FF5146 100%)'
+                    background: 'linear-gradient(90deg, #FF9F27 0%, #006a3d 100%)'
                   }}
                   onClick={() => {
                     setShowModal(false);
@@ -218,7 +218,7 @@ export default function GenerateQuizPage() {
                 id="grade"
                 value={grade}
                 onChange={(e) => setGrade(Number(e.target.value))}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 {Array.from({length: 12}, (_, i) => i + 1).map((g) => (
@@ -242,7 +242,7 @@ export default function GenerateQuizPage() {
                 id="persona"
                 value={persona}
                 onChange={(e) => setPersona(e.target.value)}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 <option value='teacher'>Teacher</option>
@@ -262,7 +262,7 @@ export default function GenerateQuizPage() {
               <select
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className='w-full rounded px-3 py-2 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                className='w-full rounded px-3 py-2 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
                 required
               >
                 <option value="">Select Subject</option>
@@ -287,7 +287,7 @@ export default function GenerateQuizPage() {
                 id="difficulty"
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 {difficulties.map((d) => (
@@ -313,7 +313,7 @@ export default function GenerateQuizPage() {
                 id="numQuestions"
                 value={numQuestions}
                 onChange={(e) => setNumQuestions(Number(e.target.value))}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 {numQuestionsOptions.map((n) => (
@@ -337,7 +337,7 @@ export default function GenerateQuizPage() {
                 id="timer"
                 value={timer}
                 onChange={(e) => setTimer(Number(e.target.value))}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-orange-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 {timeLimits.map((t) => (

@@ -26,11 +26,11 @@ export default function VoiceOverlay({ isListening, onStop, transcript = "" }: V
             }}
           >
             {/* Pulsing rings */}
-            <div className="absolute inset-0 rounded-full animate-ping opacity-20 bg-gradient-to-r from-orange-400 to-red-400"></div>
-            <div className="absolute inset-2 rounded-full animate-ping opacity-15 bg-gradient-to-r from-red-400 to-orange-400" style={{ animationDelay: "0.5s" }}></div>
+            <div className="absolute inset-0 rounded-full animate-ping opacity-20 bg-gradient-to-r from-green-600 to-green-900"></div>
+            <div className="absolute inset-2 rounded-full animate-ping opacity-15 bg-gradient-to-r from-red-400 to-green-600" style={{ animationDelay: "0.5s" }}></div>
             
             {/* Microphone icon */}
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center relative z-10">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-600 to-green-700 flex items-center justify-center relative z-10">
               <svg
                 width="32"
                 height="32"
@@ -53,7 +53,7 @@ export default function VoiceOverlay({ isListening, onStop, transcript = "" }: V
             {transcript ? (
               <p className="text-white text-lg leading-relaxed">
                 {transcript}
-                <span className="inline-block w-0.5 h-6 bg-orange-500 ml-1 animate-pulse" />
+                <span className="inline-block w-0.5 h-6 bg-green-600 ml-1 animate-pulse" />
               </p>
             ) : (
               <p className="text-white/60 text-lg italic">

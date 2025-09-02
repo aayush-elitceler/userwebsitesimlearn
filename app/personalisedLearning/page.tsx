@@ -174,7 +174,7 @@ function PersonalisedLearningPage() {
     return (
       <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500 mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-green-700 mx-auto mb-4'></div>
           <p className='text-gray-600'>Loading your personalized learning data...</p>
         </div>
       </div>
@@ -236,7 +236,7 @@ function PersonalisedLearningPage() {
 
         .custom-scrollbar {
           scrollbar-width: thin;
-          scrollbar-color: #FF9E27 #f1f1f1;
+          scrollbar-color: #006a3d #f1f1f1;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -249,12 +249,12 @@ function PersonalisedLearningPage() {
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: linear-gradient(180deg, #FF9E27, #FF7A00);
+          background: linear-gradient(180deg, #006a3d, #006a3d);
           border-radius: 10px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(180deg, #FF7A00, #FF5500);
+          background: linear-gradient(180deg, #006a3d, #006a3d);
         }
       `}</style>
       <div className='min-h-screen bg-gray-50 p-6'>
@@ -290,7 +290,7 @@ function PersonalisedLearningPage() {
                     topProgressItems.map((item, index) => (
                       <div 
                         key={item.topicId} 
-                        className='bg-[#FF9E2714] rounded-lg p-4 hover:bg-[#FF9E2725] transition-all duration-300'
+                        className='bg-[#006a3d14] rounded-lg p-4 hover:bg-[#006a3d25] transition-all duration-300'
                         style={{ 
                           animationDelay: `${index * 100}ms`,
                           opacity: 0,
@@ -307,14 +307,14 @@ function PersonalisedLearningPage() {
                               className='h-3 w-full bg-gray-200'
                             />
                           </div>
-                          <span className='text-sm font-medium text-orange-600'>
+                          <span className='text-sm font-medium text-green-700'>
                             {Number(item.mastery) || 0}% mastered
                           </span>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className='bg-[#FF9E2714] rounded-lg p-4'>
+                    <div className='bg-[#006a3d14] rounded-lg p-4'>
                       <div className='mb-3'>
                         <h3 className='font-semibold text-gray-800 text-base mb-2'>
                           No progress data available
@@ -322,7 +322,7 @@ function PersonalisedLearningPage() {
                         <div className='w-full mb-2'>
                           <Progress value={0} className='h-3 w-full bg-gray-200' />
                         </div>
-                        <span className='text-sm font-medium text-orange-600'>
+                        <span className='text-sm font-medium text-green-700'>
                           0% mastered
                         </span>
                       </div>
@@ -344,7 +344,7 @@ function PersonalisedLearningPage() {
                 </p>
               </CardHeader>
               <CardContent className='p-6'>
-                <div className='bg-[#FF9E2714] rounded-lg p-4'>
+                <div className='bg-[#006a3d14] rounded-lg p-4'>
                   <div className='mb-3'>
                     <h3 className='font-semibold text-gray-800 text-base mb-2'>
                       {data?.microGoal?.title || 'Complete today\'s learning challenge'}
@@ -352,7 +352,7 @@ function PersonalisedLearningPage() {
                     <div className='w-full mb-2'>
                       <Progress value={data?.microGoal?.completion || 0} className='h-3 w-full bg-gray-200' />
                     </div>
-                    <span className='text-sm font-medium text-orange-600'>
+                    <span className='text-sm font-medium text-green-700'>
                       {data?.microGoal?.completion || 0}%
                     </span>
                   </div>
@@ -393,7 +393,7 @@ function PersonalisedLearningPage() {
                   data.recommendedTopics.map((topic, index) => (
                     <div 
                       key={topic.topicId} 
-                      className='flex items-center justify-between p-4 bg-[#FF9E2714] rounded-lg transition-all duration-300 hover:bg-[#FF9E2725] hover:scale-[1.02] hover:shadow-md'
+                      className='flex items-center justify-between p-4 bg-[#006a3d14] rounded-lg transition-all duration-300 hover:bg-[#006a3d25] hover:scale-[1.02] hover:shadow-md'
                       style={{ 
                         animationDelay: `${index * 150}ms`,
                         opacity: 0,
@@ -404,11 +404,11 @@ function PersonalisedLearningPage() {
                         <h3 className='font-medium text-gray-900 text-sm leading-tight'>
                           {topic.subject || 'Unknown Subject'} - {topic.concept || 'Unknown Concept'}
                         </h3>
-                        <p className='text-sm text-orange-600'>{Number(topic.mastery) || 0}% mastered</p>
+                        <p className='text-sm text-green-700'>{Number(topic.mastery) || 0}% mastered</p>
                       </div>
                       <Button
                         onClick={() => handleImproveClick(topic.subject || 'Unknown', topic.concept || 'Unknown')}
-                        className='cursor-pointer point-ask-gradient hover:bg-orange-600 text-white text-sm px-4 py-2'
+                        className='cursor-pointer point-ask-gradient hover:bg-green-800 text-white text-sm px-4 py-2'
                       >
                         {topic.action || 'Improve'}
                       </Button>
@@ -417,16 +417,16 @@ function PersonalisedLearningPage() {
                 ) : (
                   <>
                     {/* Fallback content */}
-                    <div className='flex items-center justify-between p-4 bg-[#FF9E2714] rounded-lg'>
+                    <div className='flex items-center justify-between p-4 bg-[#006a3d14] rounded-lg'>
                       <div>
                         <h3 className='font-medium text-gray-900'>
                           No recommendations available
                         </h3>
-                        <p className='text-sm text-orange-600'>Keep learning to get personalized recommendations</p>
+                        <p className='text-sm text-green-700'>Keep learning to get personalized recommendations</p>
                       </div>
                       <Button
                         onClick={() => handleImproveClick('General', 'Learning')}
-                        className='cursor-pointer point-ask-gradient hover:bg-orange-600 text-white'
+                        className='cursor-pointer point-ask-gradient hover:bg-green-800 text-white'
                       >
                         Explore
                       </Button>
@@ -449,7 +449,7 @@ function PersonalisedLearningPage() {
               </CardHeader>
               <CardContent className='space-y-3'>
                 <Button
-                  className='cursor-pointer w-full point-ask-gradient hover:bg-orange-600 text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-lg transform'
+                  className='cursor-pointer w-full point-ask-gradient hover:bg-green-800 text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-lg transform'
                   onClick={handlePracticeSetsClick}
                   style={{ 
                     opacity: 0,

@@ -132,7 +132,7 @@ export default function AIMessage({ text }: AIMessageProps) {
             key={index}
             className={`${
               isSpeaking && currentWordIndex === index
-                ? "bg-orange-200 text-orange-800 rounded px-1"
+                ? "bg-green-200 text-green-800 rounded px-1"
                 : ""
             } transition-all duration-150`}
           >
@@ -210,15 +210,15 @@ export default function AIMessage({ text }: AIMessageProps) {
           </div>
 
           {/* Speaking indicator */}
-          <div className="flex items-center gap-2 text-xs text-orange-400">
+          <div className="flex items-center gap-2 text-xs text-green-600">
             <div className="flex gap-1">
-              <div className="w-1 h-3 bg-orange-400 rounded animate-pulse"></div>
+              <div className="w-1 h-3 bg-green-600 rounded animate-pulse"></div>
               <div
-                className="w-1 h-3 bg-orange-400 rounded animate-pulse"
+                className="w-1 h-3 bg-green-600 rounded animate-pulse"
                 style={{ animationDelay: "0.2s" }}
               ></div>
               <div
-                className="w-1 h-3 bg-orange-400 rounded animate-pulse"
+                className="w-1 h-3 bg-green-600 rounded animate-pulse"
                 style={{ animationDelay: "0.4s" }}
               ></div>
             </div>
