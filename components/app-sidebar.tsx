@@ -144,7 +144,7 @@ const projectSubRoutes = [
 
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
-  const logoUrl = '/logo2.png';
+  const logoUrl = '/logo.png';
 
   const [aiOpen, setAiOpen] = useState(false);
   const [pointOpen, setPointOpen] = useState(false);
@@ -605,7 +605,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 <div className="">
                   <Link href="/">
                   <Image
-                    src="/logo2.png"
+                    src="/logo.png"
                     alt="Logo"
                     width={180}
                     height={70}
