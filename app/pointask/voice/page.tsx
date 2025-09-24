@@ -39,6 +39,9 @@ export default function ScreenRecorderWithAI() {
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const latestTranscriptRef = useRef<{final: string, interim: string}>({final: '', interim: ''});
   const processingScheduledRef = useRef<boolean>(false);
+  const recognitionRunningRef = useRef<boolean>(false);
+  const recognitionStartingRef = useRef<boolean>(false);
+  const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [finalTranscript, setFinalTranscript] = useState('');
@@ -113,12 +116,15 @@ export default function ScreenRecorderWithAI() {
       recognitionRef.current.onstart = () => {
         console.log('🎤 Speech recognition started');
         setIsListening(true);
+        recognitionRunningRef.current = true;
+        recognitionStartingRef.current = false;
       };
 
       // Event listener for when speech ends (silence detected)
       recognitionRef.current.onspeechend = () => {
         console.log('🔇 Silence detected. Recognition will end.');
         setIsListening(false);
+        recognitionRunningRef.current = false;
       };
 
       recognitionRef.current.onresult = (event: any) => {
@@ -183,6 +189,8 @@ export default function ScreenRecorderWithAI() {
       recognitionRef.current.onend = () => {
         console.log('🔇 Speech recognition ended');
         setIsListening(false);
+        recognitionRunningRef.current = false;
+        recognitionStartingRef.current = false;
         
         // Clear silence timer and countdown since recognition ended
         if (silenceTimerRef.current) {
@@ -211,6 +219,8 @@ export default function ScreenRecorderWithAI() {
       recognitionRef.current.onerror = (event: any) => {
         console.error('🔇 Speech recognition error:', event.error);
         setIsListening(false);
+        recognitionRunningRef.current = false;
+        recognitionStartingRef.current = false;
         
         // Clear silence timer and countdown on error
         if (silenceTimerRef.current) {
@@ -231,17 +241,33 @@ export default function ScreenRecorderWithAI() {
               restartSpeechRecognition();
             }
           }, 1000);
+        } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          console.log('🚫 Microphone permission denied or blocked.');
+          setError('Microphone access is blocked. Please allow microphone permissions in your browser settings and reload.');
         } else if (event.error === 'network' || event.error === 'audio-capture' || event.error === 'aborted') {
-          console.log('🔄 Restarting after recoverable error...');
+          console.log('🔄 Restarting after recoverable error (backoff)...');
           setTimeout(() => {
             if (isRecording && !isProcessing && autoSendEnabled) {
               restartSpeechRecognition();
             }
-          }, 1500);
+          }, 3000);
         } else {
           console.log('❌ Speech recognition stopped due to unrecoverable error:', event.error);
         }
       };
+    } else {
+      // Unsupported environment: show actionable error
+      const hasWindow = typeof window !== 'undefined';
+      const hostname = hasWindow ? (window as any).location?.hostname : '';
+      const isLocalhost = hasWindow && (/^(localhost|127\.0\.0\.1)$/).test(hostname || '');
+      const isSecure = hasWindow ? Boolean((window as any).isSecureContext) : false;
+      const needsHttps = !isSecure && !isLocalhost;
+      setError(
+        needsHttps
+          ? 'Voice requires a secure (https) connection. Please use https or localhost.'
+          : 'Voice recognition is not supported in this browser. Please use Chrome/Edge.'
+      );
+      setShowManualInput(true);
     }
 
     return () => {
@@ -260,6 +286,15 @@ export default function ScreenRecorderWithAI() {
       setError(null);
       console.log('🎥 Starting Screen Recording...');
 
+      // Start speech recognition immediately within the user gesture
+      // and proactively request mic permission to surface the browser prompt
+      try {
+        startSpeechRecognition();
+        navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => {});
+      } catch (e) {
+        console.log('Speech start attempt failed (continuing):', e);
+      }
+
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false // Disable audio capture to prevent capturing AI speech
@@ -267,8 +302,6 @@ export default function ScreenRecorderWithAI() {
 
       setScreenStream(stream);
       setIsRecording(true);
-
-      startSpeechRecognition();
 
       console.log('✅ Screen Recording Active');
     } catch (err: any) {
@@ -286,57 +319,76 @@ export default function ScreenRecorderWithAI() {
       console.log('⏹️ Skipping restart - not recording or processing');
       return;
     }
-    
-    console.log('🔄 Attempting to restart speech recognition...');
-    
-    // Stop current recognition if running
-    if (recognitionRef.current && isListening) {
+
+    // Debounce restarts
+    if (restartTimeoutRef.current) {
+      clearTimeout(restartTimeoutRef.current);
+    }
+
+    restartTimeoutRef.current = setTimeout(() => {
+      if (!isRecording || isProcessing) return;
+      if (!recognitionRef.current) return;
+
+      // If it's already running or starting, skip
+      if (recognitionRunningRef.current || recognitionStartingRef.current) {
+        console.log('⏭️ Skip restart: recognition already active/starting');
+        return;
+      }
+
+      console.log('🔄 Attempting to restart speech recognition...');
+
+      // Ensure stopped before starting
       try {
         recognitionRef.current.stop();
-      } catch (err) {
-        console.log('Stop recognition error (ignored):', err);
-      }
-    }
-    
-    setIsListening(false);
-    
-    // Start after a short delay to ensure cleanup
-    setTimeout(() => {
-      if (isRecording && !isProcessing && recognitionRef.current) {
+      } catch {}
+
+      setIsListening(false);
+      recognitionRunningRef.current = false;
+      recognitionStartingRef.current = true;
+
+      setTimeout(() => {
         try {
-          recognitionRef.current.start();
+          recognitionRef.current?.start();
           console.log('✅ Speech recognition restarted successfully');
         } catch (error: any) {
-          console.log('⚠️ Failed to restart speech recognition:', error.message);
-          
-          // For common errors, try again after a longer delay
-          if (error.message.includes('already started') || error.message.includes('not-allowed')) {
+          console.log('⚠️ Failed to restart speech recognition:', error?.message || error);
+          recognitionStartingRef.current = false;
+
+          // Throttle retries for transient states
+          if (
+            typeof error?.message === 'string' &&
+            (error.message.includes('already started') || error.message.includes('service not allowed'))
+          ) {
             setTimeout(() => {
-              if (isRecording && !isProcessing) {
-                restartSpeechRecognition();
-              }
-            }, 2000);
+              if (isRecording && !isProcessing) restartSpeechRecognition();
+            }, 1500);
           }
         }
-      }
-    }, 500);
+      }, 300);
+    }, 300);
   };
 
   // Start speech recognition
   const startSpeechRecognition = () => {
-    if (recognitionRef.current && !isListening) {
-      try {
-        setTranscript('');
-        setFinalTranscript('');
-        latestTranscriptRef.current = {final: '', interim: ''};
-        recognitionRef.current.start();
-        setIsListening(true);
-        console.log('🎤 Speech recognition started');
-      } catch (error) {
-        console.log('ℹ️ Speech recognition start prevented:', error);
-        // If already running, just set listening state
-        setIsListening(true);
-      }
+    if (!recognitionRef.current) return;
+    if (recognitionRunningRef.current || recognitionStartingRef.current) {
+      console.log('⏭️ Skip start: recognition already active/starting');
+      return;
+    }
+    try {
+      setTranscript('');
+      setFinalTranscript('');
+      latestTranscriptRef.current = { final: '', interim: '' };
+      recognitionStartingRef.current = true;
+      recognitionRef.current.start();
+      setIsListening(true);
+      console.log('🎤 Speech recognition started');
+    } catch (error: any) {
+      console.log('ℹ️ Speech recognition start prevented:', error?.message || error);
+      // If already started, keep state consistent
+      setIsListening(true);
+      recognitionStartingRef.current = false;
+      recognitionRunningRef.current = true;
     }
   };
 

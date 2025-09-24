@@ -5,7 +5,7 @@ import SpruceBall from "@/components/SpruceBall";
 import HistorySlider from "@/components/HistorySlider";
 import { fetchHistory, HistoryItem, saveHistory } from "@/lib/historyService";
 import type { ChatMessage } from "@/lib/historyService";
-import { ChevronDownIcon } from "lucide-react";
+import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 import Cookies from "js-cookie";
 
 // --- Constants & Types ---
@@ -32,12 +32,12 @@ const styles = [
     label: "Professor",
     value: "professor",
     icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
+      <span className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
           width="24"
           height="24"
           fill="none"
-          stroke="#fff"
+          stroke="currentColor"
           strokeWidth="2"
           viewBox="0 0 24 24"
         >
@@ -53,12 +53,12 @@ const styles = [
     label: "Friend",
     value: "friend",
     icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
+      <span className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
           width="24"
           height="24"
           fill="none"
-          stroke="#fff"
+          stroke="currentColor"
           strokeWidth="2"
           viewBox="0 0 24 24"
         >
@@ -71,11 +71,6 @@ const styles = [
 ];
 
 type StyleOption = "professor" | "friend";
-type UiStyleOption = (typeof styles)[0];
-type OptionType = string | UiStyleOption;
-
-const isUiStyleOption = (opt: OptionType): opt is UiStyleOption =>
-  typeof opt === "object" && "label" in opt && "value" in opt;
 
 export default function VoicebaseRealtimePage() {
   // --- State Management ---
@@ -87,8 +82,10 @@ export default function VoicebaseRealtimePage() {
   // Diarization states
   const [isUserSpeaking, setIsUserSpeaking] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-  const [currentSpeaker, setCurrentSpeaker] = useState<"user" | "ai" | "none">("none");
-  
+  const [currentSpeaker, setCurrentSpeaker] = useState<"user" | "ai" | "none">(
+    "none"
+  );
+
   // Transcript display states
   const [showTranscript, setShowTranscript] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -111,7 +108,7 @@ export default function VoicebaseRealtimePage() {
   const sessionIdRef = useRef<string | null>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  
+
   // Audio analysis refs for diarization
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -182,50 +179,55 @@ export default function VoicebaseRealtimePage() {
   }, [showOnboarding, onboardingStep, selectedGrade, selectedStyle]);
 
   // --- Audio Analysis for User Speech Detection ---
-  const setupAudioAnalysis = useCallback((stream: MediaStream) => {
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      const microphone = audioContext.createMediaStreamSource(stream);
-      
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      microphone.connect(analyser);
-      
-      audioContextRef.current = audioContext;
-      analyserRef.current = analyser;
-      
-      const detectSpeech = () => {
-        if (!analyserRef.current) return;
-        
-        const bufferLength = analyserRef.current.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        analyserRef.current.getByteFrequencyData(dataArray);
-        
-        // Calculate average volume
-        const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
-        const threshold = 20; // Adjust this threshold as needed
-        
-        const speaking = average > threshold;
-        setIsUserSpeaking(speaking);
-        
-        // Update current speaker
-        if (speaking && !isAiSpeaking) {
-          setCurrentSpeaker("user");
-        } else if (isAiSpeaking && !speaking) {
-          setCurrentSpeaker("ai");
-        } else if (!speaking && !isAiSpeaking) {
-          setCurrentSpeaker("none");
-        }
-        
-        animationFrameRef.current = requestAnimationFrame(detectSpeech);
-      };
-      
-      detectSpeech();
-    } catch (error) {
-      console.error("Error setting up audio analysis:", error);
-    }
-  }, [isAiSpeaking]);
+  const setupAudioAnalysis = useCallback(
+    (stream: MediaStream) => {
+      try {
+        const audioContext = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const microphone = audioContext.createMediaStreamSource(stream);
+
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.8;
+        microphone.connect(analyser);
+
+        audioContextRef.current = audioContext;
+        analyserRef.current = analyser;
+
+        const detectSpeech = () => {
+          if (!analyserRef.current) return;
+
+          const bufferLength = analyserRef.current.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          analyserRef.current.getByteFrequencyData(dataArray);
+
+          // Calculate average volume
+          const average =
+            dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+          const threshold = 20; // Adjust this threshold as needed
+
+          const speaking = average > threshold;
+          setIsUserSpeaking(speaking);
+
+          // Update current speaker
+          if (speaking && !isAiSpeaking) {
+            setCurrentSpeaker("user");
+          } else if (isAiSpeaking && !speaking) {
+            setCurrentSpeaker("ai");
+          } else if (!speaking && !isAiSpeaking) {
+            setCurrentSpeaker("none");
+          }
+
+          animationFrameRef.current = requestAnimationFrame(detectSpeech);
+        };
+
+        detectSpeech();
+      } catch (error) {
+        console.error("Error setting up audio analysis:", error);
+      }
+    },
+    [isAiSpeaking]
+  );
 
   const cleanupAudioAnalysis = useCallback(() => {
     if (animationFrameRef.current) {
@@ -248,24 +250,24 @@ export default function VoicebaseRealtimePage() {
       const voice = selectedStyle === "professor" ? "echo" : "alloy";
       const instructions = `You are a helpful AI assistant. You are speaking to a ${selectedGrade} learner. Adapt your language and complexity for that grade level. Your current persona is a ${selectedStyle}. When responding as a professor, be more structured and authoritative. When responding as a friend, be more encouraging and simple. Keep responses concise and conversational.`;
       console.log(`🚀 Sending update: Style=${selectedStyle}, Voice=${voice}`);
-      
+
       const sessionUpdate = {
         type: "session.update",
-        session: { 
-          voice, 
+        session: {
+          voice,
           instructions,
           input_audio_transcription: {
-            model: "whisper-1"
+            model: "whisper-1",
           },
           turn_detection: {
             type: "server_vad",
             threshold: 0.5,
             prefix_padding_ms: 300,
-            silence_duration_ms: 200
-          }
-        }
+            silence_duration_ms: 200,
+          },
+        },
       };
-      
+
       dataChannelRef.current.send(JSON.stringify(sessionUpdate));
     } catch (err) {
       console.error("🔴 Failed to send session update:", err);
@@ -306,8 +308,8 @@ export default function VoicebaseRealtimePage() {
     setStatus("requesting-session");
     setIsDataChannelOpen(false);
     setTranscript([]);
-      const authCookie = Cookies.get('auth');
-      let token: string | undefined;
+    const authCookie = Cookies.get("auth");
+    let token: string | undefined;
 
     if (authCookie) {
       const parsedAuth = JSON.parse(authCookie);
@@ -352,11 +354,15 @@ export default function VoicebaseRealtimePage() {
           style: selectedStyle,
         }),
       });
-if (!sessionRes.ok) {
-    const errorDetails = await sessionRes.json();
-    console.error("Backend error details:", errorDetails);
-    throw new Error(`Failed to create session with the backend: ${errorDetails.details || sessionRes.statusText}`);
-}
+      if (!sessionRes.ok) {
+        const errorDetails = await sessionRes.json();
+        console.error("Backend error details:", errorDetails);
+        throw new Error(
+          `Failed to create session with the backend: ${
+            errorDetails.details || sessionRes.statusText
+          }`
+        );
+      }
       const session = await sessionRes.json();
 
       if (session?.data?.sessionId) setSessionId(session.data.sessionId);
@@ -371,10 +377,10 @@ if (!sessionRes.ok) {
         },
       });
       localStreamRef.current = mic;
-      
+
       // Setup audio analysis for speech detection
       setupAudioAnalysis(mic);
-      
+
       setStatus("creating-peer");
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
@@ -395,22 +401,22 @@ if (!sessionRes.ok) {
       dc.onopen = () => {
         setIsDataChannelOpen(true);
         console.log("🔗 Data channel opened");
-        
+
         // Enable transcription when data channel opens
         try {
           const enableTranscription = {
             type: "session.update",
             session: {
               input_audio_transcription: {
-                model: "whisper-1"
+                model: "whisper-1",
               },
               turn_detection: {
                 type: "server_vad",
                 threshold: 0.5,
                 prefix_padding_ms: 300,
-                silence_duration_ms: 200
-              }
-            }
+                silence_duration_ms: 200,
+              },
+            },
           };
           console.log("🎤 Enabling transcription...");
           dc.send(JSON.stringify(enableTranscription));
@@ -445,7 +451,10 @@ if (!sessionRes.ok) {
 
           // USER SPEECH TRANSCRIPTION - Multiple patterns
           // Pattern 1: Direct transcription completion
-          if (type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
+          if (
+            type === "conversation.item.input_audio_transcription.completed" &&
+            msg.transcript
+          ) {
             const userText = msg.transcript.trim();
             if (userText) {
               console.log("👤 User (pattern 1):", userText);
@@ -470,8 +479,13 @@ if (!sessionRes.ok) {
             if (userText) {
               console.log("👤 User (pattern 3):", userText);
               // Check for duplicates
-              const lastMessage = messagesRef.current[messagesRef.current.length - 1];
-              if (!lastMessage || lastMessage.text !== userText || lastMessage.role !== "user") {
+              const lastMessage =
+                messagesRef.current[messagesRef.current.length - 1];
+              if (
+                !lastMessage ||
+                lastMessage.text !== userText ||
+                lastMessage.role !== "user"
+              ) {
                 messagesRef.current.push({ role: "user", text: userText });
                 setTranscript([...messagesRef.current]);
               }
@@ -479,7 +493,11 @@ if (!sessionRes.ok) {
           }
 
           // Pattern 4: Streaming user transcription with delta
-          if (type.includes("input") && type.includes("transcription") && msg.delta) {
+          if (
+            type.includes("input") &&
+            type.includes("transcription") &&
+            msg.delta
+          ) {
             if (!assistantSpeakingRef.current) {
               userTranscriptBufferRef.current += msg.delta;
               console.log("👤 User delta:", msg.delta);
@@ -487,7 +505,11 @@ if (!sessionRes.ok) {
           }
 
           // Pattern 5: Finalize user transcription
-          if (type.includes("input") && type.includes("transcription") && type.includes("done")) {
+          if (
+            type.includes("input") &&
+            type.includes("transcription") &&
+            type.includes("done")
+          ) {
             const userText = userTranscriptBufferRef.current.trim();
             if (userText) {
               console.log("👤 User final:", userText);
@@ -500,10 +522,19 @@ if (!sessionRes.ok) {
           // Pattern 6: General transcript field check
           if (msg.transcript && typeof msg.transcript === "string") {
             const text = msg.transcript.trim();
-            if (text && !type.includes("response") && !type.includes("output")) {
+            if (
+              text &&
+              !type.includes("response") &&
+              !type.includes("output")
+            ) {
               console.log("👤 User (general):", text);
-              const lastMessage = messagesRef.current[messagesRef.current.length - 1];
-              if (!lastMessage || lastMessage.text !== text || lastMessage.role !== "user") {
+              const lastMessage =
+                messagesRef.current[messagesRef.current.length - 1];
+              if (
+                !lastMessage ||
+                lastMessage.text !== text ||
+                lastMessage.role !== "user"
+              ) {
                 messagesRef.current.push({ role: "user", text });
                 setTranscript([...messagesRef.current]);
               }
@@ -525,7 +556,11 @@ if (!sessionRes.ok) {
             type === "response.completed" ||
             type === "response.audio_transcript.done"
           ) {
-            const aiText = (msg.transcript || aiTextBufferRef.current || "").trim();
+            const aiText = (
+              msg.transcript ||
+              aiTextBufferRef.current ||
+              ""
+            ).trim();
             if (aiText) {
               console.log("🤖 AI response:", aiText);
               messagesRef.current.push({ role: "ai", text: aiText });
@@ -533,7 +568,6 @@ if (!sessionRes.ok) {
             }
             aiTextBufferRef.current = "";
           }
-
         } catch (e) {
           console.error("Failed to parse server message:", e);
         }
@@ -583,12 +617,12 @@ if (!sessionRes.ok) {
     setStatus("stopping");
     setTranscript([...messagesRef.current]);
 
-  // Optional: Log to verify messages
-  console.log("💬 Final Transcript:", messagesRef.current);
-    
+    // Optional: Log to verify messages
+    console.log("💬 Final Transcript:", messagesRef.current);
+
     // Cleanup audio analysis
     cleanupAudioAnalysis();
-    
+
     if (pcRef.current) pcRef.current.close();
     if (localStreamRef.current)
       localStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -650,123 +684,51 @@ if (!sessionRes.ok) {
   // --- Floating Selectors UI Component ---
   const FloatingSelectors = (
     <div>
-      {/* Wrapper for selectors */}
-      <div className="fixed z-[60] flex flex-row gap-[10px] items-center" style={{ top: "40px", right: "8rem" }} onClick={(e) => e.stopPropagation()}>
-        
-        {/* Class & Persona in colored background */}
-        <div
-          className={`flex flex-row gap-3 p-4 rounded-xl transition-all duration-300 ${
-            showOnboarding ? "z-[60] shadow-2xl" : ""
-          }`}
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(255, 159, 39, 0.08) 0%, rgba(255, 81, 70, 0.08) 100%)",
+      <div
+        className="fixed z-[60] flex flex-row gap-[10px] items-center"
+        style={{ top: "40px", right: "8rem" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <TwoSelectPill
+          className={`${showOnboarding ? "z-[60]" : ""}`}
+          left={{
+            label: "Grade",
+            displayValue: selectedGrade,
+            options: grades,
+            showDropdown: showGradeDropdown,
+            onToggle: () => {
+              setShowGradeDropdown((v) => !v);
+              setShowStyleDropdown(false);
+            },
+            onSelect: (val: string) => {
+              setSelectedGrade(val);
+              setShowGradeDropdown(false);
+            },
           }}
-        >
-          {[
-            {
-              label: "Class",
-              value: selectedGrade,
-              onClick: () => {
-                setShowGradeDropdown((v) => !v);
-                setShowStyleDropdown(false);
-              },
-              options: grades,
-              showDropdown: showGradeDropdown,
-              onSelect: (val: string) => {
-                setSelectedGrade(val);
-                setShowGradeDropdown(false);
-              },
+          right={{
+            label: "Persona",
+            displayValue: selectedStyle,
+            options: styles as unknown as OptionWithLabel[],
+            showDropdown: showStyleDropdown,
+            onToggle: () => {
+              setShowStyleDropdown((v) => !v);
+              setShowGradeDropdown(false);
             },
-            {
-              label: "Persona",
-              value: selectedStyle,
-              onClick: () => {
-                setShowStyleDropdown((v) => !v);
-                setShowGradeDropdown(false);
-              },
-              options: styles,
-              showDropdown: showStyleDropdown,
-              onSelect: (val: string) => {
-                setSelectedStyle(val);
-                setShowStyleDropdown(false);
-              },
-              renderOption: (style: UiStyleOption) => (
-                <div className="flex items-center gap-3 cursor-pointer">
-                  {style.label}
-                </div>
-              ),
+            onSelect: (val: string) => {
+              setSelectedStyle(val);
+              setShowStyleDropdown(false);
             },
-          ].map(
-            (
-              {
-                label,
-                value,
-                onClick,
-                options,
-                showDropdown,
-                onSelect,
-                renderOption,
-              },
-              i
-            ) => (
-              <div key={i} className="relative dropdown-container">
-                <button
-                  className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${
-                    value
-                      ? "point-ask-gradient text-white shadow-lg shadow-orange-500/25"
-                      : "bg-white/90 hover:bg-white text-gray-700 border border-gray-200/60 hover:border-gray-300 hover:shadow-md shadow-sm"
-                  }`}
-                  onClick={onClick}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium whitespace-nowrap flex items-center">
-                      <span className="mr-1">{label}:</span>
-                      <span className="font-semibold">{value || "Select"}</span>
-                      <ChevronDownIcon className={`ml-2 size-4 shrink-0 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
-                    </span>
-                  </div>
-                </button>
+            renderOption: (style: OptionWithLabel) => (
+              <div className="flex items-center gap-3 cursor-pointer">{style.label}</div>
+            ),
+          }}
+        />
 
-                {showDropdown && (
-                  <div className="absolute mt-2 z-10 bg-white/95 backdrop-blur-md rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200/50 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100/80 px-4 py-3 rounded-t-xl border-b border-gray-200/50">
-                      <span className="text-sm font-semibold text-gray-700">Select {label}</span>
-                    </div>
-                    {/* Options */}
-                    {options.map((opt: OptionType) => {
-                      const key = isUiStyleOption(opt) ? opt.label : opt;
-                      const val = isUiStyleOption(opt) ? opt.value : opt;
-                      return (
-                        <div
-                          key={key}
-                          className="px-4 py-3 hover:bg-blue-50/80 cursor-pointer text-sm text-gray-700 border-b border-gray-100/50 last:border-b-0 transition-all duration-150 hover:shadow-sm"
-                          onClick={() => onSelect(val)}
-                        >
-                          {isUiStyleOption(opt) && renderOption
-                            ? renderOption(opt)
-                            : key}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          )}
-        </div>
-
-        {/* View History Button OUTSIDE colored box */}
         <button
           onClick={handleHistoryClick}
-          className="rounded-full px-3 py-2 bg-[#90ee90] border border-[#006a3d] text-[#006a3d] hover:bg-[#87ceeb] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
+          className="rounded-full px-3 py-2 bg-primary/10 border border-primary text-primary hover:bg-primary/20 transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
         >
-          <img
-            src="/images/history.svg"
-            alt="history"
-            className="w-4 h-4"
-          />
+          <img src="/images/history.svg" alt="history" className="w-4 h-4" />
           <span className="text-sm font-medium">View history</span>
         </button>
       </div>
@@ -788,18 +750,20 @@ if (!sessionRes.ok) {
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
-          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg bg-primary text-primary-foreground mb-2">
             {selectedGrade ? (
               <div>
                 <div className="mb-2">Great! You've selected:</div>
-                <div className="text-sm opacity-90">
-                  Class: {selectedGrade}
+                <div className="text-sm opacity-90">Class: {selectedGrade}</div>
+                <div className="text-xs mt-2 opacity-75">
+                  Now let's choose your persona...
                 </div>
-                <div className="text-xs mt-2 opacity-75">Now let's choose your persona...</div>
               </div>
             ) : (
               <div>
-                <div className="mb-2">First, choose your class/grade level.</div>
+                <div className="mb-2">
+                  First, choose your class/grade level.
+                </div>
                 <div className="text-xs opacity-75">
                   This helps me teach at the right level for you.
                 </div>
@@ -817,18 +781,22 @@ if (!sessionRes.ok) {
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
-          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg bg-primary text-primary-foreground mb-2">
             {selectedStyle ? (
               <div>
                 <div className="mb-2">Perfect! You've selected:</div>
                 <div className="text-sm opacity-90">
                   Persona: {selectedStyle}
                 </div>
-                <div className="text-xs mt-2 opacity-75">Now you can start your voice conversation...</div>
+                <div className="text-xs mt-2 opacity-75">
+                  Now you can start your voice conversation...
+                </div>
               </div>
             ) : (
               <div>
-                <div className="mb-2">Now choose how you'd like me to talk to you.</div>
+                <div className="mb-2">
+                  Now choose how you'd like me to talk to you.
+                </div>
                 <div className="text-xs opacity-75">
                   Professor or Friend - pick your style!
                 </div>
@@ -867,7 +835,9 @@ if (!sessionRes.ok) {
           transcript.length > 0 ? (
             <div className="w-full max-w-2xl p-4 space-y-4 overflow-y-auto h-[60vh] flex flex-col">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Conversation Transcript</h3>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Conversation Transcript
+                </h3>
                 <button
                   onClick={() => setTranscript([])}
                   className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100 transition-colors"
@@ -886,14 +856,20 @@ if (!sessionRes.ok) {
                     className={`max-w-[85%] px-4 py-3 rounded-lg shadow-sm border ${
                       message.role === "user"
                         ? "bg-blue-50 text-blue-900 border-blue-200"
-                        : "bg-green-50 text-orange-900 border-green-200"
+                        : "bg-primary/10 text-primary border-primary/20"
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-semibold uppercase tracking-wide ${
-                        message.role === "user" ? "text-blue-600" : "text-green-700"
-                      }`}>
-                        {message.role === "user" ? "You" : `AI (${selectedStyle || "Assistant"})`}
+                      <span
+                        className={`text-xs font-semibold uppercase tracking-wide ${
+                          message.role === "user"
+                            ? "text-blue-600"
+                            : "text-primary"
+                        }`}
+                      >
+                        {message.role === "user"
+                          ? "You"
+                          : `AI (${selectedStyle || "Assistant"})`}
                       </span>
                     </div>
                     <p className="text-sm leading-relaxed">{message.text}</p>
@@ -920,7 +896,7 @@ if (!sessionRes.ok) {
                 )}
               </div>
               <div className="text-lg text-black mb-8">
-                {selectedGrade && selectedStyle 
+                {selectedGrade && selectedStyle
                   ? "Ask me anything when you're ready."
                   : "Choose your settings from the top-right corner."}
               </div>
@@ -935,40 +911,48 @@ if (!sessionRes.ok) {
                   {error}
                 </p>
               )}
-              
+
               {/* Diarization Indicator */}
               <div className="mb-6 flex items-center gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg">
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    currentSpeaker === "user" ? "bg-blue-500 animate-pulse" : "bg-gray-300"
-                  }`}></div>
-                  <span className={`text-sm font-medium transition-colors duration-300 ${
-                    currentSpeaker === "user" ? "text-blue-600" : "text-gray-500"
-                  }`}>
+                  <div
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      currentSpeaker === "user"
+                        ? "bg-primary animate-pulse"
+                        : "bg-gray-300"
+                    }`}
+                  ></div>
+                  <span
+                    className={`text-sm font-medium transition-colors duration-300 ${
+                      currentSpeaker === "ai"
+                        ? "text-primary animate-pulse"
+                        : "text-gray-500"
+                    }`}
+                  >
                     You
                   </span>
                 </div>
-                
+
                 <div className="w-px h-8 bg-gray-300"></div>
-                
+
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    currentSpeaker === "ai" ? "bg-green-700 animate-pulse" : "bg-gray-300"
-                  }`}></div>
-                  <span className={`text-sm font-medium transition-colors duration-300 ${
-                    currentSpeaker === "ai" ? "text-green-700" : "text-gray-500"
-                  }`}>
+                  <div
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      currentSpeaker === "ai"
+                        ? "bg-primary animate-pulse"
+                        : "bg-gray-300"
+                    }`}
+                  ></div>
+                  <span
+                    className={`text-sm font-medium transition-colors duration-300 ${
+                      currentSpeaker === "ai" ? "text-primary" : "text-gray-500"
+                    }`}
+                  >
                     AI {selectedStyle ? `(${selectedStyle})` : ""}
                   </span>
                 </div>
-                
-                {currentSpeaker === "none" && (
-                  <div className="text-xs text-gray-400 ml-2">
-                    Listening...
-                  </div>
-                )}
               </div>
-              
+
               <SpruceBall listening={isActive && status === "connected"} />
             </div>
 
@@ -1002,12 +986,12 @@ if (!sessionRes.ok) {
                         className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
                           message.role === "user"
                             ? "bg-blue-100 text-blue-900 border-l-4 border-blue-500"
-                            : "bg-green-100 text-orange-900 border-l-4 border-green-700"
+                            : "bg-primary/10 text-primary border-l-4 border-primary"
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`text-xs font-bold uppercase tracking-wide ${
-                            message.role === "user" ? "text-blue-600" : "text-green-700"
+                            message.role === "user" ? "text-blue-600" : "text-primary"
                           }`}>
                             {message.role === "user" ? "You" : "AI"}
                           </span>
@@ -1020,7 +1004,7 @@ if (!sessionRes.ok) {
                     </div>
                   ))}
                   {/* Real-time typing indicators */}
-                  {/* {currentSpeaker === "user" && (
+            {/* {currentSpeaker === "user" && (
                     <div className="flex justify-end">
                       <div className="bg-blue-100 text-blue-900 px-3 py-2 rounded-lg text-sm border-l-4 border-blue-500 opacity-70">
                         <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">You</span>
@@ -1030,8 +1014,8 @@ if (!sessionRes.ok) {
                   )}
                   {currentSpeaker === "ai" && (
                     <div className="flex justify-start">
-                      <div className="bg-green-100 text-orange-900 px-3 py-2 rounded-lg text-sm border-l-4 border-green-700 opacity-70">
-                        <span className="text-xs font-bold text-green-700 uppercase tracking-wide">AI</span>
+                      <div className="bg-primary/10 text-primary px-3 py-2 rounded-lg text-sm border-l-4 border-primary opacity-70">
+                        <span className="text-xs font-bold text-primary uppercase tracking-wide">AI</span>
                         <p className="italic">Speaking...</p>
                       </div>
                     </div>
@@ -1047,9 +1031,12 @@ if (!sessionRes.ok) {
         {!isActive ? (
           <button
             onClick={startRealtime}
-            className="point-ask-gradient cursor-pointer text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-shadow disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-primary text-primary-foreground cursor-pointer px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-shadow disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={
-              !selectedGrade || !selectedStyle || status !== "idle" || !isLoggedIn
+              !selectedGrade ||
+              !selectedStyle ||
+              status !== "idle" ||
+              !isLoggedIn
             }
           >
             <span className="flex items-center gap-2">
@@ -1072,7 +1059,7 @@ if (!sessionRes.ok) {
           <div className="flex gap-3 items-center">
             <button
               onClick={stopRealtime}
-              className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all"
+              className="bg-primary text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all"
             >
               <span className="flex items-center gap-2">
                 <svg
@@ -1086,13 +1073,13 @@ if (!sessionRes.ok) {
                 Stop Conversation
               </span>
             </button>
-            
+
             {/* {transcript.length > 0 && (
               <button
                 onClick={() => setShowTranscript(!showTranscript)}
                 className={`px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all ${
-                  showTranscript 
-                    ? "bg-green-700 hover:bg-green-800 text-white" 
+                  showTranscript
+                    ? "bg-primary text-primary-foreground"
                     : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
                 }`}
               >
@@ -1122,8 +1109,8 @@ if (!sessionRes.ok) {
         style={{ display: "none" }}
       />
       <style>{`
-        .point-ask-gradient {
-          background: linear-gradient(90deg, #ff9f27 0%, #006a3d 100%);
+        .bg-primary {
+          background-color: var(--primary);
         }
       `}</style>
     </div>

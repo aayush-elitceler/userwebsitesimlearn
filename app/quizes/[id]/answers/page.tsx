@@ -87,7 +87,7 @@ export default function QuizAnswersPage() {
                     className={`px-4 py-2 rounded flex items-center gap-2
                       ${opt.isCorrect ? "bg-green-600 text-white font-bold" : ""}
                       ${isUserSelected && !opt.isCorrect ? "bg-red-600 text-white font-bold" : ""}
-                      ${!opt.isCorrect && !isUserSelected ? "bg-[#FFB12133] text-[#646464]" : ""}
+                      ${!opt.isCorrect && !isUserSelected ? "bg-gray-100 text-[#646464]" : ""}
                     `}
                   >
                     <span className="mr-2">{opt.isCorrect ? '✅' : isUserSelected ? '❌' : '⬜'}</span>

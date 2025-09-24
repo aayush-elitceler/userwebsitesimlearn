@@ -8,13 +8,14 @@ import React, {
   ForwardedRef,
 } from "react";
 import Cookies from "js-cookie";
-import { ArrowRight, ChevronDownIcon, X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import { fetchHistory, getFilteredHistory, HistoryItem } from "@/lib/historyService";
 import HistorySlider from "@/components/HistorySlider";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 import axios from 'axios';
+import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 
 type StyleOption = {
   label: string;
@@ -73,12 +74,12 @@ const styles = [
     label: "Professor",
     value: "professor",
     icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
+      <span className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
           width="24"
           height="24"
           fill="none"
-          stroke="#fff"
+          stroke="currentColor"
           strokeWidth="2"
           viewBox="0 0 24 24"
         >
@@ -94,12 +95,12 @@ const styles = [
     label: "Friend",
     value: "friend",
     icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
+      <span className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
           width="24"
           height="24"
           fill="none"
-          stroke="#fff"
+          stroke="currentColor"
           strokeWidth="2"
           viewBox="0 0 24 24"
         >
@@ -113,12 +114,12 @@ const styles = [
     label: "Robot",
     value: "robot",
     icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
+      <span className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
           width="24"
           height="24"
           fill="none"
-          stroke="#fff"
+          stroke="currentColor"
           strokeWidth="2"
           viewBox="0 0 24 24"
         >
@@ -437,113 +438,47 @@ export default function AiChatsChatPage() {
 
   const FloatingSelectors = (
     <div>
-      {/* Wrapper for selectors */}
       <div className="fixed z-[60] flex flex-row gap-[10px] items-center" style={{ top: "40px", right: "8rem" }} onClick={(e) => e.stopPropagation()}>
-        
-        {/* Class & Persona in colored background */}
-        <div
-          className={`flex flex-row gap-3 p-4 rounded-xl transition-all duration-300 ${
-            showOnboarding ? "z-[60] shadow-2xl" : ""
-          }`}
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(255, 159, 39, 0.08) 0%, rgba(255, 81, 70, 0.08) 100%)",
+        <TwoSelectPill
+          className={`${showOnboarding ? "z-[60]" : ""}`}
+          left={{
+            label: "Grade",
+            displayValue: selectedGrade,
+            options: grades,
+            showDropdown: showGradeDropdown,
+            onToggle: () => {
+              setShowGradeDropdown((v) => !v);
+              setShowStyleDropdown(false);
+            },
+            onSelect: (val: string) => {
+              setSelectedGrade(val);
+              setShowGradeDropdown(false);
+            },
           }}
-        >
-          {[
-            {
-              label: "Class",
-              value: selectedGrade,
-              onClick: () => {
-                setShowGradeDropdown((v) => !v);
-                setShowStyleDropdown(false);
-              },
-              options: grades,
-              showDropdown: showGradeDropdown,
-              onSelect: (val: string) => {
-                setSelectedGrade(val);
-                setShowGradeDropdown(false);
-              },
+          right={{
+            label: "Persona",
+            displayValue: selectedStyle,
+            options: styles as unknown as OptionWithLabel[],
+            showDropdown: showStyleDropdown,
+            onToggle: () => {
+              setShowStyleDropdown((v) => !v);
+              setShowGradeDropdown(false);
             },
-            {
-              label: "Persona",
-              value: selectedStyle,
-              onClick: () => {
-                setShowStyleDropdown((v) => !v);
-                setShowGradeDropdown(false);
-              },
-              options: styles,
-              showDropdown: showStyleDropdown,
-              onSelect: (val: string) => {
-                setSelectedStyle(val);
-                setShowStyleDropdown(false);
-              },
-              renderOption: (style: StyleOption) => (
-                <div className="flex items-center gap-3 cursor-pointer">
-                  {typeof style === "string" ? style : style.label}
-                </div>
-              ),
+            onSelect: (val: string) => {
+              setSelectedStyle(val);
+              setShowStyleDropdown(false);
             },
-          ].map(
-            ({ label, value, onClick, options, showDropdown, onSelect, renderOption }, i) => (
-              <div key={i} className="relative dropdown-container">
-                <button
-                  className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${
-                    value
-                      ? "point-ask-gradient text-white shadow-lg shadow-orange-500/25"
-                      : "bg-white/90 hover:bg-white text-gray-700 border border-gray-200/60 hover:border-gray-300 hover:shadow-md shadow-sm"
-                  }`}
-                  onClick={onClick}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium whitespace-nowrap flex items-center">
-                      <span className="mr-1">{label}:</span>
-                      <span className="font-semibold">{value || "Select"}</span>
-                      <ChevronDownIcon className={`ml-2 size-4 shrink-0 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
-                    </span>
-                  </div>
-                </button>
-  
-                {showDropdown && (
-                  <div className="absolute mt-2 z-10 bg-white/95 backdrop-blur-md rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200/50 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100/80 px-4 py-3 rounded-t-xl border-b border-gray-200/50">
-                      <span className="text-sm font-semibold text-gray-700">Select {label}</span>
-                    </div>
-                    {/* Options */}
-                    {options.map((opt: OptionType) => {
-                      const key = isOptionWithIcon(opt) ? opt.label : opt;
-                      const value = isOptionWithIcon(opt) ? opt.value : opt;
+            renderOption: (opt: OptionWithLabel) => (
+              <div className="flex items-center gap-3 cursor-pointer">{opt.label}</div>
+            ),
+          }}
+        />
 
-                      return (
-                        <div
-                          key={key}
-                          className="px-4 py-3 hover:bg-blue-50/80 cursor-pointer text-sm text-gray-700 border-b border-gray-100/50 last:border-b-0 transition-all duration-150 hover:shadow-sm"
-                          onClick={() => onSelect(value)}
-                        >
-                          {isOptionWithIcon(opt) && renderOption
-                            ? renderOption(opt)
-                            : key}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          )}
-        </div>
-  
-        {/* View History Button OUTSIDE colored box */}
         <button
           onClick={handleHistoryClick}
-          className="rounded-full px-3 py-2 bg-[#90ee90] border border-[#006a3d] text-[#006a3d] hover:bg-[#87ceeb] transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
+          className="rounded-full px-3 py-2 bg-primary/10 border border-primary text-primary hover:bg-primary/20 transition-all duration-150 flex items-center gap-2 min-w-[120px] justify-center shadow-sm"
         >
-          <img
-            src="/images/history.svg"
-            alt="history"
-            className="w-4 h-4"
-          />
+          <img src="/images/history.svg" alt="history" className="w-4 h-4" />
           <span className="text-sm font-medium">View history</span>
         </button>
       </div>
@@ -574,7 +509,7 @@ export default function AiChatsChatPage() {
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
-          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg bg-primary text-primary-foreground mb-2">
             {selectedGrade ? (
               <div>
                 <div className="mb-2">Great! You've selected:</div>
@@ -603,7 +538,7 @@ export default function AiChatsChatPage() {
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
-          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg bg-primary text-primary-foreground mb-2">
             {selectedStyle ? (
               <div>
                 <div className="mb-2">Perfect! You've selected:</div>
@@ -627,7 +562,7 @@ export default function AiChatsChatPage() {
       {/* Onboarding tooltip for Input Bar */}
       {showOnboarding && onboardingStep === 3 && (
         <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[60]">
-          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg bg-primary text-primary-foreground mb-2">
             Type your question here and hit send!
           </div>
           <img
@@ -691,14 +626,14 @@ export default function AiChatsChatPage() {
               {suggestions.map((s, i) => (
                 <button
                   key={i}
-                  className="rounded-xl bg-gradient-to-r from-[#FF9F2733] to-[#006a3d33] 
-                 transition font-medium border-none shadow-sm 
-                 flex items-center justify-center text-center 
+                  className="rounded-xl bg-primary/10 cursor-pointer
+                 transition font-medium border-none shadow-sm
+                 flex items-center justify-center text-center
                  w-full h-[110px]"
                   onClick={() => handleSuggestion(s)}
                 >
                   <span
-                    className="bg-gradient-to-r from-[#FF9F27] to-[#006a3d] 
+                    className="bg-primary 
                        bg-clip-text text-transparent font-semibold"
                   >
                     {s}
@@ -722,7 +657,7 @@ export default function AiChatsChatPage() {
                 >
                   {/* AI Avatar - only show for AI messages */}
                   {msg.role === "ai" && (
-                    <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold flex-shrink-0">
                       AI
                     </div>
                   )}
@@ -732,7 +667,7 @@ export default function AiChatsChatPage() {
                     className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.role === "user"
                         ? "bg-[#DDDDDD] text-[#000000]"
-                        : "bg-[#FFEFD3] text-[#006a3d]"
+                        : "bg-primary/10 text-primary"
                     }`}
                   >
                     <p className="text-sm md:text-base leading-relaxed">
@@ -765,10 +700,10 @@ export default function AiChatsChatPage() {
               ))}
               {apiLoading && (
                 <div className="flex items-end gap-3 justify-start">
-                  <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold flex-shrink-0">
                     AI
                   </div>
-                  <div className="bg-[#FFEFD3] text-[#006a3d] rounded-2xl px-4 py-3 opacity-70 shadow-sm">
+                  <div className="bg-primary/10 text-primary rounded-2xl px-4 py-3 opacity-70 shadow-sm">
                     <p className="text-sm md:text-base">Thinking...</p>
                   </div>
                 </div>
@@ -820,18 +755,18 @@ const ChatInputBar = forwardRef(
       pathname === "/login/otp" ||
       pathname === "/register";
     const sidebarCollapsed = state === "collapsed";
-    const inputBarClass = `fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
+    const inputBarClass = `fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-1 flex items-center gap-2 sm:gap-3 py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
       hideSidebar ? "" : sidebarCollapsed ? "sidebar-collapsed" : ""
     }`;
 
     return (
       <div
-        className={inputBarClass}
+        className={`${inputBarClass} shadow-md`}
         style={{
           height: "55px",
           boxShadow: "0px 4px 16px 0px #00000040",
           border: "0.96px solid #FFFFFF1F",
-          borderRadius: "12px",
+          borderRadius: "30px",
           background: showOnboarding ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.1)",
           backdropFilter: "blur(10px)",
         }}
@@ -845,37 +780,18 @@ const ChatInputBar = forwardRef(
           onKeyDown={(e) => e.key === "Enter" && onSend()}
           disabled={disabled}
           autoFocus={autoFocus}
-          className={`flex-1 bg-transparent p-3 text-black placeholder-gray-500 focus:outline-none text-sm sm:text-base font-medium transition-all duration-300 ${
+          className={`flex-1 bg-transparent  p-3 text-black placeholder-gray-500 focus:outline-none text-sm sm:text-base font-medium transition-all duration-300 ${
             showOnboarding 
-              ? "border-2 border-green-700 shadow-lg shadow-orange-500/50 rounded-full" 
+              ? "border-2 border-primary shadow-lg rounded-full" 
               : ""
           }`}
         />
         <button
           onClick={onSend}
           disabled={disabled || !value.trim()}
-          className="rounded-full p-2 sm:p-3 point-ask-gradient disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+          className="rounded-full p-2 sm:p-3 bg-primary text-primary-foreground disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
         >
-          <svg
-            width="23"
-            height="19"
-            viewBox="0 0 23 19"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="sm:hidden"
-          >
-            <path d="M12.3238 0.399048C12.2007 0.525093 12.1031 0.674866 12.0365 0.839779C11.9699 1.00469 11.9356 1.1815 11.9356 1.36007C11.9356 1.53864 11.9699 1.71544 12.0365 1.88036C12.1031 2.04527 12.2007 2.19505 12.3238 2.32109L17.9865 8.14262L1.81974 8.14262C1.46972 8.14262 1.13404 8.28556 0.886545 8.54C0.639046 8.79444 0.5 9.13953 0.5 9.49936C0.5 9.85919 0.639046 10.2043 0.886545 10.4587C1.13404 10.7132 1.46972 10.8561 1.81974 10.8561L17.9865 10.8561L12.3238 16.6799C12.0758 16.9348 11.9366 17.2805 11.9366 17.6409C11.9366 18.0014 12.0758 18.3471 12.3238 18.6019C12.5717 18.8568 12.908 19 13.2586 19C13.6092 19 13.9455 18.8568 14.1934 18.6019L22.1118 10.4615C22.2349 10.3355 22.3325 10.1857 22.3991 10.0208C22.4657 9.85586 22.5 9.67906 22.5 9.50049C22.5 9.32193 22.4657 9.14511 22.3991 8.9802C22.3325 8.81529 22.2349 8.66551 22.1118 8.53947L14.1934 0.399048C14.0708 0.272564 13.9251 0.172205 13.7647 0.103727C13.6043 0.0352516 13.4323 0 13.2586 0C13.0849 0 12.9129 0.0352516 12.7525 0.103727C12.5921 0.172205 12.4464 0.272564 12.3238 0.399048Z" fill="white"/>
-          </svg>
-          <svg
-            width="23"
-            height="19"
-            viewBox="0 0 23 19"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="hidden sm:block"
-          >
-            <path d="M12.3238 0.399048C12.2007 0.525093 12.1031 0.674866 12.0365 0.839779C11.9699 1.00469 11.9356 1.1815 11.9356 1.36007C11.9356 1.53864 11.9699 1.71544 12.0365 1.88036C12.1031 2.04527 12.2007 2.19505 12.3238 2.32109L17.9865 8.14262L1.81974 8.14262C1.46972 8.14262 1.13404 8.28556 0.886545 8.54C0.639046 8.79444 0.5 9.13953 0.5 9.49936C0.5 9.85919 0.639046 10.2043 0.886545 10.4587C1.13404 10.7132 1.46972 10.8561 1.81974 10.8561L17.9865 10.8561L12.3238 16.6799C12.0758 16.9348 11.9366 17.2805 11.9366 17.6409C11.9366 18.0014 12.0758 18.3471 12.3238 18.6019C12.5717 18.8568 12.908 19 13.2586 19C13.6092 19 13.9455 18.8568 14.1934 18.6019L22.1118 10.4615C22.2349 10.3355 22.3325 10.1857 22.3991 10.0208C22.4657 9.85586 22.5 9.67906 22.5 9.50049C22.5 9.32193 22.4657 9.14511 22.3991 8.9802C22.3325 8.81529 22.2349 8.66551 22.1118 8.53947L14.1934 0.399048C14.0708 0.272564 13.9251 0.172205 13.7647 0.103727C13.6043 0.0352516 13.4323 0 13.2586 0C13.0849 0 12.9129 0.0352516 12.7525 0.103727C12.5921 0.172205 12.4464 0.272564 12.3238 0.399048Z" fill="white"/>
-          </svg>
+          <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
       </div>
     );

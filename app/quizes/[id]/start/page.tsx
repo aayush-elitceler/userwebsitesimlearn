@@ -220,7 +220,7 @@ export default function QuizStartPage() {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className='mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700'
+              className='mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90'
             >
               Refresh Page
             </button>
@@ -265,7 +265,7 @@ export default function QuizStartPage() {
                 </div>
               </div>
               <div className='flex items-center gap-2'>
-                <div className='point-ask-gradient text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2'>
+                <div className='bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold flex items-center gap-2'>
                   <svg
                     width='20'
                     height='20'
@@ -299,7 +299,7 @@ export default function QuizStartPage() {
             </div>
             <div className='w-full h-3 bg-white rounded-full overflow-hidden mb-4'>
               <div
-                className='h-full point-ask-gradient transition-all'
+                className='h-full bg-amber-600 transition-all'
                 style={{ width: `${progress * 100}%` }}
               ></div>
             </div>
@@ -317,8 +317,8 @@ export default function QuizStartPage() {
                       key={opt.id}
                       className={`block rounded-md px-4 py-3 cursor-pointer transition-all border border-transparent ${
                         selected[q.id] === opt.id
-                          ? 'point-ask-gradient text-white border-green-400'
-                          : 'bg-gradient-to-r from-orange-100 to-red-200 text-[#646464] hover:point-ask-gradient'
+                          ? 'bg-primary text-primary-foreground border-amber-400'
+                          : 'bg-gradient-to-r from-orange-100 to-red-200 text-[#646464] hover:bg-primary/40'
                       }`}
                     >
                       <input
@@ -329,7 +329,7 @@ export default function QuizStartPage() {
                         onChange={() =>
                           setSelected((s) => ({ ...s, [q.id]: opt.id }))
                         }
-                        className='mr-3 accent-black'
+                        className='mr-3 accent-amber-600'
                       />
                       <span className='font-semibold mr-2'>
                         {String.fromCharCode(65 + i)})
@@ -341,7 +341,7 @@ export default function QuizStartPage() {
               </div>
             ))}
             <button
-              className='point-ask-gradient text-white p-3 cursor-pointer rounded-xl'
+              className='bg-primary text-primary-foreground p-3 cursor-pointer rounded-xl'
               onClick={() => submitQuiz(quiz, selected, quizStartedAt, router)}
             >
               Submit Quiz

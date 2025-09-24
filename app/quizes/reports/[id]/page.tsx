@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 type QuizResult = {
@@ -50,6 +50,7 @@ export default function QuizReportPage() {
   const [loading, setLoading] = useState(true);
   const [suggestedLoading, setSuggestedLoading] = useState(true);
   const router = useRouter();
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchResult() {
@@ -112,6 +113,9 @@ export default function QuizReportPage() {
     : 0;
   const performanceLevel = getPerformanceLevel(scorePercentage);
   const pointerPosition = calculatePointerPosition(scorePercentage);
+  const difficultyLabel = result.difficulty
+    ? `${result.difficulty.charAt(0).toUpperCase()}${result.difficulty.slice(1)}`
+    : "Medium";
 
   // Get CSS class for subject background
   const getSubjectClass = (subject: string | undefined) => {
@@ -145,6 +149,20 @@ export default function QuizReportPage() {
     return "Subject";
   };
 
+  const scrollCarouselByOne = (direction: 1 | -1) => {
+    const container = carouselRef.current;
+    if (!container) return;
+    const firstItem = container.querySelector<HTMLElement>(".carousel-item");
+    let scrollAmount = container.clientWidth * 0.9;
+    if (firstItem) {
+      const styles = window.getComputedStyle(firstItem);
+      const marginLeft = parseFloat(styles.marginLeft || "0");
+      const marginRight = parseFloat(styles.marginRight || "0");
+      scrollAmount = firstItem.offsetWidth + marginLeft + marginRight;
+    }
+    container.scrollBy({ left: direction * scrollAmount, behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
       <div className="max-w-4xl mx-auto">
@@ -152,7 +170,7 @@ export default function QuizReportPage() {
         <div className="bg-white rounded-2xl p-8 mb-8 shadow-lg">
           <h2 className="text-3xl font-bold text-black mb-2">Assessment report</h2>
           <div className="text-black mb-2">
-            {result.quizTitle} • Difficulty - {result.difficulty?.charAt(0).toUpperCase() + result.difficulty?.slice(1) || "Medium"}
+            {result.quizTitle} • Difficulty - {difficultyLabel}
           </div>
           <div className="text-black mb-6">
             You received a score of <span className="text-red-500 font-bold">{result.correctAnswers}</span>/{result.totalQuestions}. 
@@ -198,11 +216,11 @@ export default function QuizReportPage() {
                  
                  <defs>
                    <linearGradient id="paint0_linear_1306_119905" x1="301.418" y1="188.432" x2="301.418" y2="153.798" gradientUnits="userSpaceOnUse">
-                     <stop stopColor="#00963A"/>
-                     <stop offset="0.1576" stopColor="#06A541"/>
-                     <stop offset="0.4706" stopColor="#0FBD4B"/>
-                     <stop offset="0.7597" stopColor="#14CC52"/>
-                     <stop offset="1" stopColor="#16D154"/>
+                     <stop stopColor="#dc2626"/>
+                     <stop offset="0.1576" stopColor="#ef4444"/>
+                     <stop offset="0.4706" stopColor="#f87171"/>
+                     <stop offset="0.7597" stopColor="#fca5a5"/>
+                     <stop offset="1" stopColor="#fecaca"/>
                    </linearGradient>
                    <linearGradient id="paint1_linear_1306_119905" x1="268.588" y1="105.189" x2="238.359" y2="75.5772" gradientUnits="userSpaceOnUse">
                      <stop stopColor="#FFAC05"/>
@@ -227,11 +245,11 @@ export default function QuizReportPage() {
                      <stop offset="1" stopColor="#FF5E2D"/>
                    </linearGradient>
                    <linearGradient id="paint4_linear_1306_119905" x1="276.134" y1="187.898" x2="276.134" y2="160.884" gradientUnits="userSpaceOnUse">
-                     <stop stopColor="#00963A"/>
-                     <stop offset="0.1576" stopColor="#06A541"/>
-                     <stop offset="0.4706" stopColor="#0FBD4B"/>
-                     <stop offset="0.7597" stopColor="#14CC52"/>
-                     <stop offset="1" stopColor="#16D154"/>
+                     <stop stopColor="#dc2626"/>
+                     <stop offset="0.1576" stopColor="#ef4444"/>
+                     <stop offset="0.4706" stopColor="#f87171"/>
+                     <stop offset="0.7597" stopColor="#fca5a5"/>
+                     <stop offset="1" stopColor="#fecaca"/>
                    </linearGradient>
                    <linearGradient id="paint5_linear_1306_119905" x1="250.531" y1="122.969" x2="226.953" y2="99.8723" gradientUnits="userSpaceOnUse">
                      <stop stopColor="#FFAC05"/>
@@ -268,84 +286,106 @@ export default function QuizReportPage() {
         </div>
 
                  {/* Recommended Quizzes Section */}
-         <div className="bg-white rounded-2xl p-8 shadow-lg">
+        <div className="bg-white rounded-2xl p-8 shadow-lg ">
            <h3 className="text-2xl font-bold text-black mb-6">Recommended quizzes</h3>
            {suggestedLoading ? (
              <div className="text-black">Loading recommended quizzes...</div>
            ) : suggestedQuizzes.length === 0 ? (
              <div className="text-black">No recommended quizzes available.</div>
            ) : (
-             <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 overflow-x-auto pb-4">
-               {suggestedQuizzes.slice(0, 3).map((quiz) => (
-                 <div key={quiz.id} className="flex flex-row bg-white border border-[#DEDEDE] items-center 
-                     w-[480px] h-[220px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
-                     sm:w-[500px] sm:h-[230px] sm:p-5
-                     md:w-[420px] md:h-[200px] md:p-4
-                     lg:w-[480px] lg:h-[220px] lg:p-5
-                     xl:w-[520px] xl:h-[240px] xl:p-6
-                     2xl:w-[588px] 2xl:h-[260px] 2xl:p-6">
-                   <div className="flex-1 min-w-0 flex flex-col justify-between h-full overflow-hidden">
-                     <div className="flex-1 min-h-0">
-                       <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
-                         Subject: {guessSubjectFromTopic(quiz.topic)}
-                       </div>
-                       <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text mb-2 break-words leading-tight">
-                         {quiz.title}
-                       </div>
-                       <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed break-words">
-                         {quiz.instructions}
-                       </div>
-                       <div className="flex items-center gap-2 text-black text-xs sm:text-sm mb-3">
-                         <span role="img" aria-label="clock">🕒</span>
-                         <span className="break-words">Due date: 10 July 2025</span>
-                       </div>
-                     </div>
-                     <div className="mt-auto pt-1">
-                       <button
-                         className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-                         onClick={() => router.push(`/quizes/${quiz.id}/start`)}
-                       >
-                         Start Quiz
-                       </button>
-                     </div>
-                   </div>
-                   <div className="flex-shrink-0 ml-3 sm:ml-4 lg:ml-5">
-                     <div
-                       className={`flex items-center justify-center text-white font-bold relative overflow-hidden rounded-[9px] shadow-[0px_0.89px_6.68px_0px_#00000075]
-                                   w-[120px] h-[80px] text-sm
-                                   sm:w-[130px] sm:h-[85px] sm:text-base
-                                   md:w-[110px] md:h-[75px] md:text-sm
-                                   lg:w-[140px] lg:h-[95px] lg:text-base
-                                   xl:w-[160px] xl:h-[110px] xl:text-lg
-                                   2xl:w-[180px] 2xl:h-[120px] 2xl:text-xl ${getSubjectClass(guessSubjectFromTopic(quiz.topic))}`}
-                     >
-                       <span className="z-10 font-bold tracking-wide text-center px-1.5 break-words">
-                         {guessSubjectFromTopic(quiz.topic)}
-                       </span>
-                       {/* SVG Pattern from Figma */}
-                       <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
-                         <svg width="134" height="133" viewBox="0 0 134 133" fill="none" xmlns="http://www.w3.org/2000/svg">
-                           <circle cx="61.3397" cy="72.3504" r="5.11912" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3395" cy="72.3512" r="10.6834" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3393" cy="72.351" r="16.2477" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3391" cy="72.3508" r="21.8119" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3389" cy="72.3506" r="27.3762" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3387" cy="72.3514" r="32.9404" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3385" cy="72.3512" r="38.5047" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3403" cy="72.351" r="44.069" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3401" cy="72.3508" r="49.6332" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3399" cy="72.3506" r="55.1975" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3397" cy="72.3514" r="60.7618" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3395" cy="72.3512" r="66.326" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <circle cx="61.3393" cy="72.351" r="71.8903" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                           <line x1="61.1936" y1="72.784" x2="0.000449386" y2="72.8107" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
-                         </svg>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-               ))}
-             </div>
+            <div className="flex items-center gap-4 md:gap-6">
+              <button
+                type="button"
+                aria-label="Scroll left"
+                className="hidden md:flex items-center justify-center h-12 w-14 rounded-full bg-primary text-white text-2xl font-semibold shadow-2xl border-2 border-white/60 hover:bg-primary/95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary/30"
+                onClick={() => scrollCarouselByOne(-1)}
+              >
+                ‹
+              </button>
+              <div
+                ref={carouselRef}
+                className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 overflow-x-auto pb-4 scroll-smooth scrollbar-hide pr-2 md:pr-6"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
+              >
+                {suggestedQuizzes.map((quiz) => (
+                  <div key={quiz.id} className="carousel-item flex flex-row bg-white border border-[#DEDEDE] items-center 
+                      w-[480px] h-[220px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] flex-shrink-0 p-5
+                      sm:w-[500px] sm:h-[230px] sm:p-5
+                      md:w-[420px] md:h-[200px] md:p-4
+                      lg:w-[480px] lg:h-[220px] lg:p-5
+                      xl:w-[520px] xl:h-[240px] xl:p-6
+                      2xl:w-[588px] 2xl:h-[260px] 2xl:p-6">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between h-full overflow-hidden">
+                      <div className="flex-1 min-h-0">
+                        <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
+                          Subject: {guessSubjectFromTopic(quiz.topic)}
+                        </div>
+                        <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-primary to-primary text-transparent bg-clip-text mb-2 break-words leading-tight">
+                          {quiz.title}
+                        </div>
+                        <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed break-words">
+                          {quiz.instructions}
+                        </div>
+                        <div className="flex items-center gap-2 text-black text-xs sm:text-sm mb-3">
+                          <span role="img" aria-label="clock">🕒</span>
+                          <span className="break-words">Due date: 10 July 2025</span>
+                        </div>
+                      </div>
+                      <div className="mt-auto pt-1">
+                        <button
+                          className="bg-gradient-to-r from-primary to-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+                          onClick={() => router.push(`/quizes/${quiz.id}/start`)}
+                        >
+                          Start Quiz
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 ml-3 sm:ml-4 lg:ml-5">
+                      <div
+                        className={`flex items-center justify-center text-white font-bold relative overflow-hidden rounded-[9px] shadow-[0px_0.89px_6.68px_0px_#00000075]
+                                    w-[120px] h-[80px] text-sm
+                                    sm:w-[130px] sm:h-[85px] sm:text-base
+                                    md:w-[110px] md:h-[75px] md:text-sm
+                                    lg:w-[140px] lg:h-[95px] lg:text-base
+                                    xl:w-[160px] xl:h-[110px] xl:text-lg
+                                    2xl:w-[180px] 2xl:h-[120px] 2xl:text-xl ${getSubjectClass(guessSubjectFromTopic(quiz.topic))}`}
+                      >
+                        <span className="z-10 font-bold tracking-wide text-center px-1.5 break-words">
+                          {guessSubjectFromTopic(quiz.topic)}
+                        </span>
+                        {/* SVG Pattern from Figma */}
+                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
+                          <svg width="134" height="133" viewBox="0 0 134 133" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="61.3397" cy="72.3504" r="5.11912" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3395" cy="72.3512" r="10.6834" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3393" cy="72.351" r="16.2477" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3391" cy="72.3508" r="21.8119" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3389" cy="72.3506" r="27.3762" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3387" cy="72.3514" r="32.9404" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3385" cy="72.3512" r="38.5047" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3403" cy="72.351" r="44.069" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3401" cy="72.3508" r="49.6332" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3399" cy="72.3506" r="55.1975" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3397" cy="72.3514" r="60.7618" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3395" cy="72.3512" r="66.326" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <circle cx="61.3393" cy="72.351" r="71.8903" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                            <line x1="61.1936" y1="72.784" x2="0.000449386" y2="72.8107" stroke="white" strokeOpacity="0.3" strokeWidth="0.890282"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                aria-label="Scroll right"
+                className="hidden md:flex items-center justify-center h-12 w-14 rounded-full bg-primary text-white text-2xl font-semibold shadow-2xl border-2 border-white/60 hover:bg-primary/95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary/30"
+                onClick={() => scrollCarouselByOne(1)}
+              >
+                ›
+              </button>
+            </div>
            )}
          </div>
       </div>

@@ -111,10 +111,10 @@ export default function GenerateQuizPage() {
   }
 
   return (
-    <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-white flex flex-col items-center'>
+    <div className='min-h-screen w-full px-4 md:px-12 py-8 bg-background flex flex-col items-center'>
       {/* Modal Popup */}
       {showModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm'>
           <div className='rounded-2xl shadow-lg p-8 min-w-[420px] max-w-[90vw] flex flex-col items-center' style={{
             background: 'linear-gradient(180deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)'
           }}>
@@ -135,16 +135,16 @@ export default function GenerateQuizPage() {
 
                 {/* Quiz Details */}
                 <div className='flex flex-col gap-3 mb-8'>
-                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-amber-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-amber-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <circle cx='12' cy='12' r='10'/>
                       <polyline points='12,6 12,12 16,14'/>
                     </svg>
                     <span className='text-black font-medium'>Takes {timer} mins</span>
                   </div>
                   
-                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-amber-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-amber-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/>
                       <polyline points='14,2 14,8 20,8'/>
                       <line x1='16' y1='13' x2='8' y2='13'/>
@@ -154,8 +154,8 @@ export default function GenerateQuizPage() {
                     <span className='text-black font-medium'>{numQuestions} Questions</span>
                   </div>
                   
-                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-amber-100 rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-amber-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M9 12l2 2 4-4'/>
                       <path d='M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z'/>
                       <path d='M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z'/>
@@ -187,7 +187,7 @@ export default function GenerateQuizPage() {
                 <button
                   className='text-white cursor-pointer rounded-lg px-8 py-3 font-semibold shadow hover:opacity-90 transition'
                   style={{
-                    background: 'linear-gradient(90deg, #FF9F27 0%, #006a3d 100%)'
+                    background: 'linear-gradient(90deg, #FF9F27 0%, hsl(var(--primary)) 100%)'
                   }}
                   onClick={() => {
                     setShowModal(false);
@@ -203,9 +203,9 @@ export default function GenerateQuizPage() {
           </div>
         </div>
       )}
-      <div className='max-w-4xl w-full bg-transparent bg-gray-100 rounded-2xl shadow-lg p-8'>
+      <div className='max-w-4xl w-full bg-muted/50 rounded-2xl shadow-lg p-8'>
         <h2 className='text-2xl font-bold text-black mb-2'>Create Quiz</h2>
-        <hr className='border-gray-600 mb-6' />
+        <hr className='border-border mb-6' />
         <form
           onSubmit={handleSubmit}
           className='grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6'
@@ -218,7 +218,7 @@ export default function GenerateQuizPage() {
                 id="grade"
                 value={grade}
                 onChange={(e) => setGrade(Number(e.target.value))}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 {Array.from({length: 12}, (_, i) => i + 1).map((g) => (
@@ -228,7 +228,7 @@ export default function GenerateQuizPage() {
                 ))}
               </select>
               <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
                 </svg>
               </div>
@@ -242,14 +242,14 @@ export default function GenerateQuizPage() {
                 id="persona"
                 value={persona}
                 onChange={(e) => setPersona(e.target.value)}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 <option value='teacher'>Teacher</option>
                 <option value='student'>Student</option>
               </select>
               <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
                 </svg>
               </div>
@@ -262,7 +262,7 @@ export default function GenerateQuizPage() {
               <select
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className='w-full rounded px-3 py-2 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                className='w-full rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer pr-8'
                 required
               >
                 <option value="">Select Subject</option>
@@ -273,7 +273,7 @@ export default function GenerateQuizPage() {
                 ))}
               </select>
               <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                <svg className='w-4 h-4 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg className='w-4 h-4 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
                 </svg>
               </div>
@@ -287,7 +287,7 @@ export default function GenerateQuizPage() {
                 id="difficulty"
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 {difficulties.map((d) => (
@@ -297,7 +297,7 @@ export default function GenerateQuizPage() {
                 ))}
               </select>
               <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
                 </svg>
               </div>
@@ -313,7 +313,7 @@ export default function GenerateQuizPage() {
                 id="numQuestions"
                 value={numQuestions}
                 onChange={(e) => setNumQuestions(Number(e.target.value))}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 {numQuestionsOptions.map((n) => (
@@ -323,7 +323,7 @@ export default function GenerateQuizPage() {
                 ))}
               </select>
               <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
                 </svg>
               </div>
@@ -337,7 +337,7 @@ export default function GenerateQuizPage() {
                 id="timer"
                 value={timer}
                 onChange={(e) => setTimer(Number(e.target.value))}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 {timeLimits.map((t) => (
@@ -347,7 +347,7 @@ export default function GenerateQuizPage() {
                 ))}
               </select>
               <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
                 </svg>
               </div>
@@ -355,10 +355,10 @@ export default function GenerateQuizPage() {
           </div>
         </form>
         {/* Buttons */}
-        <div className='flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-4 border-t border-gray-300'>
+        <div className='flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-4 border-t border-border'>
           <button
             type='button'
-            className='border border-red-400 text-red-400 rounded-lg px-6 py-3 font-semibold bg-transparent hover:bg-red-50 transition-all duration-200 min-w-[120px] order-2 sm:order-1'
+            className='border border-destructive text-destructive rounded-lg px-6 py-3 font-semibold bg-transparent hover:bg-muted transition-all duration-200 min-w-[120px] order-2 sm:order-1'
             onClick={() => {
               setTopic('');
               setDifficulty('medium');
@@ -374,15 +374,15 @@ export default function GenerateQuizPage() {
           <button
             type='submit'
             form='quiz-gen-form'
-            className='point-ask-gradient text-white cursor-pointer rounded-lg px-6 py-3 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed min-w-[140px] order-1 sm:order-2'
-            disabled={loading}
+            className='bg-primary text-primary-foreground cursor-pointer rounded-lg px-6 py-3 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed min-w-[140px] order-1 sm:order-2'
             onClick={handleSubmit}
+            disabled={loading}
           >
-            {loading ? 'Generating...' : 'Create quiz'}
+            {loading ? 'Generating...' : 'Generate Quiz'}
           </button>
         </div>
         {error && (
-          <div className='text-red-400 font-semibold mt-4'>{error}</div>
+          <div className='text-destructive font-semibold mt-4'>{error}</div>
         )}
       </div>
     </div>
