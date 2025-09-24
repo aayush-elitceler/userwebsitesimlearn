@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Plus, ArrowRight } from "lucide-react";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 import QuizCard from "@/components/QuizCard";
+import ExamCard from "@/components/ExamCard";
 
 // Update the Quiz type to match API
 interface Teacher {
@@ -55,87 +56,9 @@ type Submission = {
   quiz: Quiz;
 };
 
-const subjectColors: Record<string, string> = {
-  Maths: "#4A90E2",
-  Math: "#4A90E2",
-  Science: "#8F5AFF",
-  English: "#F44336",
-  EVS: "#E6AF3F",
-  Default: "#E6AF3F",
-};
+// Removed subjectColors - not needed since ExamCard handles its own styling
 
-function ExamCard({
-  exam,
-  onStart,
-  buttonText = "Take practice exam",
-}: {
-  exam: {
-    title: string;
-    subject?: string;
-    instructions?: string;
-    dueDate?: string; // ISO string
-    description?: string;
-  };
-  onStart?: () => void;
-  buttonText?: string;
-}) {
-  return (
-    <div className="flex flex-row bg-white border border-[#DEDEDE] items-center 
-                    w-full max-w-[520px] min-w-[380px] h-[280px] rounded-[15.51px] shadow-[0px_2.15px_16px_0px_#0000002E] 
-                    flex-shrink-0 p-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 transform
-                    sm:max-w-[540px] sm:h-[290px] sm:p-5
-                    md:max-w-[500px] md:h-[270px] md:p-5
-                    lg:max-w-[520px] lg:h-[280px] lg:p-5
-                    xl:max-w-[560px] xl:h-[300px] xl:p-6">
-      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden pr-4">
-        <div className="flex-1 min-h-0 pb-3">
-          <div className="text-[#626262] text-xs sm:text-sm font-medium mb-2">
-            Subject: {exam.subject || "N/A"}
-          </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-[#006a3d] to-[#006a3d] text-transparent bg-clip-text mb-3 break-words leading-tight">
-            {exam.title}
-          </div>
-          <div className="text-black text-xs sm:text-sm mb-4 leading-relaxed break-words line-clamp-3">
-            {exam.description || exam.instructions || "Practice exam to test your knowledge"}
-          </div>
-          <div className="flex items-center gap-2 text-black text-xs sm:text-sm mb-3">
-            <span role="img" aria-label="clock">🕒</span>
-            <span className="break-words">
-              Due date:{" "}
-              {exam.dueDate
-                ? new Date(exam.dueDate).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })
-                : "-"}
-            </span>
-          </div>
-        </div>
-        <div className="mt-auto pt-4 flex-shrink-0 min-h-[50px] flex items-end">
-          <button
-            className="bg-gradient-to-r from-[#006a3d] to-[#006a3d] cursor-pointer text-white rounded-lg px-4 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap min-w-[120px]"
-            onClick={onStart}
-          >
-            {buttonText}
-          </button>
-        </div>
-      </div>
-      <div className="flex-shrink-0 ml-4">
-        <div
-          className="rounded-xl flex items-center justify-center w-[120px] h-[80px] text-white text-base font-bold shadow-lg relative overflow-hidden"
-          style={{
-            background: subjectColors[exam.subject || "Default"],
-          }}
-        >
-          <span className="z-10 font-bold tracking-wide text-center px-2 break-words">
-            {exam.subject || "Subject"}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Removed inline ExamCard - now using the shared ExamCard component from @/components/ExamCard
 
 // Legacy inline QuizCard was removed in favor of components/QuizCard.
 // If needed later, import and use the shared component.
@@ -286,9 +209,9 @@ export default function QuizesPage() {
             ) : upcomingExams.length === 0 ? (
               <div className="text-black">No upcoming Exams.</div>
             ) : (
-              upcomingExams.slice(0, 2).map((quiz, index) => (
+              upcomingExams.slice(0, 2).map((exam, index) => (
                 <div
-                  key={quiz.id}
+                  key={exam.id}
                   style={{
                     ...getAnimationDelay(index, 200),
                     animation: 'bounceInUp 0.8s ease-out forwards'
@@ -296,10 +219,12 @@ export default function QuizesPage() {
                 >
                   <ExamCard
                     exam={{
-                      ...quiz,
-                      subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
+                      ...exam,
+                      subject: exam.subject || guessSubjectFromTopic(exam.topic),
                     }}
-                    onStart={() => router.push(`/exams/take/${quiz.id}`)}
+                    previous={false}
+                    difficulty={exam.difficulty}
+                    onStartExam={() => router.push(`/exams/take/${exam.id}`)}
                   />
                 </div>
               ))
@@ -333,23 +258,24 @@ export default function QuizesPage() {
             ) : previousExams.length === 0 ? (
               <div className="text-black">No previous exams.</div>
             ) : (
-              previousExams.slice(0, 2).map((quiz, index) => (
+              previousExams.slice(0, 2).map((exam, index) => (
                 <div
-                  key={quiz.id}
+                  key={exam.id}
                   style={{
                     ...getAnimationDelay(index, 200),
                     animation: 'bounceInUp 0.8s ease-out forwards'
                   }}
                 >
-                  <QuizCard
-                    quiz={{
-                      ...quiz,
-                      subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
+                  <ExamCard
+                    exam={{
+                      ...exam,
+                      subject: exam.subject || guessSubjectFromTopic(exam.topic),
                     }}
                     previous={true}
-                    score={quiz.assignmentDetails?.score || undefined}
-                    date={quiz.assignmentDetails?.endTime || quiz.createdAt}
-                    submissionId={undefined}
+                    date={exam.assignmentDetails?.endTime || exam.createdAt}
+                    description={exam.instructions}
+                    difficulty={exam.difficulty}
+                    onViewReport={() => router.push(`/exams/reports/${exam.id}`)}
                   />
                 </div>
               ))

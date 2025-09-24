@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import QuizCard from "@/components/QuizCard";
+import ExamCard from "@/components/ExamCard";
 
 // Update the Quiz type to match API
 interface Teacher {
@@ -147,18 +148,19 @@ export default function AllGenerateExamsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {teacherExams.map((quiz) => (
-              <QuizCard
-                key={quiz.id}
-                quiz={{
-                  ...quiz,
-                  subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
-                  date: quiz.assignmentDetails?.endTime || quiz.createdAt,
-                  assignmentDetails: quiz.assignmentDetails ? {
-                    endTime: quiz.assignmentDetails.endTime || quiz.createdAt
-                  } : undefined,
+            {teacherExams.map((exam) => (
+              <ExamCard
+                key={exam.id}
+                exam={{
+                  ...exam,
+                  subject: exam.subject || guessSubjectFromTopic(exam.topic),
                 }}
-                onStartQuiz={() => router.push(`/exams/take/${quiz.id}`)}
+                previous={exam.completed}
+                date={exam.assignmentDetails?.endTime || exam.createdAt}
+                description={exam.instructions}
+                difficulty={exam.difficulty}
+                onStartExam={() => router.push(`/exams/take/${exam.id}`)}
+                onViewReport={exam.completed ? () => router.push(`/exams/reports/${exam.id}`) : undefined}
               />
             ))}
           </div>

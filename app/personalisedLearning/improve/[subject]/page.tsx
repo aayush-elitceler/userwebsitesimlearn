@@ -133,10 +133,10 @@ function ImprovementPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+      <div className='min-h-screen bg-background flex items-center justify-center'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500 mx-auto mb-4'></div>
-          <p className='text-gray-600'>Loading topic insights...</p>
+          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4'></div>
+          <p className='text-muted-foreground'>Loading topic insights...</p>
         </div>
       </div>
     );
@@ -144,9 +144,9 @@ function ImprovementPage() {
 
   if (error) {
     return (
-      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+      <div className='min-h-screen bg-background flex items-center justify-center'>
         <div className='text-center'>
-          <p className='text-red-600 mb-4'>Error: {error}</p>
+          <p className='text-destructive mb-4'>Error: {error}</p>
           <Button onClick={() => window.location.reload()}>
             Try Again
           </Button>
@@ -157,7 +157,7 @@ function ImprovementPage() {
 
   return (
     <>
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-background p-6">
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8 mt-8">
@@ -169,11 +169,11 @@ function ImprovementPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-semibold text-foreground">
             Improve Your Skill in {data?.concept?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Loading...'}
           </h1>
         </div>
-        <Button className="point-ask-gradient cursor-pointer hover:bg-orange-600 text-white flex items-center gap-2">
+        <Button className="point-ask-gradient cursor-pointer hover:bg-primary/90 text-primary-foreground flex items-center gap-2">
           <MessageCircle className="h-4 w-4" />
           Ask AI Chat
         </Button>
@@ -181,7 +181,7 @@ function ImprovementPage() {
   
       {/* Skill Summary */}
       <div className="mb-8">
-      <Card className="bg-white rounded-lg shadow-sm">
+      <Card className="bg-card rounded-lg shadow-sm">
   <CardHeader>
     <CardTitle className="text-xl font-semibold">Skill summary</CardTitle>
   </CardHeader>
@@ -194,13 +194,15 @@ function ImprovementPage() {
             <path
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               fill="none"
-              stroke="#e5e7eb"
+              className="text-border"
+              stroke="currentColor"
               strokeWidth="3"
             />
             <path
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               fill="none"
-              stroke="#f97316"
+              className="text-primary"
+              stroke="currentColor"
               strokeWidth="3"
               strokeDasharray={`${data?.mastery || 0}, 100`}
             />
@@ -212,21 +214,21 @@ function ImprovementPage() {
       </div>
 
       {/* Stat items */}
-      <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-200 w-full text-center">
+      <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border w-full text-center">
         <div className="px-4">
-          <div className="text-sm text-gray-600 border-b pb-1">Attempts</div>
+          <div className="text-sm text-muted-foreground border-b pb-1">Attempts</div>
           <div className="text-lg font-bold mt-2">{String(data?.attempts || 0).padStart(2, '0')}</div>
         </div>
         <div className="px-4">
-          <div className="text-sm text-gray-600 border-b pb-1">Last practice</div>
+          <div className="text-sm text-muted-foreground border-b pb-1">Last practice</div>
           <div className="text-lg font-bold mt-2">{formatLastPracticed(data?.lastPracticed || '')}</div>
         </div>
         <div className="px-4">
-          <div className="text-sm text-gray-600 border-b pb-1">Concept</div>
+          <div className="text-sm text-muted-foreground border-b pb-1">Concept</div>
           <div className="text-lg font-bold mt-2">{data?.concept?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Loading...'}</div>
         </div>
         <div className="px-4">
-          <div className="text-sm text-gray-600 border-b pb-1">Subject</div>
+          <div className="text-sm text-muted-foreground border-b pb-1">Subject</div>
           <div className="text-lg font-bold mt-2">{data?.subject || 'Loading...'}</div>
         </div>
       </div>
@@ -250,17 +252,17 @@ function ImprovementPage() {
             <div className="space-y-3">
               {data?.mostCommonMistakes && data.mostCommonMistakes.length > 0 ? (
                 data.mostCommonMistakes.map((mistake, index) => (
-                  <p key={index} className="text-gray-700">
+                  <p key={index} className="text-muted-foreground">
                     {index + 1}. {mistake}
                   </p>
                 ))
               ) : (
-                <p className="text-gray-700">No common mistakes data available yet. Keep practicing to get insights!</p>
+                <p className="text-muted-foreground">No common mistakes data available yet. Keep practicing to get insights!</p>
               )}
               {data?.averageTime && (
-                <p className="text-gray-700">
+                <p className="text-muted-foreground">
                   Average time per question:{' '}
-                  <span className="text-orange-600 font-medium">{data.averageTime}</span>
+                  <span className="text-primary font-medium">{data.averageTime}</span>
                 </p>
               )}
             </div>
@@ -281,7 +283,7 @@ function ImprovementPage() {
                 return (
                   <Button 
                     key={index}
-                    className="cursor-pointer w-full h-16 text-lg flex items-center justify-center gap-3 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white transition-all duration-200"
+                    className="cursor-pointer w-full h-16 text-lg flex items-center justify-center gap-3 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
                     variant="outline"
                     onClick={() => handlePracticeClick(item)}
                   >
@@ -293,7 +295,7 @@ function ImprovementPage() {
               })
             ) : (
               <Button 
-                className="cursor-pointer w-full h-16 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white transition-all duration-200 text-lg flex items-center justify-center gap-3"
+                className="cursor-pointer w-full h-16 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-lg flex items-center justify-center gap-3"
                 variant="outline"
                 onClick={() => handlePracticeClick({ label: 'Practice Questions', type: 'general', payload: {} })}
               >
