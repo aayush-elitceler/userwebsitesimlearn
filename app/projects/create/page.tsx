@@ -104,10 +104,10 @@ export default function CreateProjectPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       {/* Modal Popup */}
       {showModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm'>
           <div className='rounded-2xl shadow-lg p-8 min-w-[420px] max-w-[90vw] flex flex-col items-center' style={{
             background: 'linear-gradient(180deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)'
           }}>
@@ -128,33 +128,33 @@ export default function CreateProjectPage() {
 
                 {/* Project Details */}
                 <div className='flex flex-col gap-3 mb-8'>
-                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <div className='flex items-center gap-3 bg-muted rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/>
                       <polyline points='14,2 14,8 20,8'/>
                       <line x1='16' y1='13' x2='8' y2='13'/>
                       <line x1='16' y1='17' x2='8' y2='17'/>
                       <polyline points='10,9 9,9 8,9'/>
                     </svg>
-                    <span className='text-black font-medium'>{form.subject || 'Subject'}</span>
+                    <span className='text-foreground font-medium'>{form.subject || 'Subject'}</span>
                   </div>
-                  
-                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+
+                  <div className='flex items-center gap-3 bg-muted rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M9 12l2 2 4-4'/>
                       <path d='M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z'/>
                       <path d='M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z'/>
                       <path d='M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z'/>
                       <path d='M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z'/>
                     </svg>
-                    <span className='text-black font-medium'>{form.persona}</span>
+                    <span className='text-foreground font-medium'>{form.persona}</span>
                   </div>
-                  
-                  <div className='flex items-center gap-3 bg-green-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-green-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+
+                  <div className='flex items-center gap-3 bg-muted rounded-lg px-4 py-2'>
+                    <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path d='M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'/>
                     </svg>
-                    <span className='text-black font-medium'>Class {form.class}</span>
+                    <span className='text-foreground font-medium'>Class {form.class}</span>
                   </div>
                 </div>
               </>
@@ -172,9 +172,9 @@ export default function CreateProjectPage() {
           </div>
         </div>
       )}
-      <div className='max-w-4xl w-full bg-transparent bg-gray-100 rounded-2xl shadow-lg p-8'>
+      <div className='max-w-4xl w-full bg-muted/50 rounded-2xl shadow-lg p-8'>
         <h2 className='text-2xl font-bold text-black mb-2'>Create Project</h2>
-        <hr className='border-gray-600 mb-6' />
+        <hr className='border-border mb-6' />
         <form
           onSubmit={handleSubmit}
           className='grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6'
@@ -185,7 +185,7 @@ export default function CreateProjectPage() {
               name="title"
               value={form.title}
               onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none'
+              className='rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent'
               placeholder="e.g. Law of Motion"
               required
             />
@@ -196,7 +196,7 @@ export default function CreateProjectPage() {
               name="class"
               value={form.class}
               onChange={handleChange}
-              className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+              className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
               aria-label="Select class"
               required
             >
@@ -214,7 +214,7 @@ export default function CreateProjectPage() {
               name="persona"
               value={form.persona}
               onChange={handleChange}
-              className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+              className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
               aria-label="Select persona"
             >
               <option value="Teacher">Teacher</option>
@@ -228,7 +228,7 @@ export default function CreateProjectPage() {
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
-                className='w-full rounded px-3 py-2 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                className='w-full rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer pr-8'
                 aria-label="Select subject"
                 required
               >
@@ -240,7 +240,7 @@ export default function CreateProjectPage() {
                 ))}
               </select>
               <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                <svg className='w-4 h-4 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg className='w-4 h-4 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
                 </svg>
               </div>
@@ -252,7 +252,7 @@ export default function CreateProjectPage() {
               name="description"
               value={form.description}
               onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-green-100 to-green-200 text-black focus:outline-none'
+              className='rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent'
               rows={4}
               placeholder="Describe the topic..."
               required
@@ -261,10 +261,10 @@ export default function CreateProjectPage() {
         </form>
         
         {/* Buttons */}
-        <div className='flex justify-end gap-4 mt-8'>
+        <div className='flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-4 border-t border-border'>
           <button
             type='button'
-            className='border border-red-400 text-red-400 rounded-lg px-8 py-2 font-semibold bg-transparent hover:bg-white/10 transition'
+            className='border border-destructive text-destructive rounded-lg px-6 py-3 font-semibold bg-transparent hover:bg-muted transition-all duration-200 min-w-[120px] order-2 sm:order-1'
             onClick={() => router.back()}
             disabled={loading}
           >
@@ -272,7 +272,7 @@ export default function CreateProjectPage() {
           </button>
           <button
             type='button'
-            className='point-ask-gradient text-white cursor-pointer rounded-lg px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition disabled:opacity-60'
+            className='bg-primary text-primary-foreground cursor-pointer rounded-lg px-6 py-3 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed min-w-[140px] order-1 sm:order-2'
             disabled={loading}
             onClick={handleSubmit}
           >
@@ -281,7 +281,7 @@ export default function CreateProjectPage() {
         </div>
         
         {error && (
-          <div className='text-red-400 font-semibold mt-4'>{error}</div>
+          <div className='text-destructive font-semibold mt-4'>{error}</div>
         )}
       </div>
     </div>

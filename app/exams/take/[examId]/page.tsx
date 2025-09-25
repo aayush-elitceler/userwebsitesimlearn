@@ -230,32 +230,32 @@ export default function TakeExamPage() {
   }, []);
 
   if (loading || !exam) {
-    return <div className="fixed inset-0 flex items-center justify-center bg-[#181c24] text-white w-screen h-screen">Loading exam...</div>;
+    return <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground w-screen h-screen">Loading exam...</div>;
   }
 
   return (
-    <div className="fixed inset-0 min-h-screen min-w-screen bg-gray-100 py-8 px-2 md:px-0 flex flex-col items-center z-10">
+    <div className="fixed inset-0 min-h-screen min-w-screen bg-background py-8 px-2 md:px-0 flex flex-col items-center z-10">
       {/* Warning Modal */}
       {showWarning && warningCount > 0 && warningCount < 5 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div 
-            className="bg-white flex flex-col items-center justify-center border border-[#DFDFDF]"
+          <div
+            className="bg-card flex flex-col items-center justify-center border border-border"
             style={{
               width: '700px',
               height: '320px',
               borderRadius: '32px',
-              boxShadow: '0px 4px 16px 0px #F9771754',
+              boxShadow: 'var(--shadow-lg)',
               padding: '40px 60px',
             }}
           >
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-5">
-              <svg 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
+            <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-5">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-red-500"
+                className="text-destructive"
               >
                 <path 
                   d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
@@ -266,8 +266,8 @@ export default function TakeExamPage() {
                 />
               </svg>
             </div>
-            <h2 
-              className="text-gray-900 mb-3"
+            <h2
+              className="text-card-foreground mb-3"
               style={{
                 fontFamily: 'Poppins',
                 fontWeight: 700,
@@ -280,8 +280,8 @@ export default function TakeExamPage() {
             >
               🚨 You've Left the Exam Screen
             </h2>
-            <p 
-              className="text-gray-700 mb-3"
+            <p
+              className="text-muted-foreground mb-3"
               style={{
                 fontFamily: 'Poppins',
                 fontWeight: 400,
@@ -293,8 +293,8 @@ export default function TakeExamPage() {
             >
               To maintain exam integrity, please stay on this page.
             </p>
-            <p 
-              className="text-red-600 mb-1"
+            <p
+              className="text-destructive mb-1"
               style={{
                 fontFamily: 'Poppins',
                 fontWeight: 700,
@@ -306,8 +306,8 @@ export default function TakeExamPage() {
             >
               This is Warning {Math.ceil(warningCount/2)} of 3.
             </p>
-            <p 
-              className="text-gray-600 mb-6"
+            <p
+              className="text-muted-foreground mb-6"
               style={{
                 fontFamily: 'Poppins',
                 fontWeight: 400,
@@ -320,13 +320,12 @@ export default function TakeExamPage() {
               If you switch again, the exam may be auto-submitted.
             </p>
             <button
-              className="text-white font-semibold transition-all duration-200 flex items-center justify-center"
+              className="text-primary-foreground font-semibold transition-all duration-200 flex items-center justify-center bg-primary hover:bg-primary/90"
               style={{
                 width: '336px',
                 height: '48px',
                 borderRadius: '10px',
                 padding: '12px',
-                background: 'linear-gradient(89.79deg, #006a3d 0.11%, #006a3d 95.83%)',
                 fontFamily: 'Poppins',
                 fontWeight: 600,
                 fontSize: '16px',
@@ -342,24 +341,24 @@ export default function TakeExamPage() {
       )}
       {showFinalViolationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div 
-            className="bg-white flex flex-col items-center justify-center border border-[#DFDFDF]"
+          <div
+            className="bg-card flex flex-col items-center justify-center border border-border"
             style={{
               width: '700px',
               height: '320px',
               borderRadius: '32px',
-              boxShadow: '0px 4px 16px 0px #F9771754',
+              boxShadow: 'var(--shadow-lg)',
               padding: '50px 60px',
             }}
           >
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-6">
-              <svg 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
+            <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-6">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-red-500"
+                className="text-destructive"
               >
                 <path 
                   d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
@@ -370,8 +369,8 @@ export default function TakeExamPage() {
                 />
               </svg>
             </div>
-            <h2 
-              className="text-gray-900 mb-4"
+            <h2
+              className="text-card-foreground mb-4"
               style={{
                 fontFamily: 'Poppins',
                 fontWeight: 700,
@@ -384,8 +383,8 @@ export default function TakeExamPage() {
             >
               🚨 You've exceeded the allowed number of screen violations.
             </h2>
-            <p 
-              className="text-gray-700 mb-8"
+            <p
+              className="text-muted-foreground mb-8"
               style={{
                 fontFamily: 'Poppins',
                 fontWeight: 400,
@@ -398,13 +397,12 @@ export default function TakeExamPage() {
               Your exam has been submitted automatically due to repeated tab switches or screen exits.
             </p>
             <button
-              className="text-white font-semibold transition-all duration-200 flex items-center justify-center"
+              className="text-primary-foreground font-semibold transition-all duration-200 flex items-center justify-center bg-primary hover:bg-primary/90"
               style={{
                 width: '336px',
                 height: '48px',
                 borderRadius: '10px',
                 padding: '12px',
-                background: 'linear-gradient(89.79deg, #006a3d 0.11%, #006a3d 95.83%)',
                 fontFamily: 'Poppins',
                 fontWeight: 600,
                 fontSize: '16px',
@@ -419,25 +417,25 @@ export default function TakeExamPage() {
         </div>
       )}
       {/* Timer Bar and Progress */}
-      <div className="w-full max-w-3xl mb-4 sticky top-0 z-20 bg-gray-100 p-4 rounded-lg shadow-sm border">
+      <div className="w-full max-w-3xl mb-4 sticky top-0 z-20 bg-card p-4 rounded-lg shadow-sm border border-border">
         <div className="flex justify-between items-center mb-3">
-          <div className="text-black font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
-          <div className="text-gray-400 text-sm">(Exam will auto-submit when time runs out)</div>
+          <div className="text-card-foreground font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
+          <div className="text-muted-foreground text-sm">(Exam will auto-submit when time runs out)</div>
         </div>
         
         {/* Progress Bar */}
-        <div className="mb-3">
+        <div className="mb-8">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-sm font-medium text-gray-700">Progress</span>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-muted-foreground">Progress</span>
+            <span className="text-sm font-medium text-muted-foreground">
               {answers.filter(answer => answer.trim() !== "").length} of {exam.questions.length} answered
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-green-700 to-green-900 rounded-full transition-all duration-500 ease-out relative"
-              style={{ 
-                width: `${(answers.filter(answer => answer.trim() !== "").length / exam.questions.length) * 100}%` 
+          <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-500 ease-out relative"
+              style={{
+                width: `${(answers.filter(answer => answer.trim() !== "").length / exam.questions.length) * 100}%`
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
@@ -445,76 +443,35 @@ export default function TakeExamPage() {
           </div>
         </div>
         
-        {/* Time Progress Bar */}
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-gray-600">Time Remaining</span>
-            <span className="text-xs text-gray-600">
-              {remainingTime ? Math.round((remainingTime / (exam.timeLimitMinutes * 60)) * 100) : 0}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-            <div 
-              className={`h-full rounded-full transition-all duration-1000 ease-linear ${
-                remainingTime && (remainingTime / (exam.timeLimitMinutes * 60)) > 0.3 
-                  ? 'bg-gradient-to-r from-green-400 to-green-600' 
-                  : remainingTime && (remainingTime / (exam.timeLimitMinutes * 60)) > 0.1
-                  ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
-                  : 'bg-gradient-to-r from-red-400 to-red-600 animate-pulse'
-              }`}
-              style={{ 
-                width: `${remainingTime ? Math.max(0, (remainingTime / (exam.timeLimitMinutes * 60)) * 100) : 0}%` 
-              }}
-            />
-          </div>
-        </div>
       </div>
       
-      {/* Question Navigation */}
-      <div className="w-full max-w-3xl mb-4 sticky top-16 z-20 bg-gray-100 py-2">
-        <div className="flex flex-wrap gap-2 justify-center">
-          {exam.questions.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => scrollToQuestion(idx)}
-              className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                answers[idx] 
-                  ? 'bg-green-500 text-white hover:bg-green-600' 
-                  : 'bg-white text-gray-700 hover:bg-[#006a3d] hover:text-white border border-gray-300'
-              }`}
-            >
-              {idx + 1}
-            </button>
-          ))}
-        </div>
-      </div>
       <div 
         className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-32px)]"
         style={{
           scrollBehavior: 'smooth',
           scrollbarWidth: 'thin',
-          scrollbarColor: '#006a3d #f1f1f1',
+          scrollbarColor: 'var(--primary) var(--muted)',
         }}
       >
         <div className="mb-4">
-          <div className="text-black font-semibold">Difficulty: {exam.difficulty?.charAt(0).toUpperCase() + exam.difficulty?.slice(1)}</div>
-          <div className="text-2xl font-bold text-black mb-2">{exam.title}</div>
+          <div className="text-muted-foreground font-semibold">Difficulty: {exam.difficulty?.charAt(0).toUpperCase() + exam.difficulty?.slice(1)}</div>
+          <div className="text-2xl font-bold text-foreground mb-2">{exam.title}</div>
         </div>
        
         {exam.questions.map((q, idx) => (
-          <div 
-            key={q.id} 
+          <div
+            key={q.id}
             id={`question-${idx}`}
-            className="mb-8 bg-white rounded-2xl p-6 transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-[1.01]"
+            className="mb-8 bg-card rounded-2xl p-6 transition-all duration-300 ease-in-out hover:shadow-lg border border-border"
             style={{
               scrollMarginTop: '80px',
             }}
           >
-            <div className="font-semibold text-black mb-4 text-lg">
+            <div className="font-semibold text-card-foreground mb-4 text-lg">
               Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ""}
             </div>
             <textarea
-              className="w-full p-4 rounded bg-[#006a3d33] text-gray-700 min-h-[60px] transition-all duration-200 focus:bg-[#006a3d55] focus:outline-none focus:ring-2 focus:ring-[#006a3d] focus:ring-opacity-50"
+              className="w-full p-4 rounded bg-primary/10 text-card-foreground min-h-[60px] transition-all duration-200 focus:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
               placeholder="Type your short answer here"
               value={answers[idx]}
               onChange={(e) => handleAnswerChange(idx, e.target.value)}
@@ -522,7 +479,7 @@ export default function TakeExamPage() {
           </div>
         ))}
         <button
-          className="point-ask-gradient text-white p-4 rounded-lg w-full max-w-xs mx-auto block"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 p-4 rounded-lg w-full max-w-xs mx-auto block disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => handleSubmit(false)}
           disabled={submitting}
         >

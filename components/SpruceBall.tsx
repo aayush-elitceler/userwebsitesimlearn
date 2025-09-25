@@ -65,10 +65,10 @@ export default function SpruceBall({ listening }: { listening: boolean }) {
   const scale = 1 + volume * 0.5 + pulse * 0.2;
   const glow = 0.5 + volume * 1.2;
   
-  // Colors for different states
+  // Colors for different states - Red theme to match website primary color
   const baseColors = listening
-    ? "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(100, 200, 255, 0.9), rgba(0, 120, 255, 0.9), rgba(0, 80, 200, 1))"
-    : "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 204, 128, 0.9), rgba(255, 112, 67, 0.9), rgba(255, 87, 34, 1))";
+    ? "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 150, 150, 0.9), rgba(220, 80, 80, 0.9), rgba(200, 60, 60, 1))"
+    : "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 180, 120, 0.9), rgba(255, 100, 80, 0.9), rgba(220, 70, 70, 1))";
 
   return (
     <div className="flex justify-center items-center py-10">
@@ -78,8 +78,8 @@ export default function SpruceBall({ listening }: { listening: boolean }) {
           transform: `scale(${scale})`,
           background: baseColors,
           boxShadow: `
-            0 0 40px rgba(0, 150, 255, ${glow}),
-            0 0 80px rgba(0, 100, 255, ${glow * 0.5})
+            0 0 40px rgba(220, 80, 80, ${glow}),
+            0 0 80px rgba(200, 60, 60, ${glow * 0.5})
           `,
         }}
       >

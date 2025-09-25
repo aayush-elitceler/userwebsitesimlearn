@@ -136,6 +136,23 @@ export default function Home() {
   const [selectedChallengeIndex, setSelectedChallengeIndex] = useState(0);
   const router = useRouter();
   const { setLogoUrl } = useLogo();
+  const [primaryColor, setPrimaryColor] = useState<string>("#000");
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const c = getComputedStyle(document.documentElement)
+        .getPropertyValue('--primary')
+        .trim();
+      if (c) setPrimaryColor(c);
+    }
+  }, []);
+
+  const withAlpha = (color: string, alpha: number): string => {
+    if (color.startsWith('oklch(')) {
+      return color.replace(/\)$/, ` / ${alpha})`);
+    }
+    return color;
+  };
 
   // Function to convert number to ordinal (1st, 2nd, 3rd, etc.)
   const getOrdinal = (num: number): string => {
@@ -342,11 +359,11 @@ export default function Home() {
         {
           label: 'Learning Growth',
           data: allMonths.map((month) => dataMap.get(month) || 0),
-          borderColor: '#006a3d',
-          backgroundColor: 'rgba(249, 115, 22, 0.1)',
+          borderColor: primaryColor,
+          backgroundColor: withAlpha(primaryColor, 0.12),
           tension: 0.4,
           fill: true,
-          pointBackgroundColor: '#006a3d',
+          pointBackgroundColor: primaryColor,
           pointRadius: 4,
         },
       ],
@@ -359,7 +376,7 @@ export default function Home() {
         className={`min-h-screen flex items-center justify-center bg-gray-50 ${poppins.className}`}
       >
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-20 w-20 border-b-2 border-green-700 mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-20 w-20 border-b-2 border-primary mx-auto mb-4'></div>
           <p className='text-gray-600'>Loading dashboard...</p>
         </div>
       </div>
@@ -375,7 +392,7 @@ export default function Home() {
           <p className='text-red-600 text-lg mb-4'>{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className='px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800'
+            className='px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90'
           >
             Retry
           </button>
@@ -478,7 +495,7 @@ export default function Home() {
             <div
               key={idx}
               className={`flex-1 flex flex-col items-center py-2 rounded-xl ${
-                day.isActive ? 'text-green-800' : 'text-gray-400'
+                day.isActive ? 'text-primary' : 'text-gray-400'
               }`}
             >
               <img
@@ -494,7 +511,7 @@ export default function Home() {
         </div>
 
         <div 
-          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-green-200 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-green-300 transition-all duration-200'
+          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-primary/20 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-primary/30 transition-all duration-200'
           onClick={() => {
             if (primaryChallenge) {
               if (primaryChallenge.quizId) {
@@ -515,8 +532,10 @@ export default function Home() {
           }}
         >
           <img src='/images/medal.svg' alt='' className='w-[50px] h-[50px]' />
-          <div className='flex-1 text-green-700 font-semibold'>
-            {primaryChallenge ? primaryChallenge.title : 'Badge Challenge'}
+          <div className='flex-1 font-semibold'>
+            <span className='text-primary'>
+              {primaryChallenge ? primaryChallenge.title : 'Badge Challenge'}
+            </span>
             {challenges.length > 1 && (
               <span className='ml-2 text-xs text-gray-600'>({challenges.length} challenges)</span>
             )}
@@ -524,7 +543,7 @@ export default function Home() {
           <div className='text-sm text-gray-600'>
             {primaryChallenge ? (
               primaryChallenge.current >= primaryChallenge.target ? (
-                <span className='text-green-600 font-semibold'>🎉 Earned!</span>
+                <span className='text-primary font-semibold'>🎉 Earned!</span>
               ) : (
                 <>
                   {primaryChallenge.current}/{primaryChallenge.target}
@@ -532,9 +551,9 @@ export default function Home() {
               )
             ) : null}
           </div>
-          <span className='text-green-700 font-medium'>
-            {(primaryChallenge?.quizId || primaryChallenge?.link) && !isPrimaryCompleted ? 'Start' : 'View'}
-          </span>
+          <div className='w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 hover:shadow-lg hover:scale-110 transition-all duration-200'>
+            <ArrowRight size={20} />
+          </div>
         </div>
       </div>
 
@@ -592,7 +611,7 @@ export default function Home() {
             </p>
             <button
               onClick={() => router.push(card.link)}
-              className='point-ask-gradient hover:from-green-800 hover:to-green-900 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 w-full sm:w-auto hover:shadow-lg hover:scale-105'
+              className='bg-primary text-primary-foreground text-base px-4 py-1.5 rounded-lg transition-all duration-200 w-full sm:w-auto hover:bg-primary/90 hover:shadow-lg hover:scale-105'
             >
               {card.buttonText}
             </button>
@@ -632,10 +651,10 @@ export default function Home() {
                   </div>
                   <button
                     onClick={() => handleMissionClick(mission)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-white w-[150px] h-[40px]  ${
+                    className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-white w-[150px] h-[40px]  ${
                       mission.completed
-                        ? 'bg-[#009B41] hover:bg-[#008a3a] hover:shadow-lg hover:scale-105 cursor-default'
-                        : 'point-ask-gradient hover:from-green-800 hover:to-green-900 hover:shadow-lg hover:scale-105'
+                        ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105 cursor-default'
+                        : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105'
                     }`}
                   >
                     {mission.completed
@@ -692,7 +711,7 @@ export default function Home() {
               Quick Links
             </h2>
             <div className='space-y-3'>
-              {dashboardData.quickLinks.map((link, idx) => (
+              {dashboardData.quickLinks.slice(0, 3).map((link, idx) => (
                 <div
                   key={idx}
                   className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b-1 border-gray-200 pb-2 last:border-b-0 transform transition-all duration-300 hover:bg-gray-50 hover:scale-[1.01] rounded-lg px-2'
@@ -707,10 +726,10 @@ export default function Home() {
                   </div>
                   <button
                     onClick={() => handleQuickLinkClick(link)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-white w-[150px] h-[40px] ${
+                    className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-primary-foreground w-[150px] h-[40px] ${
                       link.status === 'Completed'
-                        ? 'bg-[#009B41] hover:bg-[#008a3a] hover:shadow-lg hover:scale-105'
-                        : 'point-ask-gradient hover:from-green-800 hover:to-green-900 hover:shadow-lg hover:scale-105'
+                        ? 'bg-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+                        : 'bg-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
                     }`}
                   >
                     {link.status === 'Completed' 
@@ -739,7 +758,7 @@ export default function Home() {
                   </div>
                   <div className='w-full bg-gray-200 rounded-full h-3'>
                     <div
-                      className='h-3 rounded-full point-ask-gradient transition-all duration-500'
+                      className='h-3 rounded-full bg-primary transition-all duration-500'
                       style={{ width: `${item.percentage}%` }}
                     ></div>
                   </div>
@@ -807,7 +826,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-gray-600">Completed:</span>
-                    <span className="font-semibold text-green-700">{challenges[selectedChallengeIndex]?.current} tasks</span>
+                    <span className="font-semibold text-primary">{challenges[selectedChallengeIndex]?.current} tasks</span>
                   </div>
                   
                   <div className="flex items-center justify-between mb-3">
@@ -828,9 +847,7 @@ export default function Home() {
                         className="h-3 rounded-full transition-all duration-500"
                         style={{ 
                           width: `${Math.min(100, (((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100))}%`,
-                          background: (challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0) 
-                            ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' 
-                            : 'linear-gradient(90deg, #006a3d 0%, #006a3d 100%)'
+                          background: 'var(--primary)'
                         }}
                       ></div>
                     </div>
@@ -838,7 +855,7 @@ export default function Home() {
                   
                   {/* Status */}
                   {(challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0) ? (
-                    <div className="flex items-center gap-2 text-green-700 font-semibold">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
                       🎉 Badge Completed!
                     </div>
                   ) : (
@@ -884,7 +901,7 @@ export default function Home() {
                       }
                       router.push('/quizes/generate');
                     }}
-                    className="flex-1 point-ask-gradient hover:from-green-800 hover:to-green-900 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
                   >
                     Start Challenge
                   </button>

@@ -261,6 +261,33 @@ export default function ExamReportPage() {
   const pointerPosition = calculatePointerPosition(scorePercentage);
   const performanceLevel = getPerformanceLevel(scorePercentage);
 
+  const difficultyLabel = result.exam.difficulty
+    ? `${result.exam.difficulty.charAt(0).toUpperCase()}${result.exam.difficulty.slice(1)}`
+    : 'Medium';
+
+  const getMessageForPerformance = (level: string) => {
+    switch (level) {
+      case 'EXCELLENT':
+        return { headline: 'Great Job!!', betterThan: 90 };
+      case 'GOOD':
+        return { headline: 'Great Job!!', betterThan: 70 };
+      case 'FAIR':
+        return { headline: 'Nice Try!', betterThan: 40 };
+      default:
+        return { headline: 'Keep Going!', betterThan: 10 };
+    }
+  };
+  const { headline, betterThan } = getMessageForPerformance(performanceLevel);
+
+  // Aggregate feedback across questions for the right-side panel
+  const strengths = Array.from(new Set(result.exam.questions.flatMap(q => q.gradingResult?.strengths || [])));
+  const areasForImprovement = Array.from(new Set(result.exam.questions.flatMap(q => q.gradingResult?.areasForImprovement || [])));
+  const keyPoints = Array.from(new Set(result.exam.questions.flatMap(q => q.gradingResult?.keyPoints || [])));
+  const suggestions = Array.from(new Set(result.exam.questions.flatMap(q => {
+    const s = q.gradingResult?.suggestions;
+    return s ? (Array.isArray(s) ? s : [s]) : [];
+  })));
+
   // Debug logging to understand the scoring
   console.log('Exam Report Debug:', {
     totalScore: result.score,
@@ -275,240 +302,166 @@ export default function ExamReportPage() {
   });
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100">
-      <div className="max-w-3xl mx-auto">
-        {/* Header with cache status and refresh button */}
+    <div className="min-h-screen w-full px-4 md:px-10 lg:px-12 py-8 bg-gray-100">
+      <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-black mb-2">Assessment report</h2>
-          
+            <h2 className="text-3xl font-bold text-black mb-2">Assessment report</h2>
+            <div className="text-black">
+              {result.exam.title} • Difficulty - {difficultyLabel}
+            </div>
           </div>
           <button
             onClick={handleRefreshReport}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-[#FFB121] text-white rounded-lg hover:bg-[#FFB121] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span>{loading ? 'Refreshing...' : 'Refresh Report'}</span>
           </button>
         </div>
-        
-        <div className="text-black mb-2">
-          {result.exam.title} &nbsp; • &nbsp; Difficulty - {result.exam.difficulty || "N/A"}
-        </div>
-        <div className="text-black mb-4">
-          You received a score of <span className="text-black ">{result.score}</span> / {totalPossibleMarks} ({result.totalQuestions} questions).
-        </div>
-        
-        {/* Score Breakdown */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">Score Breakdown</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <span className="text-sm text-gray-600">Total Score:</span>
-              <span className="ml-2 font-bold text-green-600">{result.score}</span>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Total Possible:</span>
-              <span className="ml-2 font-bold text-green-600">{totalPossibleMarks}</span>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Percentage:</span>
-              <span className="ml-2 font-bold text-green-600">{Math.round(scorePercentage)}%</span>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Performance:</span>
-              <span className="ml-2 font-bold text-green-600">{performanceLevel}</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Overall Feedback */}
-        {result.overallFeedback && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h3 className="text-lg font-semibold text-blue-800 mb-2">Overall Feedback</h3>
-            <div className="text-blue-700 whitespace-pre-line">{result.overallFeedback}</div>
-            
-          </div>
-        )}
-        
-        {/* Custom Assessment Indicator */}
-        <div className="flex justify-center mb-8">
-          <div className="relative">
-            <svg width="373" height="207" viewBox="0 0 373 207" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g opacity="0.2">
-                <path d="M318.061 54.4395L274.198 98.3021L230.336 142.164C241.578 153.379 248.501 168.859 248.501 185.999H310.501H372.501C372.501 134.577 351.705 88.0839 318.061 54.4395Z" fill="url(#paint0_linear_1306_119905)"/>
-                <path d="M186.5 0V62V124C203.641 124 219.12 130.923 230.335 142.166L274.197 98.3032L318.06 54.4406C284.415 20.7959 237.922 0 186.5 0Z" fill="url(#paint1_linear_1306_119905)"/>
-                <path d="M54.9414 54.4404L98.8038 98.303L142.639 142.165H142.666C153.881 130.923 169.361 124 186.501 124V62V0C135.079 0 88.5859 20.7959 54.9414 54.4404Z" fill="url(#paint2_linear_1306_119905)"/>
-                <path d="M98.8027 98.3021L54.9404 54.4395C21.2959 88.0839 0.5 134.577 0.5 185.999H62.5H124.5C124.5 168.859 131.423 153.379 142.638 142.165L98.8027 98.3021Z" fill="url(#paint3_linear_1306_119905)"/>
-              </g>
-              <path d="M289.115 83.3867L254.903 117.599L220.691 151.81C229.46 160.558 234.86 172.631 234.86 186H283.219H331.577C331.577 145.893 315.357 109.629 289.115 83.3867Z" fill="url(#paint4_linear_1306_119905)"/>
-              <path d="M186.504 40.9238V89.2826V137.641C199.874 137.641 211.947 143.041 220.694 151.81L254.906 117.598L289.117 83.3861C262.876 57.144 226.612 40.9238 186.504 40.9238Z" fill="url(#paint5_linear_1306_119905)"/>
-              <path d="M83.8867 83.3861L118.098 117.598L152.289 151.81H152.31C161.058 143.041 173.131 137.641 186.5 137.641V89.2826V40.9238C146.393 40.9238 110.129 57.144 83.8867 83.3861Z" fill="url(#paint6_linear_1306_119905)"/>
-              <path d="M118.1 117.599L83.888 83.3867C57.6459 109.629 41.4258 145.893 41.4258 186.001H89.7845H138.143C138.143 172.631 143.543 160.558 152.29 151.811L118.1 117.599Z" fill="url(#paint7_linear_1306_119905)"/>
-              
-              {/* Dynamic Pointer */}
-              <g transform={`rotate(${pointerPosition * 1.8 - 150}, 186.5, 186)`}>
-                <path d="M182.52 177.195L277.974 132.729C278.986 132.25 279.915 133.757 278.896 134.402L190.363 191.415C180.459 197.21 172.3 182.522 182.52 177.195Z" fill="#1D3B63"/>
-                <path d="M175.202 165.678C185.492 159.48 198.863 162.782 205.069 173.072C207.307 176.787 208.306 180.891 208.186 184.929C207.977 192.072 204.25 198.97 197.678 202.924C187.394 209.14 174.021 205.832 167.814 195.542C161.607 185.258 164.919 171.894 175.202 165.678Z" fill="#1D3B63"/>
-                <path d="M180.783 174.928C185.962 171.808 192.692 173.471 195.816 178.65C196.942 180.52 197.446 182.585 197.385 184.618C197.28 188.214 195.404 191.686 192.096 193.676C186.92 196.805 180.188 195.14 177.064 189.96C173.94 184.784 175.606 178.057 180.783 174.928Z" fill="white"/>
-              </g>
-              
-              <defs>
-                <linearGradient id="paint0_linear_1306_119905" x1="301.418" y1="188.432" x2="301.418" y2="153.798" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#00963A"/>
-                  <stop offset="0.1576" stopColor="#06A541"/>
-                  <stop offset="0.4706" stopColor="#0FBD4B"/>
-                  <stop offset="0.7597" stopColor="#14CC52"/>
-                  <stop offset="1" stopColor="#16D154"/>
-                </linearGradient>
-                <linearGradient id="paint1_linear_1306_119905" x1="268.588" y1="105.189" x2="238.359" y2="75.5772" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FFAC05"/>
-                  <stop offset="0.1821" stopColor="#FFBE10"/>
-                  <stop offset="0.494" stopColor="#FFD820"/>
-                  <stop offset="0.776" stopColor="#FFE82A"/>
-                  <stop offset="1" stopColor="#FFED2D"/>
-                </linearGradient>
-                <linearGradient id="paint2_linear_1306_119905" x1="185.822" y1="71.0827" x2="139.538" y2="71.0827" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF4D05"/>
-                  <stop offset="0.2771" stopColor="#FF6E16"/>
-                  <stop offset="0.5535" stopColor="#FF8822"/>
-                  <stop offset="0.8024" stopColor="#FF982A"/>
-                  <stop offset="1" stopColor="#FF9D2D"/>
-                </linearGradient>
-                <linearGradient id="paint3_linear_1306_119905" x1="104.13" y1="103.358" x2="83.1554" y2="127.417" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF0508"/>
-                  <stop offset="0.0461" stopColor="#FF0C0B"/>
-                  <stop offset="0.3221" stopColor="#FF2F1A"/>
-                  <stop offset="0.5813" stopColor="#FF4924"/>
-                  <stop offset="0.8147" stopColor="#FF592B"/>
-                  <stop offset="1" stopColor="#FF5E2D"/>
-                </linearGradient>
-                <linearGradient id="paint4_linear_1306_119905" x1="276.134" y1="187.898" x2="276.134" y2="160.884" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#00963A"/>
-                  <stop offset="0.1576" stopColor="#06A541"/>
-                  <stop offset="0.4706" stopColor="#0FBD4B"/>
-                  <stop offset="0.7597" stopColor="#14CC52"/>
-                  <stop offset="1" stopColor="#16D154"/>
-                </linearGradient>
-                <linearGradient id="paint5_linear_1306_119905" x1="250.531" y1="122.969" x2="226.953" y2="99.8723" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FFAC05"/>
-                  <stop offset="0.1821" stopColor="#FFBE10"/>
-                  <stop offset="0.494" stopColor="#FFD820"/>
-                  <stop offset="0.776" stopColor="#FFE82A"/>
-                  <stop offset="1" stopColor="#FFED2D"/>
-                </linearGradient>
-                <linearGradient id="paint6_linear_1306_119905" x1="185.971" y1="96.3667" x2="149.87" y2="96.3667" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF4D05"/>
-                  <stop offset="0.2771" stopColor="#FF6E16"/>
-                  <stop offset="0.5535" stopColor="#FF8822"/>
-                  <stop offset="0.8024" stopColor="#FF982A"/>
-                  <stop offset="1" stopColor="#FF9D2D"/>
-                </linearGradient>
-                <linearGradient id="paint7_linear_1306_119905" x1="122.255" y1="121.542" x2="105.895" y2="140.308" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF0508"/>
-                  <stop offset="0.0461" stopColor="#FF0C0B"/>
-                  <stop offset="0.3221" stopColor="#FF2F1A"/>
-                  <stop offset="0.5813" stopColor="#FF4924"/>
-                  <stop offset="0.8147" stopColor="#FF592B"/>
-                  <stop offset="1" stopColor="#FF5E2D"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            
-            {/* Performance Level Text */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-              <div className="text-2xl font-bold text-black mb-2">{performanceLevel}</div>
-              <div className="text-lg text-gray-600">{Math.round(scorePercentage)}%</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Show questions and student answers with grading feedback */}
-        <div className="mt-8">
-          <h3 className="text-xl font-bold text-black mb-4">Your Answers & Feedback</h3>
-          {result.exam.questions.map((q, idx) => (
-            <div key={idx} className="mb-8 bg-white rounded-lg p-6 shadow-sm">
-              <div className="text-black font-semibold mb-3 text-lg">
-                Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ""}
-              </div>
-              
-              {/* Student Answer */}
-              <div className="mb-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Your Answer:</h4>
-                <div className="bg-[#FFB12133] text-black rounded p-4 min-h-[60px]">
-                  {q.studentAnswer || <span className="italic text-gray-500">No answer provided</span>}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left: Result Card */}
+          <div className="rounded-2xl p-8 shadow-lg bg-gradient-to-b from-orange-50 to-orange-100 relative">
+            <div className="flex flex-col items-center mt-8">
+              <div className="relative">
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 text-xl font-semibold text-black z-10">Your Result</div>
+                <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-gradient-to-b from-orange-300 via-orange-400 to-rose-500 flex items-center justify-center shadow-inner mt-12">
+                  <div className="text-white text-4xl sm:text-5xl font-bold">{Math.round(scorePercentage)}%</div>
                 </div>
               </div>
-              
-              {/* Grading Feedback */}
-              {q.gradingResult && (
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-gray-700">Feedback:</h4>
-                    <span className="text-sm font-bold text-blue-600">
-                      Score: {q.gradingResult.score}/{q.marks || 0}
-                    </span>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded p-4 mb-3">
-                    <p className="text-gray-800 mb-3">{q.gradingResult.feedback}</p>
-                    
-                    {/* Strengths */}
-                    {q.gradingResult.strengths && q.gradingResult.strengths.length > 0 && (
-                      <div className="mb-3">
-                        <h5 className="text-sm font-semibold text-green-700 mb-1">Strengths:</h5>
-                        <ul className="list-disc list-inside text-sm text-green-600">
-                          {q.gradingResult.strengths.map((strength, i) => (
-                            <li key={i}>{strength}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {/* Areas for Improvement */}
-                    {q.gradingResult.areasForImprovement && q.gradingResult.areasForImprovement.length > 0 && (
-                      <div className="mb-3">
-                        <h5 className="text-sm font-semibold text-orange-700 mb-1">Areas for Improvement:</h5>
-                        <ul className="list-disc list-inside text-sm text-orange-600">
-                          {q.gradingResult.areasForImprovement.map((area, i) => (
-                            <li key={i}>{area}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {/* Key Points */}
-                    {q.gradingResult.keyPoints && q.gradingResult.keyPoints.length > 0 && (
-                      <div className="mb-3">
-                        <h5 className="text-sm font-semibold text-red-700 mb-1">Key Points:</h5>
-                        <ul className="list-disc list-inside text-sm text-red-600">
-                          {q.gradingResult.keyPoints.map((point, i) => (
-                            <li key={i}>{point}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {/* Suggestions */}
-                    {q.gradingResult.suggestions && (
-                      <div>
-                        <h5 className="text-sm font-semibold text-green-500 mb-1">Suggestions:</h5>
-                        {Array.isArray(q.gradingResult.suggestions) ? (
-                          <ul className="list-disc list-inside text-sm text-green-400">
-                            {q.gradingResult.suggestions.map((suggestion, i) => (
-                              <li key={i}>{suggestion}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-sm text-green-400">{q.gradingResult.suggestions}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
+              <div className="mt-6 text-2xl font-semibold text-[#ff4d4f]">{headline}</div>
+              <p className="mt-4 text-center text-gray-700 max-w-md">
+                You received a score of <span className="font-semibold text-black">{result.score}</span>/{totalPossibleMarks}. You performed better than {betterThan}% of all others that have taken this exam.
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Feedback Panel */}
+          <div className="bg-white rounded-2xl p-8 shadow-lg">
+            <div className="text-2xl font-bold text-black mb-6">Feedback</div>
+            <div className="space-y-4 max-h-[29rem] overflow-auto pr-2" style={{ scrollbarWidth: 'thin' } as React.CSSProperties}>
+              {result.overallFeedback && (
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <div className="text-sm font-semibold text-gray-800 mb-2">Overall</div>
+                  <div className="text-gray-700 whitespace-pre-line">{result.overallFeedback}</div>
+                </div>
+              )}
+
+              {strengths.length > 0 && (
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <div className="text-sm font-semibold text-gray-800 mb-2">Strengths</div>
+                  <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                    {strengths.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {areasForImprovement.length > 0 && (
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <div className="text-sm font-semibold text-gray-800 mb-2">Areas for improvement</div>
+                  <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                    {areasForImprovement.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {keyPoints.length > 0 && (
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <div className="text-sm font-semibold text-gray-800 mb-2">Key points</div>
+                  <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                    {keyPoints.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {suggestions.length > 0 && (
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <div className="text-sm font-semibold text-gray-800 mb-2">Suggestions</div>
+                  <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                    {suggestions.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
-          ))}
+          </div>
+        </div>
+
+        {/* Answers & Feedback (Minimal) */}
+        <div className="mt-10">
+          <h3 className="text-lg font-semibold text-black mb-4">Your answers & feedback</h3>
+          <div className="space-y-4">
+            {result.exam.questions.map((q, idx) => (
+              <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div className="text-black font-medium">
+                    Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ''}
+                  </div>
+                  {q.gradingResult && (
+                    <span className="inline-flex items-center rounded-full border border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                      Score {q.gradingResult.score}/{q.marks || 0}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs font-semibold text-gray-600 mb-1">Your answer</div>
+                    <div className="rounded-lg border border-gray-200 bg-white p-3 min-h-[52px] text-gray-800">
+                      {q.studentAnswer || <span className="italic text-gray-500">No answer provided</span>}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-semibold text-gray-600 mb-1">Feedback</div>
+                    {q.gradingResult ? (
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-gray-800">
+                        {q.gradingResult.feedback && (
+                          <p className="text-sm leading-6">{q.gradingResult.feedback}</p>
+                        )}
+                        <div className="mt-2 space-y-1">
+                          {q.gradingResult.strengths && q.gradingResult.strengths.length > 0 && (
+                            <div className="text-xs text-gray-600">
+                              <span className="font-semibold text-gray-700">Strengths: </span>
+                              <span>{q.gradingResult.strengths.join(', ')}</span>
+                            </div>
+                          )}
+                          {q.gradingResult.areasForImprovement && q.gradingResult.areasForImprovement.length > 0 && (
+                            <div className="text-xs text-gray-600">
+                              <span className="font-semibold text-gray-700">Improve: </span>
+                              <span>{q.gradingResult.areasForImprovement.join(', ')}</span>
+                            </div>
+                          )}
+                          {q.gradingResult.keyPoints && q.gradingResult.keyPoints.length > 0 && (
+                            <div className="text-xs text-gray-600">
+                              <span className="font-semibold text-gray-700">Key points: </span>
+                              <span>{q.gradingResult.keyPoints.join(', ')}</span>
+                            </div>
+                          )}
+                          {q.gradingResult.suggestions && (
+                            <div className="text-xs text-gray-600">
+                              <span className="font-semibold text-gray-700">Suggestions: </span>
+                              <span>{Array.isArray(q.gradingResult.suggestions) ? q.gradingResult.suggestions.join(', ') : q.gradingResult.suggestions}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-gray-500">No feedback provided</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

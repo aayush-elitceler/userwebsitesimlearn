@@ -175,13 +175,13 @@ export default function ProjectDetailPage() {
                 href={project.pdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 point-ask-gradient text-white text-center py-3 px-6 rounded-lg font-semibold hover:bg-[#16a34a] transition shadow"
+                className="flex-1 bg-primary text-primary-foreground text-center py-3 px-6 rounded-lg font-semibold hover:opacity-90 transition shadow"
               >
                 📄 Download Project PDF
               </a>
               <button
                 onClick={() => router.push("/projects")}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                className="px-6 py-3 border border-border text-foreground rounded-lg hover:bg-muted transition"
               >
                 Create Another Project
               </button>

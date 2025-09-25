@@ -1,6 +1,33 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+
+interface ContentItem {
+  id: string;
+  title: string;
+  subject?: string;
+  description?: string;
+  instructions?: string;
+  difficulty?: string;
+  createdAt?: string;
+  date?: string;
+  pdfUrl?: string;
+  downloadUrl?: string;
+  class?: string;
+  persona?: string;
+  deadline?: string | null;
+  type?: 'quiz' | 'project' | 'exam';
+}
+
+interface ContentCardProps {
+  content: ContentItem;
+  type?: 'quiz' | 'project' | 'exam';
+  previous?: boolean;
+  showScoreAndDate?: boolean;
+  onStart?: (id: string) => void;
+  onDownload?: (url: string) => void;
+  onViewAnswers?: (id: string) => void;
+}
 
 // Get CSS class for subject background
 const getSubjectClass = (subject: string | undefined) => {
@@ -21,65 +48,103 @@ const getSubjectClass = (subject: string | undefined) => {
   }
 };
 
-interface Exam {
-  id: string;
-  title: string;
-  subject?: string;
-  createdAt: string;
-  previous?: boolean;
-  date?: string;
-  description?: string;
-  difficulty?: string;
-  instructions?: string;
-  topic?: string;
-  [key: string]: any; // For additional properties
-}
-
-interface ExamCardProps {
-  exam: Exam;
-  previous?: boolean;
-  date?: string;
-  description?: string;
-  onStartExam?: (examId: string) => void;
-  onViewReport?: (examId: string) => void;
-  height?: string;
-  maxWidth?: string;
-  showScoreAndDate?: boolean;
-  difficulty?: string;
-}
-
-export default function ExamCard({
-  exam,
+export default function ContentCard({
+  content,
+  type = 'quiz',
   previous = false,
-  date,
-  description,
-  onStartExam,
-  onViewReport,
-  height = "240px",
-  maxWidth = "520px",
   showScoreAndDate = true,
-  difficulty,
-}: ExamCardProps) {
+  onStart,
+  onDownload,
+  onViewAnswers,
+}: ContentCardProps) {
   const router = useRouter();
-  const examDescription =
-    description ||
-    exam.description ||
-    "Comprehensive exam covering all topics with detailed analysis and scoring.";
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldTruncate, setShouldTruncate] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
 
-  const handleStartExam = () => {
-    if (onStartExam) {
-      onStartExam(exam.id);
+  const description =
+    content.description ||
+    content.instructions ||
+    (content.type === 'project'
+      ? `Class ${content.class} - ${content.persona}`
+      : "Learn with AI Tutor the core of grammar with help of new age solutions in your test"
+    );
+
+  // Check if content actually overflows
+  useEffect(() => {
+    if (descriptionRef.current) {
+      const element = descriptionRef.current;
+      // Temporarily remove line-clamp to check full height
+      element.classList.remove("line-clamp-2");
+      const fullHeight = element.scrollHeight;
+      // Add line-clamp back
+      element.classList.add("line-clamp-2");
+      const clampedHeight = element.scrollHeight;
+      setShouldTruncate(fullHeight > clampedHeight);
+    }
+  }, [description]);
+
+  const handleStart = () => {
+    if (onStart) {
+      onStart(content.id);
+    } else if (content.type === 'project') {
+      // Default project behavior
+      if (content.pdfUrl || content.downloadUrl) {
+        window.open(content.pdfUrl || content.downloadUrl, '_blank');
+      }
     } else {
-      router.push(`/exams/take/${exam.id}`);
+      // Default quiz/exam behavior
+      router.push(`/quizes/${content.id}/start`);
     }
   };
 
-  const handleViewReport = () => {
-    if (onViewReport) {
-      onViewReport(exam.id);
-    } else {
-      router.push(`/exams/reports/${exam.id}`);
+  const handleDownload = () => {
+    if (onDownload && (content.pdfUrl || content.downloadUrl)) {
+      onDownload(content.pdfUrl || content.downloadUrl!);
+    } else if (content.pdfUrl || content.downloadUrl) {
+      window.open(content.pdfUrl || content.downloadUrl, '_blank');
     }
+  };
+
+  const handleViewAnswers = () => {
+    if (onViewAnswers) {
+      onViewAnswers(content.id);
+    } else {
+      router.push(`/quizes/reports/${content.id}`);
+    }
+  };
+
+  const getDisplayDate = () => {
+    if (content.deadline) {
+      return new Date(content.deadline).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    }
+    if (content.date) {
+      return new Date(content.date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    }
+    if (content.createdAt) {
+      return new Date(content.createdAt).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    }
+    return "-";
+  };
+
+  const getDisplaySubject = () => {
+    return content.subject || "Subject";
+  };
+
+  const getDisplayDifficulty = () => {
+    return content.difficulty?.charAt(0).toUpperCase() + content.difficulty?.slice(1) || "";
   };
 
   return (
@@ -88,9 +153,9 @@ export default function ExamCard({
                 w-full hover:shadow-lg
                 flex-shrink-0 p-5 hover:scale-[1.02] transition-all duration-300 transform"
       style={{
-        maxWidth,
+        maxWidth: "520px",
         minWidth: "380px",
-        height,
+        height: "240px",
         borderRadius: "15.51px",
         boxShadow: "0px 2.15px 16px 0px #0000002E",
       }}
@@ -98,32 +163,63 @@ export default function ExamCard({
       <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden pr-4">
         <div className="flex-1 min-h-0 pb-3">
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
-            Difficulty:{" "}
-            {difficulty || exam.difficulty || "Medium"}
+            {content.type === 'project' ? 'Subject' : 'Difficulty'}:{" "}
+            {content.type === 'project' ? getDisplaySubject() : getDisplayDifficulty()}
           </div>
           <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-primary to-primary text-transparent bg-clip-text mb-2 break-words leading-tight">
-            {exam.title}
+            {content.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
-            <div className={"break-words line-clamp-2"}>
-              {examDescription}
+            <div
+              ref={descriptionRef}
+              className={`break-words cursor-pointer ${
+                !isExpanded ? "line-clamp-2" : ""
+              }`}
+              onClick={() => shouldTruncate && setIsExpanded(!isExpanded)}
+            >
+              {description}
             </div>
+            {shouldTruncate && (
+              <button
+                className="text-primary hover:text-primary/80 text-xs mt-1 font-medium"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? "Read less" : "Read more"}
+              </button>
+            )}
           </div>
+          {showScoreAndDate && (
+            <div className="flex items-center gap-2 text-black text-xs sm:text-sm mb-3">
+              <span role="img" aria-label={content.type === 'project' ? "calendar" : "clock"}>
+                {content.type === 'project' ? "🗓️" : "🕒"}
+              </span>
+              <span className="break-words">
+                {content.type === 'project' ? "Created on" : "Due date"}: {getDisplayDate()}
+              </span>
+            </div>
+          )}
         </div>
         <div className="mt-auto pt-3">
           {previous ? (
             <button
               className="bg-gradient-to-r from-primary to-primary text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={handleViewReport}
+              onClick={handleViewAnswers}
             >
-              View Report
+              View answers
+            </button>
+          ) : content.type === 'project' ? (
+            <button
+              className="bg-gradient-to-r from-primary to-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              onClick={handleDownload}
+            >
+              Download Project
             </button>
           ) : (
             <button
               className="bg-gradient-to-r from-primary to-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={handleStartExam}
+              onClick={handleStart}
             >
-              Start Exam
+              Start {type === 'exam' ? 'Exam' : 'Quiz'}
             </button>
           )}
         </div>
@@ -132,10 +228,10 @@ export default function ExamCard({
         <div
           className={`flex items-center justify-center text-white font-bold relative overflow-hidden rounded-[9px] shadow-[0px_0.89px_6.68px_0px_#00000075]
                      h-[10rem] w-[14rem]
-            ${getSubjectClass(exam.subject)}`}
+            ${getSubjectClass(content.subject)}`}
         >
           <span className="z-10 font-bold tracking-wide text-center px-1.5 break-words">
-            {exam.subject || "Subject"}
+            {getDisplaySubject()}
           </span>
           {/* SVG Pattern from Figma */}
           <div className="absolute left-0 top-1/2 transform -translate-y-1/2">

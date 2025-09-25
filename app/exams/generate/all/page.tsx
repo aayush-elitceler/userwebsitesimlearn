@@ -1,7 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import QuizCard from "@/components/QuizCard";
+import ExamCard from "@/components/ExamCard";
 
 // Update the Quiz type to match API
 interface Teacher {
@@ -50,73 +52,6 @@ interface Quiz {
   };
 }
 
-const subjectColors: Record<string, string> = {
-  Maths: "#4A90E2",
-  Math: "#4A90E2",
-  Science: "#8F5AFF",
-  English: "#F44336",
-  EVS: "#E6AF3F",
-  Default: "#E6AF3F",
-};
-
-function ExamCard({
-  exam,
-  onStart,
-  buttonText = "Take exam",
-}: {
-  exam: {
-    title: string;
-    subject?: string;
-    instructions?: string;
-    dueDate?: string; // ISO string
-    description?: string;
-    id?: string;
-  };
-  onStart?: () => void;
-  buttonText?: string;
-}) {
-  return (
-    <div className="flex flex-row bg-white rounded-2xl p-8 shadow-lg w-full items-center">
-      <div className="flex-1">
-        <div className="text-black font-semibold mb-1">
-          Subject: {exam.subject || "N/A"}
-        </div>
-        <div className="text-2xl font-bold text-black mb-2">{exam.title}</div>
-        <div className="text-black mb-3">
-          {exam.description || exam.instructions}
-        </div>
-        <div className="text-black mb-4 flex items-center gap-2">
-          <span role="img" aria-label="clock">🕒</span>
-          Due date:{" "}
-          {exam.dueDate
-            ? new Date(exam.dueDate).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })
-            : "-"}
-        </div>
-        <button
-          className="point-ask-gradient text-white cursor-pointer rounded-lg px-6 py-2 font-semibold shadow hover:bg-green-700 transition"
-          onClick={onStart}
-        >
-          {buttonText}
-        </button>
-      </div>
-      <div className="ml-8 flex-shrink-0">
-        <div
-          className="rounded-xl flex items-center justify-center w-56 h-36 text-white text-2xl font-bold shadow-lg"
-          style={{
-            background: subjectColors[exam.subject || "Default"],
-            minWidth: 180,
-          }}
-        >
-          {exam.subject || "Subject"}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // Utility to get token from 'auth' cookie
 function getTokenFromCookie() {
@@ -213,16 +148,19 @@ export default function AllGenerateExamsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {teacherExams.map((quiz) => (
+            {teacherExams.map((exam) => (
               <ExamCard
-                key={quiz.id}
+                key={exam.id}
                 exam={{
-                  ...quiz,
-                  subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
-                  dueDate: quiz.assignmentDetails?.endTime || quiz.createdAt,
+                  ...exam,
+                  subject: exam.subject || guessSubjectFromTopic(exam.topic),
                 }}
-                onStart={() => router.push(`/exams/take/${quiz.id}`)}
-                buttonText={quiz.assignmentDetails && 'completed' in quiz.assignmentDetails && quiz.assignmentDetails.completed ? 'Complete exam' : 'Take exam'}
+                previous={exam.completed}
+                date={exam.assignmentDetails?.endTime || exam.createdAt}
+                description={exam.instructions}
+                difficulty={exam.difficulty}
+                onStartExam={() => router.push(`/exams/take/${exam.id}`)}
+                onViewReport={exam.completed ? () => router.push(`/exams/reports/${exam.id}`) : undefined}
               />
             ))}
           </div>

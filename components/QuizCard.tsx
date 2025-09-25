@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 // Get CSS class for subject background
@@ -21,64 +21,117 @@ const getSubjectClass = (subject: string | undefined) => {
   }
 };
 
-interface Exam {
-  id: string;
-  title: string;
-  subject?: string;
-  createdAt: string;
-  previous?: boolean;
-  date?: string;
-  description?: string;
-  difficulty?: string;
-  instructions?: string;
-  topic?: string;
-  [key: string]: any; // For additional properties
+interface Teacher {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 }
 
-interface ExamCardProps {
-  exam: Exam;
-  previous?: boolean;
+interface Question {
+  id: string;
+  questionText: string;
+}
+
+interface Quiz {
+  id: string;
+  title: string;
+  instructions: string;
+  timeLimitMinutes: number;
+  topic: string;
+  difficulty: string;
+  createdAt: string;
+  userId: string;
+  completed: boolean;
+  score?: number;
   date?: string;
-  description?: string;
-  onStartExam?: (examId: string) => void;
-  onViewReport?: (examId: string) => void;
+  questions?: Question[];
+  time?: string;
+  teacher?: string | Teacher;
+  subject?: string;
+  assignmentDetails?: {
+    endTime: string;
+  };
+}
+
+interface QuizCardProps {
+  quiz: Quiz;
+  previous?: boolean;
+  score?: number;
+  date?: string;
+  submissionId?: string;
   height?: string;
   maxWidth?: string;
   showScoreAndDate?: boolean;
-  difficulty?: string;
+  onStartQuiz?: (quizId: string) => void;
+  onViewAnswers?: (submissionId: string) => void;
 }
 
-export default function ExamCard({
-  exam,
+export default function QuizCard({
+  quiz,
   previous = false,
+  score,
   date,
-  description,
-  onStartExam,
-  onViewReport,
+  submissionId,
   height = "240px",
   maxWidth = "520px",
   showScoreAndDate = true,
-  difficulty,
-}: ExamCardProps) {
+  onStartQuiz,
+  onViewAnswers,
+}: QuizCardProps) {
   const router = useRouter();
-  const examDescription =
-    description ||
-    exam.description ||
-    "Comprehensive exam covering all topics with detailed analysis and scoring.";
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldTruncate, setShouldTruncate] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const description =
+    quiz.instructions ||
+    "Learn with AI Tutor the core of grammar with help of new age solutions in your test";
 
-  const handleStartExam = () => {
-    if (onStartExam) {
-      onStartExam(exam.id);
-    } else {
-      router.push(`/exams/take/${exam.id}`);
+  // Check if content actually overflows
+  useEffect(() => {
+    if (descriptionRef.current) {
+      const element = descriptionRef.current;
+      // Temporarily remove line-clamp to check full height
+      element.classList.remove("line-clamp-2");
+      const fullHeight = element.scrollHeight;
+      // Add line-clamp back
+      element.classList.add("line-clamp-2");
+      const clampedHeight = element.scrollHeight;
+      setShouldTruncate(fullHeight > clampedHeight);
+    }
+  }, [description]);
+
+  // Get CSS class for subject background
+  const getSubjectClass = (subject: string | undefined) => {
+    if (!subject) return "quiz-subject-default";
+    const normalized = subject.toLowerCase().replace(/\s+/g, "");
+    switch (normalized) {
+      case "maths":
+      case "math":
+        return "quiz-subject-maths";
+      case "science":
+        return "quiz-subject-science";
+      case "english":
+        return "quiz-subject-english";
+      case "evs":
+        return "quiz-subject-evs";
+      default:
+        return "quiz-subject-default";
     }
   };
 
-  const handleViewReport = () => {
-    if (onViewReport) {
-      onViewReport(exam.id);
+  const handleStartQuiz = () => {
+    if (onStartQuiz) {
+      onStartQuiz(quiz.id);
     } else {
-      router.push(`/exams/reports/${exam.id}`);
+      router.push(`/quizes/${quiz.id}/start`);
+    }
+  };
+
+  const handleViewAnswers = () => {
+    if (onViewAnswers) {
+      onViewAnswers(submissionId!);
+    } else {
+      router.push(`/quizes/reports/${submissionId}`);
     }
   };
 
@@ -99,31 +152,46 @@ export default function ExamCard({
         <div className="flex-1 min-h-0 pb-3">
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
             Difficulty:{" "}
-            {difficulty || exam.difficulty || "Medium"}
+            {quiz.difficulty?.charAt(0).toUpperCase() +
+              quiz.difficulty?.slice(1)}
           </div>
           <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-primary to-primary text-transparent bg-clip-text mb-2 break-words leading-tight">
-            {exam.title}
+            {quiz.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
-            <div className={"break-words line-clamp-2"}>
-              {examDescription}
+            <div
+              ref={descriptionRef}
+              className={`break-words cursor-pointer ${
+                !isExpanded ? "line-clamp-2" : ""
+              }`}
+              onClick={() => shouldTruncate && setIsExpanded(!isExpanded)}
+            >
+              {description}
             </div>
+            {shouldTruncate && (
+              <button
+                className="text-primary hover:text-primary/80 text-xs mt-1 font-medium"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? "Read less" : "Read more"}
+              </button>
+            )}
           </div>
         </div>
         <div className="mt-auto pt-3">
           {previous ? (
             <button
               className="bg-gradient-to-r from-primary to-primary text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={handleViewReport}
+              onClick={handleViewAnswers}
             >
-              View Report
+              View answers
             </button>
           ) : (
             <button
               className="bg-gradient-to-r from-primary to-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
-              onClick={handleStartExam}
+              onClick={handleStartQuiz}
             >
-              Start Exam
+              Start Quiz
             </button>
           )}
         </div>
@@ -132,10 +200,10 @@ export default function ExamCard({
         <div
           className={`flex items-center justify-center text-white font-bold relative overflow-hidden rounded-[9px] shadow-[0px_0.89px_6.68px_0px_#00000075]
                      h-[10rem] w-[14rem]
-            ${getSubjectClass(exam.subject)}`}
+            ${getSubjectClass(quiz.subject)}`}
         >
           <span className="z-10 font-bold tracking-wide text-center px-1.5 break-words">
-            {exam.subject || "Subject"}
+            {quiz.subject || "Subject"}
           </span>
           {/* SVG Pattern from Figma */}
           <div className="absolute left-0 top-1/2 transform -translate-y-1/2">

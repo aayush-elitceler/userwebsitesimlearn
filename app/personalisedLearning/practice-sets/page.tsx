@@ -201,40 +201,40 @@ export default function CreateExamPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       {loading ? (
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-green-700 mx-auto mb-4'></div>
-          <p className='text-gray-600'>Generating your practice questions...</p>
-          <p className='text-sm text-gray-500 mt-2'>This may take a few moments</p>
+          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4'></div>
+          <p className='text-muted-foreground'>Generating your practice questions...</p>
+          <p className='text-sm text-muted-foreground mt-2'>This may take a few moments</p>
         </div>
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="bg-transparent bg-white rounded-3xl p-10 w-full max-w-3xl shadow-lg"
+          className="bg-card rounded-3xl p-10 w-full max-w-3xl shadow-lg"
         >
-          <h2 className="text-3xl font-bold text-black mb-6">
+          <h2 className="text-3xl font-bold text-foreground mb-6">
             Create Practice Sets
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-black mb-2">Topic</label>
+            <label className="block text-foreground mb-2">Topic</label>
             <input
               name="topic"
               value={form.topic}
               onChange={handleChange}
-              className="w-full p-3 rounded bg-[#FFB12133] text-black"
+              className="w-full p-3 rounded bg-muted text-foreground"
               placeholder="e.g. Fractions, Photosynthesis"
               required
             />
           </div>
           <div>
-            <label className="block text-black mb-2">Difficulty</label>
+            <label className="block text-foreground mb-2">Difficulty</label>
             <select
               name="level"
               value={form.level}
               onChange={handleChange}
-              className="w-full p-3 rounded bg-[#FFB12133] text-black"
+              className="w-full p-3 rounded bg-muted text-foreground"
             >
               <option value="easy">Easy</option>
               <option value="medium">Medium</option>
@@ -242,18 +242,18 @@ export default function CreateExamPage() {
             </select>
           </div>
           <div>
-            <label className="block text-black mb-2">Subject</label>
+            <label className="block text-foreground mb-2">Subject</label>
             <input
               name="subject"
               value={form.subject}
               onChange={handleChange}
-              className="w-full p-3 rounded bg-[#FFB12133] text-black"
+              className="w-full p-3 rounded bg-muted text-foreground"
               placeholder="e.g. Math, Science, EVS, English"
               required
             />
           </div>
           <div>
-            <label className="block text-black mb-2">Question Type</label>
+            <label className="block text-foreground mb-2">Question Type</label>
             <div className="flex gap-2">
               {[
                 { value: "quiz", label: "Quiz" },
@@ -266,8 +266,8 @@ export default function CreateExamPage() {
                   onClick={() => setForm({ ...form, questionType: type.value })}
                   className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
                     form.questionType === type.value
-                      ? "bg-gradient-to-r from-green-700 to-orange-500 text-white"
-                      : "bg-green-100 text-gray-700 hover:bg-orange-200"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   }`}
                 >
                   {type.label}
@@ -278,7 +278,7 @@ export default function CreateExamPage() {
           {form.questionType === "quiz" && (
             <>
               <div>
-                <label className="block text-black mb-2">
+                <label className="block text-foreground mb-2">
                   No. of Quiz Questions
                 </label>
                 <input
@@ -288,11 +288,11 @@ export default function CreateExamPage() {
                   max={20}
                   value={form.quizCount}
                   onChange={handleChange}
-                  className="w-full p-3 rounded bg-[#FFB12133] text-black"
+                  className="w-full p-3 rounded bg-muted text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-black mb-2">
+                <label className="block text-foreground mb-2">
                   Timer (Minutes)
                 </label>
                 <input
@@ -302,7 +302,7 @@ export default function CreateExamPage() {
                   max={60}
                   value={form.quizTimer}
                   onChange={handleChange}
-                  className="w-full p-3 rounded bg-[#FFB12133] text-black"
+                  className="w-full p-3 rounded bg-muted text-foreground"
                 />
               </div>
             </>
@@ -310,7 +310,7 @@ export default function CreateExamPage() {
           {(form.questionType === "long" || form.questionType === "both") && (
             <>
               <div>
-                <label className="block text-black mb-2">
+                <label className="block text-foreground mb-2">
                   No. of Long Questions
                 </label>
                 <input
@@ -319,11 +319,11 @@ export default function CreateExamPage() {
                   min={0}
                   value={form.longCount}
                   onChange={handleChange}
-                  className="w-full p-3 rounded bg-[#FFB12133] text-black"
+                  className="w-full p-3 rounded bg-muted text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-black mb-2">
+                <label className="block text-foreground mb-2">
                   Marks per Long Question
                 </label>
                 <input
@@ -332,7 +332,7 @@ export default function CreateExamPage() {
                   min={1}
                   value={form.longMarks}
                   onChange={handleChange}
-                  className="w-full p-3 rounded bg-[#FFB12133] text-black"
+                  className="w-full p-3 rounded bg-muted text-foreground"
                 />
               </div>
             </>
@@ -340,7 +340,7 @@ export default function CreateExamPage() {
           {(form.questionType === "short" || form.questionType === "both") && (
             <>
               <div>
-                <label className="block text-black mb-2">
+                <label className="block text-foreground mb-2">
                   No. of Short Questions
                 </label>
                 <input
@@ -349,11 +349,11 @@ export default function CreateExamPage() {
                   min={0}
                   value={form.shortCount}
                   onChange={handleChange}
-                  className="w-full p-3 rounded bg-[#FFB12133] text-black"
+                  className="w-full p-3 rounded bg-muted text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-black mb-2">
+                <label className="block text-foreground mb-2">
                   Marks per Short Question
                 </label>
                 <input
@@ -362,7 +362,7 @@ export default function CreateExamPage() {
                   min={1}
                   value={form.shortMarks}
                   onChange={handleChange}
-                  className="w-full p-3 rounded bg-[#FFB12133] text-black"
+                  className="w-full p-3 rounded bg-muted text-foreground"
                 />
               </div>
             </>
@@ -371,7 +371,7 @@ export default function CreateExamPage() {
         <div className="flex justify-end gap-4 mt-8">
           <button
             type="button"
-            className="px-6 py-3 rounded-lg border border-white text-black"
+            className="px-6 py-3 rounded-lg border border-border text-foreground"
             onClick={() => router.back()}
             disabled={loading}
           >
@@ -379,7 +379,7 @@ export default function CreateExamPage() {
           </button>
           <button
             type="submit"
-            className="px-6 py-3 rounded-lg point-ask-gradient cursor-pointer text-white font-semibold"
+            className="px-6 py-3 rounded-lg point-ask-gradient cursor-pointer text-primary-foreground font-semibold"
             disabled={loading}
           >
             {loading ? "Creating..." : "Create Practice Sets"}
