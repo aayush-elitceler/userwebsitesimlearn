@@ -1195,7 +1195,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
-          <div className="w-[280px] p-4 text-center rounded-lg bg-gradient-to-r from-orange-500 to-red-500 text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
             {selectedGrade ? (
               <div>
                 <div className="mb-2">Great! You've selected:</div>
@@ -1224,7 +1224,7 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
-          <div className="w-[280px] p-4 text-center rounded-lg bg-gradient-to-r from-green-500 to-blue-500 text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
             {selectedStyle ? (
               <div>
                 <div className="mb-2">Perfect! You've selected:</div>
@@ -1285,12 +1285,6 @@ Keep responses conversational, helpful, and under 100 words unless more detail i
                   startScreenRecording();
                 }
               },
-              renderOption: (opt: OptionWithLabel) => (
-                <div className="flex items-center gap-3 text-gray-700">
-                  {opt.icon}
-                  <span className="font-medium">{opt.label}</span>
-                </div>
-              ),
             }}
           />
         </div>
