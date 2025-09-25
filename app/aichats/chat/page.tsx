@@ -17,6 +17,109 @@ import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 import axios from 'axios';
 import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 
+// Helper function to format chat response with markdown support
+const formatChatResponse = (text: string) => {
+  if (!text) return "";
+
+  // Split by double newlines for paragraphs
+  const paragraphs = text.split('\n\n');
+
+  return paragraphs.map((paragraph, index) => {
+    // Check if paragraph contains multiple lines (lists, etc.)
+    if (paragraph.includes('\n')) {
+      const lines = paragraph.split('\n').filter(line => line.trim() !== '');
+      let isNumberedList = false;
+      let isBulletList = false;
+
+      // Check if this is a numbered list
+      if (lines.length > 1) {
+        isNumberedList = lines.every(line => /^\d+\.\s+/.test(line.trim()));
+        isBulletList = lines.every(line => /^[-*•]\s+/.test(line.trim()));
+      }
+
+      if (isNumberedList) {
+        return (
+          <div key={index} className="mb-4">
+            {lines.map((line, lineIndex) => {
+              const match = line.match(/^(\d+)\.\s+(.*)/);
+              if (match) {
+                const [_, number, content] = match;
+                return (
+                  <div key={lineIndex} className="mb-2 flex items-start">
+                    <span className="mr-3 font-bold text-primary min-w-[20px]">{number}.</span>
+                    <span className="flex-1">{renderFormattedText(content)}</span>
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        );
+      }
+
+      if (isBulletList) {
+        return (
+          <div key={index} className="mb-4">
+            {lines.map((line, lineIndex) => {
+              const match = line.match(/^([-*•])\s+(.*)/);
+              if (match) {
+                const [_, bullet, content] = match;
+                return (
+                  <div key={lineIndex} className="mb-2 flex items-start">
+                    <span className="mr-3 text-primary min-w-[20px]">•</span>
+                    <span className="flex-1">{renderFormattedText(content)}</span>
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        );
+      }
+
+      // Mixed content or other multi-line content
+      return (
+        <div key={index} className="mb-4">
+          {lines.map((line, lineIndex) => (
+            <div key={lineIndex} className={lineIndex > 0 ? "mt-2" : ""}>
+              {renderFormattedText(line)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Single paragraph
+    return (
+      <div key={index} className="mb-4">
+        {renderFormattedText(paragraph)}
+      </div>
+    );
+  });
+};
+
+// Helper function to render formatted text with bold support
+const renderFormattedText = (text: string) => {
+  if (!text) return text;
+
+  if (text.includes('**')) {
+    const parts = text.split('**');
+    return (
+      <>
+        {parts.map((part, index) =>
+          index % 2 === 1 ? (
+            <strong key={index} className="font-semibold">{part}</strong>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
+  }
+
+  return text;
+};
+
 type StyleOption = {
   label: string;
   value: string;
@@ -670,13 +773,16 @@ export default function AiChatsChatPage() {
                         : "bg-primary/10 text-primary"
                     }`}
                   >
-                    <p className="text-sm md:text-base leading-relaxed">
-                      {msg.role === "ai" &&
-                      idx === streamingMessageIndex &&
-                      isStreaming
-                        ? `${displayedText}${displayedText ? "|" : ""}`
-                        : msg.text}
-                    </p>
+                    {msg.role === "ai" && idx === streamingMessageIndex && isStreaming ? (
+                      <div className="text-sm md:text-base leading-relaxed">
+                        {formatChatResponse(displayedText)}
+                        {displayedText ? <span className="animate-pulse">|</span> : ""}
+                      </div>
+                    ) : (
+                      <div className="text-sm md:text-base leading-relaxed">
+                        {msg.role === "ai" ? formatChatResponse(msg.text) : msg.text}
+                      </div>
+                    )}
                   </div>
                   
                   {/* User Avatar - only show for user messages */}
@@ -704,7 +810,7 @@ export default function AiChatsChatPage() {
                     AI
                   </div>
                   <div className="bg-primary/10 text-primary rounded-2xl px-4 py-3 opacity-70 shadow-sm">
-                    <p className="text-sm md:text-base">Thinking...</p>
+                    <div className="text-sm md:text-base leading-relaxed">Thinking...</div>
                   </div>
                 </div>
               )}
