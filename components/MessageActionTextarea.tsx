@@ -213,12 +213,13 @@ export const MessageActionTextarea = ({
   }, []);
 
   return (
-    <div className={cn("flex flex-col gap-4", className)}>
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={cn("", className)}>
+      <div className=" items-center">
         <Button
           type="button"
           onClick={isScreenSharing ? stopScreenShare : shareScreen}
           disabled={disabled}
+          className="inline-flex w-full min-w-[180px] items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isScreenSharing ? (
             <>

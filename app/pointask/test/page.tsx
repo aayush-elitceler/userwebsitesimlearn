@@ -12,6 +12,7 @@ import { convertFileToBase64 } from "@/lib/utils";
 import { MessageActionTextarea } from "@/components/MessageActionTextarea";
 import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 import SpruceBall from "@/components/SpruceBall";
+import { Mic } from "lucide-react";
 
 type RealtimeStatus =
   | "idle"
@@ -93,6 +94,8 @@ export default function RealtimeAssistant(): React.ReactElement {
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
   const [showPersonaDropdown, setShowPersonaDropdown] = useState(false);
+  const [showHeading, setShowHeading] = useState(true);
+  const [headingText, setHeadingText] = useState("Welcome ! please select you class and person to get started");
 
   const personaLabel = useMemo(() => {
     return (
@@ -214,6 +217,18 @@ export default function RealtimeAssistant(): React.ReactElement {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedGrade && selectedPersona) {
+      setHeadingText(`Got it i'l teach you like a freind for ${selectedGrade}`);
+    }
+  }, [selectedGrade, selectedPersona]);
+
+  useEffect(() => {
+    if (isConnected) {
+      setShowHeading(false);
+    }
+  }, [isConnected]);
 
   const startConversation = useCallback(async () => {
     if (isBusy || isConnected) {
@@ -533,6 +548,25 @@ export default function RealtimeAssistant(): React.ReactElement {
   const canStartConversation =
     !isBusy && !isConnected && !!selectedGrade && !!selectedPersona;
   const canShareScreen = isConnected && !isBusy;
+  const canTriggerPrimaryAction = isConnected ? !isBusy : canStartConversation;
+  const primaryButtonLabel = (() => {
+    if (status === "disconnecting") return "Ending…";
+    if (isConnected) return "End session";
+    if (isBusy) return "Starting…";
+    return "Start conversation";
+  })();
+  const primaryButtonClassName = isConnected
+    ? "inline-flex w-full min-w-[180px] items-center justify-center rounded-full border border-gray-200 bg-white px-8 py-2 text-sm font-semibold text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-2 justify-center"
+    : "inline-flex w-full min-w-[180px] items-center justify-center rounded-full bg-primary px-8 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-2 justify-center";
+
+  const handlePrimaryAction = useCallback(() => {
+    if (isConnected) {
+      void handleDisconnect();
+      return;
+    }
+
+    void startConversation();
+  }, [handleDisconnect, isConnected, startConversation]);
 
   const floatingSelectors = (
     <div className="pointer-events-none">
@@ -541,7 +575,7 @@ export default function RealtimeAssistant(): React.ReactElement {
         onClick={(event) => event.stopPropagation()}
       >
         <TwoSelectPill
-          className="drop-shadow-lg"
+          className="drop-shadow-xl backdrop-blur"
           left={{
             label: "Grade",
             displayValue: selectedGrade,
@@ -570,11 +604,9 @@ export default function RealtimeAssistant(): React.ReactElement {
               setShowPersonaDropdown(false);
             },
             renderOption: (option) => (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 text-gray-800">
                 {option.icon}
-                <span className="text-sm font-medium text-gray-700">
-                  {option.label}
-                </span>
+                <span className="text-sm font-medium">{option.label}</span>
               </div>
             ),
           }}
@@ -587,49 +619,39 @@ export default function RealtimeAssistant(): React.ReactElement {
     <div className="relative min-h-screen bg-gradient-to-b from-rose-50 via-white to-white text-gray-900">
       {floatingSelectors}
 
-      <div className="flex flex-col items-center justify-between px-4 pb-4 pt-4">
-        <div className="w-full max-w-4xl space-y-10 text-center">
-          <div className="mx-auto max-w-md rounded-2xl border border-primary/10 bg-white/80 px-6 py-5 shadow-sm backdrop-blur">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.5em] text-primary">
-              {statusLabel}
-            </div>
-            {error ? (
-              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-600">
-                {error}
-              </div>
-            ) : null}
+      <div className="relative z-10 flex min-h-screen flex-col">
+
+
+        <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+          <div className="relative flex w-full max-w-lg flex-col items-center">
+            <div className="absolute -inset-8 -z-10 rounded-full bg-primary/5 blur-3xl" aria-hidden />
+            {showHeading && (
+              <h1 className="mb-8 text-center text-2xl font-bold text-gray-900">
+                {headingText}
+              </h1>
+            )}
+            <SpruceBall listening={isConnected} />
           </div>
-        </div>
+        </main>
 
-        <div className="flex w-full max-w-4xl flex-col items-center gap-10">
-          <SpruceBall listening={isConnected} />
-        </div>
+        <footer className="px-6 pb-12">
+          <div className="pointer-events-auto mx-auto flex justify-center w-full max-w-3xl items-center gap-4 rounded-3xl bg-white/80 p-6  sm:gap-6">
+            <MessageActionTextarea
+              onSubmit={handleMessageSubmit}
+              disabled={!isConnected}
+            />
+            <div className="flex w-full flex-col gap-3  sm:w-auto sm:flex-row">
+              <button
+                onClick={handlePrimaryAction}
+                disabled={!canTriggerPrimaryAction}
+                className={primaryButtonClassName}
+              >
+               <Mic width={16} height={16}/> {primaryButtonLabel}
+              </button>
+            </div>
+          </div>
+        </footer>
       </div>
-
-      <div className="pointer-events-auto flex flex-wrap justify-center gap-3">
-          <MessageActionTextarea
-                onSubmit={handleMessageSubmit}
-                disabled={!isConnected}
-                className="mt-6"
-              />
-          <button
-            onClick={startConversation}
-            disabled={!canStartConversation}
-            className="inline-flex min-w-[200px] items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isBusy ? "Starting…" : "Start conversation"}
-          </button>
-
-          {isConnected ? (
-            <button
-              onClick={handleDisconnect}
-              disabled={isBusy}
-              className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              End session
-            </button>
-          ) : null}
-        </div>
     </div>
   );
 }
