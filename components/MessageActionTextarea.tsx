@@ -1,302 +1,237 @@
-import type { FormEvent } from "react";
-import { useState, useRef, useEffect } from "react";
-import {
-  Image,
-  X,
-  Monitor,
-  MonitorOff,
-  Play,
-  Square,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Monitor, MonitorOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface MessageActionTextareaProps {
   onSubmit: (message: string, image?: File) => void;
   className?: string;
-  textAreaClassName?: string;
   disabled?: boolean;
 }
+
+const MAX_WIDTH = 1024;
 
 export const MessageActionTextarea = ({
   onSubmit,
   className,
-  textAreaClassName,
   disabled = false,
-  ...props
 }: MessageActionTextareaProps) => {
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isContinuousMode, setIsContinuousMode] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const continuousIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup screen sharing on unmount
-  useEffect(() => {
-    return () => {
-      if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (continuousIntervalRef.current) {
-        clearInterval(continuousIntervalRef.current);
-      }
-    };
-  }, []);
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const message = formData.get("message") as string;
-
-    if (message.trim() || selectedImage || (isScreenSharing && !isContinuousMode)) {
-      let imageToSend = selectedImage;
-
-      // Auto-capture screenshot if screen sharing is active and not in continuous mode
-      if (isScreenSharing && !isContinuousMode && !selectedImage) {
-        const screenshot = await captureScreenFrame();
-        if (screenshot) {
-          // Convert base64 data URL to File object
-          const response = await fetch(screenshot);
-          const blob = await response.blob();
-          imageToSend = new File([blob], 'screenshot.jpg', { type: 'image/jpeg' });
-        }
-      }
-
-      onSubmit?.(message, imageToSend || undefined);
-      handleReset();
-    }
-  };
-
-  const handleImageSelect = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImagePreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const handleReset = () => {
-    formRef.current?.reset();
-    handleRemoveImage();
-  };
-
-  // Capture one frame as base64 data url
-  const captureScreenFrame = async (): Promise<string | null> => {
-    const screen = screenStreamRef.current;
-    if (!screen) return null;
-    const track = screen.getVideoTracks()[0];
-    try {
-      // @ts-ignore ImageCapture may not be in lib dom types
-      const imageCapture = new (window as any).ImageCapture(track);
-      const bitmap = await imageCapture.grabFrame();
-      const canvas = document.createElement("canvas");
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(bitmap as CanvasImageSource, 0, 0);
-      // resize to reduce payload
-      const MAX_W = 1024;
-      if (canvas.width > MAX_W) {
-        const scale = MAX_W / canvas.width;
-        const tmp = document.createElement("canvas");
-        tmp.width = Math.round(canvas.width * scale);
-        tmp.height = Math.round(canvas.height * scale);
-        tmp.getContext("2d")!.drawImage(canvas, 0, 0, tmp.width, tmp.height);
-        return tmp.toDataURL("image/jpeg", 0.75);
-      }
-      return canvas.toDataURL("image/jpeg", 0.75);
-    } catch (err) {
-      // fallback: draw from a video element
-      const video = document.createElement("video");
-      video.srcObject = new MediaStream([track]);
-      await video.play().catch(() => {});
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth || 1280;
-      canvas.height = video.videoHeight || 720;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      video.pause();
-      (video.srcObject as MediaStream)?.getTracks().forEach((t) => t.stop());
-      // resize and compress
-      const MAX_W = 1024;
-      if (canvas.width > MAX_W) {
-        const scale = MAX_W / canvas.width;
-        const tmp = document.createElement("canvas");
-        tmp.width = Math.round(canvas.width * scale);
-        tmp.height = Math.round(canvas.height * scale);
-        tmp.getContext("2d")!.drawImage(canvas, 0, 0, tmp.width, tmp.height);
-        return tmp.toDataURL("image/jpeg", 0.75);
-      }
-      return canvas.toDataURL("image/jpeg", 0.75);
-    }
-  };
-
-  // Share screen (store locally so we can snapshot)
-  const shareScreen = async () => {
-    try {
-      const screen = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      screenStreamRef.current = screen;
-      setIsScreenSharing(true);
-    } catch (err) {
-      console.error("Screen share error:", err);
-      alert("Screen share required for sending snapshots.");
-    }
-  };
-
-  const stopScreenShare = () => {
-    if (screenStreamRef.current) {
-      screenStreamRef.current.getTracks().forEach(track => track.stop());
-      screenStreamRef.current = null;
-    }
-    setIsScreenSharing(false);
-    stopContinuousSharing();
-  };
-
-  const startContinuousSharing = () => {
-    if (!isScreenSharing) return;
-
-    setIsContinuousMode(true);
-    // Send screenshot every 3 seconds
-    continuousIntervalRef.current = setInterval(async () => {
-      const screenshot = await captureScreenFrame();
-      if (screenshot) {
-        const response = await fetch(screenshot);
-        const blob = await response.blob();
-        const imageFile = new File([blob], 'continuous-screenshot.jpg', { type: 'image/jpeg' });
-        onSubmit?.('', imageFile);
-      }
-    }, 3000);
-  };
-
-  const stopContinuousSharing = () => {
-    setIsContinuousMode(false);
+  const clearContinuousTimer = () => {
     if (continuousIntervalRef.current) {
       clearInterval(continuousIntervalRef.current);
       continuousIntervalRef.current = null;
     }
   };
 
-  const toggleContinuousMode = () => {
-    if (isContinuousMode) {
-      stopContinuousSharing();
-    } else {
-      startContinuousSharing();
+  const stopContinuousSharing = () => {
+    clearContinuousTimer();
+    setIsContinuousMode(false);
+  };
+
+  const canvasToFile = async (
+    canvas: HTMLCanvasElement,
+    filename: string
+  ): Promise<File | null> => {
+    const targetCanvas = (() => {
+      if (canvas.width <= MAX_WIDTH) return canvas;
+      const scale = MAX_WIDTH / canvas.width;
+      const scaled = document.createElement("canvas");
+      scaled.width = Math.round(canvas.width * scale);
+      scaled.height = Math.round(canvas.height * scale);
+      const scaledCtx = scaled.getContext("2d");
+      if (!scaledCtx) {
+        return canvas;
+      }
+      scaledCtx.drawImage(canvas, 0, 0, scaled.width, scaled.height);
+      return scaled;
+    })();
+
+    return new Promise((resolve) => {
+      targetCanvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(null);
+            return;
+          }
+
+          resolve(
+            new File([blob], filename, {
+              type: blob.type || "image/jpeg",
+            })
+          );
+        },
+        "image/jpeg",
+        0.75
+      );
+    });
+  };
+
+  const captureScreenFrame = async (): Promise<File | null> => {
+    const stream = screenStreamRef.current;
+    if (!stream) return null;
+
+    const [track] = stream.getVideoTracks();
+    if (!track) return null;
+
+    // Try ImageCapture API first
+    try {
+      const ImageCapture = (window as any).ImageCapture;
+      if (ImageCapture) {
+        const imageCapture = new ImageCapture(track);
+        const bitmap = await imageCapture.grabFrame();
+        const canvas = document.createElement("canvas");
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+        ctx.drawImage(bitmap, 0, 0);
+        return await canvasToFile(canvas, `screenshot-${Date.now()}.jpg`);
+      }
+    } catch (err) {
+      console.warn("ImageCapture failed, falling back to video element", err);
+    }
+
+    // Fallback to drawing a frame from a cloned video track
+    const clone = track.clone();
+    const tempStream = new MediaStream([clone]);
+    const video = document.createElement("video");
+    video.srcObject = tempStream;
+    video.muted = true;
+
+    const ready = new Promise<void>((resolve) => {
+      const handleLoadedData = () => {
+        video.removeEventListener("loadeddata", handleLoadedData);
+        resolve();
+      };
+      video.addEventListener("loadeddata", handleLoadedData, { once: true });
+    });
+
+    await video.play().catch(() => undefined);
+    await ready;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      tempStream.getTracks().forEach((t) => t.stop());
+      return null;
+    }
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    tempStream.getTracks().forEach((t) => t.stop());
+
+    return await canvasToFile(canvas, `screenshot-${Date.now()}.jpg`);
+  };
+
+  const stopScreenShare = () => {
+    stopContinuousSharing();
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((track) => track.stop());
+      screenStreamRef.current = null;
+    }
+    setIsScreenSharing(false);
+  };
+
+  const shareScreen = async () => {
+    if (disabled) return;
+
+    if (!navigator?.mediaDevices?.getDisplayMedia) {
+      window.alert("Screen sharing isn't supported in this browser.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+
+      stream.getVideoTracks().forEach((track) => {
+        track.addEventListener("ended", () => {
+          stopScreenShare();
+        });
+      });
+
+      screenStreamRef.current = stream;
+      setIsScreenSharing(true);
+      startContinuousSharing({ immediate: true });
+    } catch (err) {
+      console.error("Screen share error:", err);
+      window.alert("Screen share required for sending snapshots.");
     }
   };
 
+  const sendSnapshot = async () => {
+    if (disabled) return;
+
+    const file = await captureScreenFrame();
+    if (file) {
+      onSubmit("", file);
+    }
+  };
+
+  const startContinuousSharing = (options?: { immediate?: boolean }) => {
+    if (disabled) return;
+    if (!screenStreamRef.current) return;
+
+    setIsContinuousMode(true);
+    clearContinuousTimer();
+
+    const send = async () => {
+      await sendSnapshot();
+    };
+
+    if (options?.immediate) {
+      void send();
+    }
+
+    continuousIntervalRef.current = setInterval(() => {
+      void send();
+    }, 3000);
+  };
+
+  useEffect(() => {
+    if (disabled && isContinuousMode) {
+      stopContinuousSharing();
+    }
+  }, [disabled, isContinuousMode]);
+
+  useEffect(() => {
+    return () => {
+      stopContinuousSharing();
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((track) => track.stop());
+        screenStreamRef.current = null;
+      }
+    };
+  }, []);
+
   return (
-    <form
-      ref={formRef}
-      className={cn("relative flex h-max items-center gap-3", className)}
-      onSubmit={handleSubmit}
-      {...props}
-    >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-
-      <textarea
-        aria-label="Message"
-        placeholder={isContinuousMode ? "Continuous screen sharing active..." : "Type your message..."}
-        name="message"
-        className={cn(
-          "h-18 w-full resize-none p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
-          isContinuousMode ? "opacity-50" : "",
-          textAreaClassName
-        )}
-        disabled={disabled || isContinuousMode}
-        rows={3}
-      />
-
-      {selectedImage && imagePreview && (
-        <div className="absolute left-3 bottom-14 flex items-center gap-2 bg-white border border-gray-200 rounded-lg p-2 shadow-sm">
-          <img
-            src={imagePreview}
-            alt="Selected image"
-            className="w-8 h-8 object-cover rounded"
-          />
-          <button
-            type="button"
-            onClick={handleRemoveImage}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      )}
-
-      <div className="absolute right-3.5 bottom-2 flex items-center gap-2">
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={handleImageSelect}
-            disabled={disabled}
-            className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
-            title="Select image"
-          >
-            <Image size={16} />
-          </button>
-
-          <button
-            type="button"
-            onClick={isScreenSharing ? stopScreenShare : shareScreen}
-            disabled={disabled}
-            className={cn(
-              "p-1 disabled:opacity-50",
-              isScreenSharing
-                ? "text-red-500 hover:text-red-700"
-                : "text-gray-500 hover:text-gray-700"
-            )}
-            title={isScreenSharing ? "Stop screen sharing" : "Share screen"}
-          >
-            {isScreenSharing ? <MonitorOff size={16} /> : <Monitor size={16} />}
-          </button>
-
-          {isScreenSharing && (
-            <button
-              type="button"
-              onClick={toggleContinuousMode}
-              disabled={disabled}
-              className={cn(
-                "p-1 disabled:opacity-50",
-                isContinuousMode
-                  ? "text-green-500 hover:text-green-700"
-                  : "text-gray-500 hover:text-gray-700"
-              )}
-              title={isContinuousMode ? "Stop continuous sharing" : "Start continuous sharing"}
-            >
-              {isContinuousMode ? <Square size={16} /> : <Play size={16} />}
-            </button>
+    <div className={cn("flex flex-col gap-4", className)}>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          onClick={isScreenSharing ? stopScreenShare : shareScreen}
+          disabled={disabled}
+        >
+          {isScreenSharing ? (
+            <>
+              <MonitorOff className="mr-2 h-4 w-4" /> Stop sharing
+            </>
+          ) : (
+            <>
+              <Monitor className="mr-2 h-4 w-4" /> Share screen
+            </>
           )}
-        </div>
-
-        <Button size="sm" type="submit" disabled={disabled || isContinuousMode}>
-          Send
         </Button>
+
       </div>
-    </form>
+    </div>
   );
 };
