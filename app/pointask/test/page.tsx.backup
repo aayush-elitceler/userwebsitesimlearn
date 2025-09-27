@@ -1,0 +1,906 @@
+"use client";
+import React, { useRef, useState, useEffect } from "react";
+import { RealtimeClient } from "@openai/realtime-api-beta";
+
+type AnyEvent = Record<string, any>;
+
+export default function RealtimeAssistant(): React.ReactElement {
+  const [connected, setConnected] = useState(false);
+  const [llmText, setLlmText] = useState("");
+  const [grade, setGrade] = useState<string>("10"); // default grade
+  const [persona, setPersona] = useState<"Professor" | "Friend">("Professor");
+  const [isLoading, setIsLoading] = useState(false);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [client, setClient] = useState<RealtimeClient | null>(null);
+  const [status, setStatus] = useState<string>("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  // Diarization states
+  const [isUserSpeaking, setIsUserSpeaking] = useState(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [currentSpeaker, setCurrentSpeaker] = useState<"user" | "ai" | "none">("none");
+  const [isAnalyzingScreen, setIsAnalyzingScreen] = useState(false);
+  const [isScreenShared, setIsScreenShared] = useState(false);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+
+  // Audio analysis refs for diarization
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Accumulators for streaming text
+  const userTranscriptBufferRef = useRef<string>("");
+  const aiTextBufferRef = useRef<string>("");
+
+  // Audio Analysis for User Speech Detection
+  const setupAudioAnalysis = (stream: MediaStream) => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      microphone.connect(analyser);
+
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+
+      const detectSpeech = () => {
+        if (!analyserRef.current) return;
+
+        const bufferLength = analyserRef.current.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyserRef.current.getByteFrequencyData(dataArray);
+
+        // Calculate average volume
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+        const threshold = 20; // Adjust this threshold as needed
+
+        const speaking = average > threshold;
+        setIsUserSpeaking(speaking);
+
+        // Update current speaker
+        if (speaking && !isAiSpeaking) {
+          setCurrentSpeaker("user");
+        } else if (isAiSpeaking && !speaking) {
+          setCurrentSpeaker("ai");
+        } else if (!speaking && !isAiSpeaking) {
+          setCurrentSpeaker("none");
+        }
+
+        animationFrameRef.current = requestAnimationFrame(detectSpeech);
+      };
+
+      detectSpeech();
+    } catch (error) {
+      console.error("Error setting up audio analysis:", error);
+    }
+  };
+
+  const cleanupAudioAnalysis = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+    setIsUserSpeaking(false);
+    setIsAiSpeaking(false);
+    setCurrentSpeaker("none");
+  };
+
+  // Update session when grade or persona changes
+  // Initialize RealtimeClient
+  React.useEffect(() => {
+    const initClient = async () => {
+      try {
+        const newClient = new RealtimeClient({
+          url: process.env.NEXT_PUBLIC_RELAY_SERVER_URL || "ws://localhost:8080",
+        });
+
+        // Set up event handlers
+        newClient.on('conversation.updated', (event) => {
+          const { item, delta } = event;
+          const items = newClient.conversation.getItems();
+
+          if (item.type === 'message' && delta?.transcript) {
+            setLlmText(prev => prev + delta.transcript);
+          }
+        });
+
+        newClient.on('conversation.item.appended', (event) => {
+          if (event.item.type === 'message' && event.item.role === 'assistant') {
+            setAudioPlaying(true);
+          }
+        });
+
+        newClient.on('conversation.item.completed', (event) => {
+          if (event.item.type === 'message' && event.item.role === 'assistant') {
+            setAudioPlaying(false);
+          }
+        });
+
+        newClient.on('error', (error) => {
+          console.error('RealtimeClient error:', error);
+          setError(error.message);
+          setStatus('error');
+        });
+
+        setClient(newClient);
+      } catch (error) {
+        console.error('Failed to initialize client:', error);
+        setError('Failed to initialize client');
+      }
+    };
+
+    initClient();
+
+    return () => {
+      if (client) {
+        client.disconnect();
+      }
+    };
+  }, []);
+
+  // Update session when grade or persona changes
+  React.useEffect(() => {
+    if (!client || !connected) return;
+
+    const voice = persona === "Professor" ? "alloy" : "verse";
+    const personaInstructions = persona === "Professor"
+      ? "You are a helpful professor: explain clearly, use proper terminology, and provide structured responses."
+      : "You are a friendly peer: be informal, use simple language, and give practical examples.";
+
+    client.updateSession({
+      voice: voice,
+      instructions: `${personaInstructions} Tailor technical depth to the user's grade level (${grade}). Be helpful and concise.`,
+    });
+  }, [client, grade, persona, connected]);
+
+  // Cleanup on component unmount
+  React.useEffect(() => {
+    return () => {
+      cleanupAudioAnalysis();
+      if (client) {
+        client.disconnect();
+      }
+      if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => t.stop());
+      if (screenStreamRef.current) screenStreamRef.current.getTracks().forEach(t => t.stop());
+    };
+  }, [client]);
+
+  // capture one frame as base64 data url
+  const captureScreenFrame = async (): Promise<string | null> => {
+    const screen = screenStreamRef.current;
+    if (!screen) return null;
+    const track = screen.getVideoTracks()[0];
+    try {
+      // @ts-ignore ImageCapture may not be in lib dom types
+      const imageCapture = new (window as any).ImageCapture(track);
+      const bitmap = await imageCapture.grabFrame();
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(bitmap as CanvasImageSource, 0, 0);
+      // resize to reduce payload
+      const MAX_W = 1024;
+      if (canvas.width > MAX_W) {
+        const scale = MAX_W / canvas.width;
+        const tmp = document.createElement("canvas");
+        tmp.width = Math.round(canvas.width * scale);
+        tmp.height = Math.round(canvas.height * scale);
+        tmp.getContext("2d")!.drawImage(canvas, 0, 0, tmp.width, tmp.height);
+        return tmp.toDataURL("image/jpeg", 0.75);
+      }
+      return canvas.toDataURL("image/jpeg", 0.75);
+    } catch (err) {
+      // fallback: draw from a video element
+      const video = document.createElement("video");
+      video.srcObject = new MediaStream([track]);
+      await video.play().catch(() => {});
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      video.pause();
+      (video.srcObject as MediaStream)?.getTracks().forEach((t) => t.stop());
+      // resize and compress
+      const MAX_W = 1024;
+      if (canvas.width > MAX_W) {
+        const scale = MAX_W / canvas.width;
+        const tmp = document.createElement("canvas");
+        tmp.width = Math.round(canvas.width * scale);
+        tmp.height = Math.round(canvas.height * scale);
+        tmp.getContext("2d")!.drawImage(canvas, 0, 0, tmp.width, tmp.height);
+        return tmp.toDataURL("image/jpeg", 0.75);
+      }
+      return canvas.toDataURL("image/jpeg", 0.75);
+    }
+  };
+
+  // Start the realtime session
+  const startSession = async () => {
+    if (!client || connected) return;
+
+    // Don't start if no screen shared
+    if (!isScreenShared || !screenStreamRef.current) {
+      setError("Please share your screen first");
+      return;
+    }
+
+    setError(null);
+    setStatus("connecting");
+    setIsLoading(true);
+    console.log("✅ Starting session...");
+
+    try {
+
+    dc.onopen = () => {
+      console.log("Data channel open — sending session.update");
+      setIsDataChannelOpen(true);
+
+      const voice = persona === "Professor" ? "alloy" : "verse";
+      const personaInstructions = persona === "Professor"
+        ? "You are a helpful professor: explain clearly, use proper terminology, and provide structured responses."
+        : "You are a friendly peer: be informal, use simple language, and give practical examples.";
+
+      const sessionUpdate = {
+        type: "session.update",
+        session: {
+          modalities: ["text", "audio"],
+          model: "gpt-4o-realtime-preview",
+          voice: voice,
+          instructions: `${personaInstructions} Tailor technical depth to the user's grade level (${grade}). Be helpful and concise.`,
+          input_audio_transcription: {
+            model: "whisper-1",
+          },
+          turn_detection: {
+            type: "server_vad",
+            threshold: 0.5,
+            prefix_padding_ms: 300,
+            silence_duration_ms: 200,
+          },
+        }
+      };
+      dc.send(JSON.stringify(sessionUpdate));
+    };
+
+    dc.onclose = () => {
+      setIsDataChannelOpen(false);
+    };
+
+    dc.onmessage = (ev) => {
+      try {
+        const msg: AnyEvent = JSON.parse(ev.data);
+        console.log("📨 Received message:", msg.type, msg);
+        
+        // AI RESPONSE TEXT
+        if (msg.type === "response.output_text.delta" || msg.type === "response.text.delta") {
+          const delta = msg.delta || "";
+          aiTextBufferRef.current += delta;
+          setLlmText(aiTextBufferRef.current);
+        }
+
+        // Finalize AI text when response is complete
+        if (msg.type === "response.completed" || msg.type === "response.done") {
+          console.log("✅ Response completed", msg);
+          setIsAiSpeaking(false);
+          if (!isUserSpeaking) {
+            setCurrentSpeaker("none");
+          }
+          aiTextBufferRef.current = "";
+        }
+
+        // Handle errors
+        if (msg.type === "error") {
+          console.error("❌ Error from AI:", msg);
+          setError(`AI Error: ${msg.error?.message || "Unknown error"}`);
+          setStatus("error");
+        }
+
+        // Session events
+        if (msg.type === "session.created") {
+          console.log("🎯 Session created successfully");
+        } else if (msg.type === "session.updated") {
+          console.log("   Session updated");
+        }
+
+        // Conversation events
+        if (msg.type === "conversation.item.created") {
+          console.log("💬 Conversation item created");
+        } else if (msg.type === "response.created") {
+          console.log("🤖 Response created");
+          setIsAiSpeaking(true);
+          setCurrentSpeaker("ai");
+        }
+
+        if (msg.type === "response.audio.delta") {
+          console.log("🎵 Audio delta received");
+        }
+        if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
+          const userText = msg.transcript.trim();
+          if (userText) {
+            console.log("👤 User (pattern 1):", userText);
+
+            // Auto-send screenshot with user's speech if screen is shared
+            if (screenStreamRef.current && connected && isDataChannelOpen) {
+              setIsAnalyzingScreen(true);
+              setTimeout(async () => {
+                try {
+                  const imageDataUrl = await captureScreenFrame();
+                  if (imageDataUrl) {
+                    // Send screenshot with user's question
+                    const itemEvent = {
+                      type: "conversation.item.create",
+                      item: {
+                        role: "user",
+                        content: [
+                          { type: "input_text", text: `Question about this screen: ${userText}` },
+                          { type: "input_image", image_url: imageDataUrl }
+                        ]
+                      }
+                    };
+                    dc.send(JSON.stringify(itemEvent));
+
+                    // Create response
+                    const responseEvent = {
+                      type: "response.create",
+                      response: {
+                        modalities: ["text", "audio"],
+                        instructions: `You are to respond using the following behavior:
+1) ${persona === "Professor" ? "You are a helpful professor: explain clearly, use proper terminology, and provide a short summary." : "You are a friendly peer: be informal, use simple language, and give practical examples."}
+2) ${grade === "UG" || grade === "PG" ? `The user's education level is ${grade}. Tailor technical depth accordingly.` : `The user is in grade ${grade}. Explain using age-appropriate examples and simple terms.`}
+3) Keep answers concise (2-4 sentences), but include one short actionable step or example if applicable.
+Reference the screenshot explicitly if useful.`
+                      }
+                    };
+
+                    setLlmText((prev) => prev + "\n\nYou: " + userText + " (with screenshot)");
+                    dc.send(JSON.stringify(responseEvent));
+                  }
+                } catch (error) {
+                  console.error("Error auto-sending screenshot:", error);
+                } finally {
+                  setIsAnalyzingScreen(false);
+                }
+              }, 500); // Small delay to ensure analysis shows
+            } else {
+              // Don't add duplicate messages
+              if (aiTextBufferRef.current !== userText) {
+                setLlmText((prev) => prev + "\n\nYou: " + userText);
+              }
+            }
+          }
+        }
+
+        // Pattern 2: Input audio buffer speech stopped
+        if (msg.type === "input_audio_buffer.speech_stopped" && msg.transcript) {
+          const userText = msg.transcript.trim();
+          if (userText) {
+            console.log("👤 User (pattern 2):", userText);
+            if (aiTextBufferRef.current !== userText) {
+              setLlmText((prev) => prev + "\n\nYou: " + userText);
+            }
+          }
+        }
+
+        // Pattern 3: General transcript field check
+        if (msg.transcript && typeof msg.transcript === "string" && !msg.type.includes("response")) {
+          const text = msg.transcript.trim();
+          if (text && text !== aiTextBufferRef.current) {
+            console.log("👤 User (general):", text);
+            setLlmText((prev) => prev + "\n\nYou: " + text);
+          }
+        }
+      } catch (e) {
+        console.error("❌ Failed to parse message:", e, ev.data);
+      }
+    };
+
+    // Add microphone track
+    try {
+      setStatus("getting-mic");
+      const mic = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      localStreamRef.current = mic;
+      mic.getAudioTracks().forEach((t) => pc.addTrack(t, mic));
+
+      // Setup audio analysis for speech detection
+      setupAudioAnalysis(mic);
+    } catch (err) {
+      console.error("Mic error:", err);
+      setError("Microphone access required. Please allow microphone access and try again.");
+      setStatus("error");
+      return;
+    }
+
+    setStatus("creating-offer");
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    setStatus("exchanging-sdp");
+    try {
+      // Use the session-based approach like aichats/voice
+      const sessionRes = await fetch("/api/voicebase1", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Add auth if available
+        },
+        body: JSON.stringify({
+          grade: grade,
+          style: persona.toLowerCase(),
+        }),
+      });
+
+      if (!sessionRes.ok) {
+        const errorDetails = await sessionRes.json();
+        console.error("Backend error details:", errorDetails);
+        setError(`Failed to create session: ${errorDetails.details || sessionRes.statusText}`);
+        setStatus("error");
+        return;
+      }
+
+      const session = await sessionRes.json();
+      const clientSecret = session?.client_secret?.value || session?.data?.client_secret?.value;
+
+      if (!clientSecret) {
+        setError("Invalid session response - no client secret");
+        setStatus("error");
+        return;
+      }
+
+      // Now do the SDP exchange with the session
+      const r = await fetch(
+        `https://api.openai.com/v1/realtime?model=${encodeURIComponent(
+          session.model
+        )}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clientSecret}`,
+            "Content-Type": "application/sdp",
+            "OpenAI-Beta": "realtime=v1",
+          },
+          body: offer.sdp,
+        }
+      );
+      if (!r.ok) {
+        const text = await r.text();
+        console.error("SDP exchange failed:", r.status, text);
+
+        // Retry logic for certain error types
+        if (retryCount < 2 && (r.status === 500 || r.status === 502 || r.status === 503)) {
+          console.log(`Retrying session start (attempt ${retryCount + 1})`);
+          setTimeout(() => startSession(retryCount + 1), 1000 * (retryCount + 1));
+          return;
+        }
+
+        setError("Failed to start realtime session. Please check your connection and try again.");
+        setStatus("error");
+        return;
+      }
+      const answerSdp = await r.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+
+      setStatus("connected");
+      setConnected(true);
+    } catch (error: any) {
+      console.error("Failed to start session:", error);
+      setError(error?.message || "An unknown error occurred while starting the session.");
+      setStatus("error");
+
+    } finally {
+      setIsLoading(false);
+    }
+    } catch (error: any) {
+      console.error("Failed to initialize session:", error);
+      setError("Failed to initialize the realtime session.");
+      setStatus("error");
+      setIsLoading(false);
+    }
+  };
+
+  // Share screen (store locally so we can snapshot)
+  const shareScreen = async () => {
+    try {
+      console.log("🖥️ Starting screen share...");
+      const screen = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      screenStreamRef.current = screen;
+      setIsScreenShared(true);
+      console.log("✅ Screen shared successfully:", screen);
+      console.log("📊 screenStreamRef.current after share:", screenStreamRef.current);
+      console.log("📊 isScreenShared state updated to:", true);
+    } catch (err) {
+      console.error("Screen share error:", err);
+      setError("Screen share access required for sending snapshots. Please allow screen sharing and try again.");
+      setStatus("error");
+    }
+  };
+
+
+  const stop = () => {
+    console.log("stop");
+    setStatus("stopping");
+
+    // Cleanup audio analysis
+    cleanupAudioAnalysis();
+
+    if (pcRef.current) pcRef.current.close();
+    if (localStreamRef.current)
+      localStreamRef.current.getTracks().forEach((t) => t.stop());
+    if (screenStreamRef.current)
+      screenStreamRef.current.getTracks().forEach((t) => t.stop());
+
+    pcRef.current = null;
+    dcRef.current = null;
+    localStreamRef.current = null;
+    screenStreamRef.current = null;
+    setConnected(false);
+    setIsDataChannelOpen(false);
+    setIsScreenShared(false);
+    setStatus("idle");
+    setLlmText("");
+    setError(null);
+    if (audioRef.current) audioRef.current.srcObject = null;
+  };
+
+  const gradeOptions = [
+    ...Array.from({ length: 12 }, (_, i) => String(i + 1)), // "1".."12"
+    "UG",
+    "PG"
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">AI Screen Assistant</h1>
+          <p className="text-sm md:text-base text-gray-600 px-4">Share your screen, speak naturally, and get automatic AI help with voice & visual analysis</p>
+        </div>
+
+        {/* Status Bar */}
+        <div className="bg-white rounded-lg shadow-md p-3 md:p-4 mb-4 md:mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+            <div className="flex items-center space-x-3 md:space-x-4">
+              <div className={`flex items-center space-x-2 ${connected ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="font-medium text-sm md:text-base">
+                  {status === "connected" ? '✓ Connected' :
+                   status === "requesting-session" ? 'Requesting session...' :
+                   status === "getting-mic" ? 'Getting microphone...' :
+                   status === "creating-offer" ? 'Creating offer...' :
+                   status === "exchanging-sdp" ? 'Exchanging SDP...' :
+                   status === "stopping" ? 'Stopping...' :
+                   'Disconnected'}
+                </span>
+              </div>
+              {audioPlaying && (
+                <div className="flex items-center space-x-2 text-blue-600">
+                  <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+                  <span className="font-medium text-sm md:text-base">Audio Active</span>
+                </div>
+              )}
+
+              {/* Diarization Indicator */}
+              {connected && (
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                        currentSpeaker === "user" ? "bg-blue-500 animate-pulse" : "bg-gray-300"
+                      }`}
+                    ></div>
+                    <span className={`text-sm font-medium transition-colors duration-300 ${
+                      currentSpeaker === "user" ? "text-blue-600" : "text-gray-500"
+                    }`}>
+                      You
+                    </span>
+                  </div>
+
+                  <div className="w-px h-4 bg-gray-300"></div>
+
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                        currentSpeaker === "ai" ? "bg-purple-500 animate-pulse" : "bg-gray-300"
+                      }`}
+                    ></div>
+                    <span className={`text-sm font-medium transition-colors duration-300 ${
+                      currentSpeaker === "ai" ? "text-purple-600" : "text-gray-500"
+                    }`}>
+                      AI
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Screen Analysis Indicator */}
+              {isAnalyzingScreen && (
+                <div className="flex items-center space-x-2 text-orange-600">
+                  <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse"></div>
+                  <span className="text-sm font-medium">Auto-Analyzing...</span>
+                </div>
+              )}
+
+              {/* Ready Indicator */}
+              {screenStreamRef.current && connected && isDataChannelOpen && !isAnalyzingScreen && (
+                <div className="flex items-center space-x-2 text-green-600">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span className="text-sm font-medium">Ready to Listen</span>
+                </div>
+              )}
+            </div>
+            {isLoading && (
+              <div className="flex items-center space-x-2 text-orange-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+                <span className="text-sm md:text-base">Processing...</span>
+              </div>
+            )}
+          </div>
+          {error && (
+            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+
+          {/* Left Column - Controls */}
+          <div className="space-y-4 md:space-y-6">
+
+            {/* Quick Actions - New Flow */}
+            <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+              <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                <button
+                  onClick={shareScreen}
+                  disabled={isScreenShared}
+                  className={`p-4 rounded-lg font-medium transition-all ${
+                    isScreenShared
+                      ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                      : 'bg-purple-600 text-white hover:bg-purple-700 hover:shadow-lg'
+                  }`}
+                >
+                  {isScreenShared ? '✅ Screen Shared' : '📺 Share Your Screen'}
+                </button>
+
+                <button
+                  onClick={() => {
+                    console.log("🔘 Start Session button clicked!");
+                    console.log("📊 Button state:", {
+                      screenShared: isScreenShared,
+                      loading: isLoading,
+                      status,
+                      error: status === "error",
+                      connected
+                    });
+                    console.log("📊 screenStreamRef.current:", screenStreamRef.current);
+                    startSession();
+                  }}
+                  disabled={!isScreenShared || isLoading || status === "error"}
+                  className={`p-4 rounded-lg font-medium transition-all ${
+                    !isScreenShared
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : connected
+                      ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                      : status === "error"
+                      ? 'bg-red-100 text-red-800 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
+                  }`}
+                >
+                  {status === "requesting-session" ? '🔄 Starting Session...' :
+                   status === "getting-mic" ? '🎤 Getting Mic...' :
+                   status === "creating-offer" ? '⚙️ Creating...' :
+                   status === "exchanging-sdp" ? '🔗 Connecting...' :
+                   connected ? '✅ Session Ready' :
+                   status === "error" ? '❌ Fix Error' :
+                   '🎯 Start Session'}
+                </button>
+              </div>
+            </div>
+
+            {/* Settings */}
+            <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+              <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">Settings</h3>
+              <div className="space-y-3 md:space-y-4">
+                {/* Debug Info */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs">
+                  <div className="font-semibold text-yellow-800 mb-1">Debug Info:</div>
+                  <div>Screen Shared: {isScreenShared ? '✅ Yes' : '❌ No'}</div>
+                  <div>Loading: {isLoading ? '⏳ Yes' : '✅ No'}</div>
+                  <div>Status: {status}</div>
+                  <div>Connected: {connected ? '✅ Yes' : '❌ No'}</div>
+                  <div>Button Disabled: {(!isScreenShared || isLoading || status === "error") ? '🔒 Yes' : '🔓 No'}</div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Grade Level
+                  </label>
+                  <select
+                    value={grade}
+                    onChange={(e) => setGrade(e.target.value)}
+                    className="w-full p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {gradeOptions.map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Conversation Style
+                  </label>
+                  <select
+                    value={persona}
+                    onChange={(e) => setPersona(e.target.value as "Professor" | "Friend")}
+                    className="w-full p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="Professor">Professor (formal)</option>
+                    <option value="Friend">Friend (casual)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Auto Analysis Info */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 md:p-6">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">🤖</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-blue-900">Automatic AI Analysis</h4>
+                  <p className="text-sm text-blue-700">Just speak naturally - I'll automatically capture your screen and respond!</p>
+                </div>
+              </div>
+              {isScreenShared && connected && isDataChannelOpen && (
+                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                  <p className="text-green-800 text-sm flex items-center">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                    Ready! When you speak, I'll automatically capture your screen and provide contextual help.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Stop Button */}
+            {connected && (
+              <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+                <button
+                  onClick={stop}
+                  disabled={status === "stopping"}
+                  className="w-full p-3 md:p-4 rounded-lg font-medium text-sm md:text-base bg-red-600 text-white hover:bg-red-700 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {status === "stopping" ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Stopping...</span>
+                    </div>
+                  ) : (
+                    '🛑 Stop Session'
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Response */}
+          <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <h3 className="text-lg md:text-xl font-semibold text-gray-800">AI Response</h3>
+              {isAiSpeaking && (
+                <div className="flex items-center space-x-2 text-purple-600">
+                  <div className="w-3 h-3 rounded-full bg-purple-500 animate-pulse"></div>
+                  <span className="text-sm font-medium">AI Speaking</span>
+                </div>
+              )}
+            </div>
+
+            {/* Audio Player */}
+            <div className="mb-4 md:mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Voice Response
+              </label>
+              <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                <audio
+                  ref={audioRef}
+                  autoPlay
+                  controls
+                  className="w-full"
+                  onPlay={() => setAudioPlaying(true)}
+                  onPause={() => setAudioPlaying(false)}
+                  onEnded={() => setAudioPlaying(false)}
+                />
+                {!audioPlaying && !llmText && connected && (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    Voice responses will appear here
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Text Response */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Text Response
+              </label>
+              <div className={`border rounded-lg p-3 md:p-4 min-h-[150px] md:min-h-[200px] max-h-[300px] md:max-h-[400px] overflow-y-auto transition-colors ${
+                isAiSpeaking ? 'border-purple-200 bg-purple-50' : 'border-gray-200 bg-gray-50'
+              }`}>
+                {isAnalyzingScreen ? (
+                  <div className="text-center py-6 md:py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+                    <p className="text-orange-600 font-medium">🤖 Auto-analyzing your screen...</p>
+                    <p className="text-gray-500 text-sm mt-2">AI is processing your voice + screenshot</p>
+                  </div>
+                ) : llmText ? (
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-gray-800 leading-relaxed whitespace-pre-wrap text-sm md:text-base">
+                      {llmText}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-gray-500 italic text-center py-6 md:py-8 text-sm md:text-base">
+                    {connected && isScreenShared ? (
+                      isDataChannelOpen ?
+                        '🎤 Speak naturally! I\'ll automatically analyze your screen and respond...' :
+                        'Session is loading...'
+                    ) : connected ? (
+                      'Share your screen first to enable automatic AI assistance...'
+                    ) : 'Start a session to begin chatting'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="mt-6 md:mt-8 bg-white rounded-lg shadow-md p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3">How it works (Fully Automatic):</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 text-sm text-gray-600">
+            <div className="flex items-start space-x-2">
+              <span className="text-blue-600 font-bold">1.</span>
+              <span>Share your screen first</span>
+            </div>
+            <div className="flex items-start space-x-2">
+              <span className="text-blue-600 font-bold">2.</span>
+              <span>Start session & select your grade/style</span>
+            </div>
+            <div className="flex items-start space-x-2">
+              <span className="text-blue-600 font-bold">3.</span>
+              <span>Just speak! AI automatically captures your screen + processes your voice</span>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+            <p className="text-green-800 text-sm">
+              <strong>🎯 How it works:</strong> When you speak, the AI automatically captures a screenshot of your current screen and combines it with your voice to provide contextual help!
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
