@@ -85,7 +85,7 @@ const aiTutorSubRoutes = [
 const pointAskSubRoutes = [
   {
     label: 'Point & Ask Test',
-    href: '/pointask/test',
+    href: '/pointask/voice',
     icon: <MicIcon />,
     bg: 'point-ask-gradient',
   },
