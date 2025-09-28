@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ChevronDownIcon } from "lucide-react";
+import clsx from "clsx";
 
 type PrimitiveOption = string;
 export type OptionWithLabel = {
@@ -22,6 +23,8 @@ type SideConfig = {
   onToggle: () => void;
   onSelect: (value: string) => void;
   renderOption?: (opt: OptionWithLabel) => React.ReactNode;
+  highlight?: boolean;
+  highlightClassName?: string;
 };
 
 type TwoSelectPillProps = {
@@ -29,6 +32,9 @@ type TwoSelectPillProps = {
   right: SideConfig;
   className?: string;
 };
+
+const HIGHLIGHT_BASE =
+  "absolute -inset-2 rounded-[22px] border-[3px] border-white/70 shadow-[0_0_35px_rgba(255,87,77,0.45)] animate-pulse bg-white/40 pointer-events-none";
 
 export default function TwoSelectPill({ left, right, className }: TwoSelectPillProps) {
   return (
@@ -42,8 +48,29 @@ export default function TwoSelectPill({ left, right, className }: TwoSelectPillP
         }}
       >
         {/* Left select */}
-        <div className="relative dropdown-container">
-          <button onClick={left.onToggle} className="flex items-center text-[#FF574D]">
+        <div
+          className={clsx(
+            "relative dropdown-container rounded-[18px] transition duration-300",
+            left.highlight && "scale-[1.02]",
+            left.highlightClassName
+          )}
+        >
+          {left.highlight && (
+            <span
+              className={clsx(
+                HIGHLIGHT_BASE,
+                "-z-10"
+              )}
+              aria-hidden="true"
+            />
+          )}
+          <button
+            onClick={left.onToggle}
+            className={clsx(
+              "relative z-10 flex items-center text-[#FF574D]",
+              left.highlight && "font-bold"
+            )}
+          >
             <span className="text-[14px] sm:text-[16px] font-semibold tracking-wide">
               {left.label} : {left.displayValue || "Select"}
             </span>
@@ -81,8 +108,29 @@ export default function TwoSelectPill({ left, right, className }: TwoSelectPillP
         />
 
         {/* Right select */}
-        <div className="relative dropdown-container">
-          <button onClick={right.onToggle} className="flex items-center text-[#FF574D]">
+        <div
+          className={clsx(
+            "relative dropdown-container rounded-[18px] transition duration-300",
+            right.highlight && "scale-[1.02]",
+            right.highlightClassName
+          )}
+        >
+          {right.highlight && (
+            <span
+              className={clsx(
+                HIGHLIGHT_BASE,
+                "-z-10"
+              )}
+              aria-hidden="true"
+            />
+          )}
+          <button
+            onClick={right.onToggle}
+            className={clsx(
+              "relative z-10 flex items-center text-[#FF574D]",
+              right.highlight && "font-bold"
+            )}
+          >
             <span className="text-[14px] sm:text-[16px] font-semibold tracking-wide">
               {right.label} : {right.displayValue || "Select"}
             </span>
