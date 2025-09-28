@@ -9,8 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/genai": "^1.21.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^4.1.3",
+    "@openai/agents-realtime": "^0.1.6",
+    "@openai/realtime-api-beta": "github:openai/openai-realtime-api-beta",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-label": "^2.1.2",
@@ -33,10 +36,9 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.477.0",
     "next": "15.2.0",
-    "openai": "^4.57.0",
+    "openai": "^5.23.1",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
-    "react-d3-speedometer": "^3.1.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.59.0",
@@ -45,6 +47,7 @@
     "react-speech-recognition": "^4.0.1",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
+    "wavefile": "^11.0.0",
     "zod": "^3.25.67",
     "zustand": "^5.0.3"
   },
