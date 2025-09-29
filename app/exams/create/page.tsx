@@ -43,12 +43,16 @@ export default function CreateExamPage() {
   const [error, setError] = useState('');
 
   const subjectOptions = [
-    'Math',
-    'Science', 
-    'Social studies',
-    'English',
-    'UG',
-    'PG'
+    'Mathematics',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'Zoology',
+    'History',
+    'Economics',
+    'Civics',
+    'Geography',
+    'English'
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 export default function CreateProjectPage() {
   const router = useRouter();
-  const subjectOptions = ['Math', 'Science', 'Social studies', 'English', 'UG', 'PG'];
+  const subjectOptions = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Zoology', 'History', 'Economics', 'Civics', 'Geography', 'English'];
   const [form, setForm] = useState({
     title: "",
     class: "",

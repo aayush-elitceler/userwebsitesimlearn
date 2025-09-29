@@ -489,7 +489,6 @@ export default function TakeExamPage() {
     </div>
   );
 }
-
 // Utility to get token from 'auth' cookie
 function getTokenFromCookie() {
   if (typeof document === "undefined") return null;
