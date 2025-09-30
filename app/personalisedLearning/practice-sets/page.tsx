@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import axios from 'axios';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 type QuestionConfig =
   | {
@@ -188,6 +188,11 @@ export default function CreateExamPage() {
         }
       }
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       console.error('Error creating exam:', error);
       if (axios.isAxiosError(error)) {
         const errorMessage = error.response?.data?.message || error.message || 'Unknown error';

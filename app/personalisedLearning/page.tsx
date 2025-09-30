@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Star, Users, Target, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
-import axios from 'axios';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 // Utility to get token from 'auth' cookie
 function getTokenFromCookie() {
@@ -105,6 +105,11 @@ function PersonalisedLearningPage() {
           throw new Error(response.data.message || 'Failed to fetch personalized learning data');
         }
       } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
         console.error('Error fetching personalized learning data:', err);
         if (axios.isAxiosError(err)) {
           setError(err.response?.data?.message || err.message || 'An error occurred');

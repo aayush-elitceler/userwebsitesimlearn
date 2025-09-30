@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import axios from 'axios';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 interface Question {
   id: string;
@@ -52,6 +52,11 @@ export default function TakeExamPage() {
       setLoading(true);
       try {
         const token = getTokenFromCookie();
+        if (!token) {
+          redirectToLogin();
+          return;
+        }
+
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/get-by-id?examId=${examId}`,
           {
@@ -66,6 +71,11 @@ export default function TakeExamPage() {
           setRemainingTime(response.data.data.exam.timeLimitMinutes * 60);
         }
       } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
         console.error('Error fetching exam:', error);
       } finally {
         setLoading(false);
@@ -195,6 +205,11 @@ export default function TakeExamPage() {
     };
     try {
       const token = getTokenFromCookie();
+      if (!token) {
+        redirectToLogin();
+        return;
+      }
+
       await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`,
         body,
@@ -210,6 +225,11 @@ export default function TakeExamPage() {
       }
       // else: wait for user to click Back to dashboard
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       console.error('Error submitting exam:', error);
     } finally {
       setSubmitting(false);
