@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "@/lib/axiosInstance";
 import Cookies from "js-cookie";
 import { Poppins } from "next/font/google";
 import Link from "next/link";

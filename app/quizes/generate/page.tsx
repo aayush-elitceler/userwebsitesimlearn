@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 const difficulties = ['easy', 'medium', 'hard'];
 const numQuestionsOptions = Array.from({length: 26}, (_, i) => i); // 0 to 25
 const timeLimits = [5, 10, 15, 20, 30, 60];
-const subjectOptions = ['Math', 'Science', 'Social studies', 'English', 'UG', 'PG'];
+const subjectOptions = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Zoology', 'History', 'Economics', 'Civics', 'Geography', 'English'];
 
 interface Option {
   id: string;

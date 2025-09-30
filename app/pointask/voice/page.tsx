@@ -13,6 +13,7 @@ import { MessageActionTextarea } from "@/components/MessageActionTextarea";
 import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 import SpruceBall from "@/components/SpruceBall";
 import { Mic } from "lucide-react";
+import Cookies from "js-cookie";
 
 type RealtimeStatus =
   | "idle"
@@ -95,7 +96,11 @@ export default function RealtimeAssistant(): React.ReactElement {
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
   const [showPersonaDropdown, setShowPersonaDropdown] = useState(false);
   const [showHeading, setShowHeading] = useState(true);
-  const [headingText, setHeadingText] = useState("Welcome ! please select you class and person to get started");
+  const [headingText, setHeadingText] = useState(
+    "Welcome! Please select your class and persona to get started."
+  );
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<number>(1);
 
   const personaLabel = useMemo(() => {
     return (
@@ -219,10 +224,39 @@ export default function RealtimeAssistant(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (selectedGrade && selectedPersona) {
-      setHeadingText(`Got it i'l teach you like a freind for ${selectedGrade}`);
+    setShowOnboarding(true);
+  }, []);
+
+  useEffect(() => {
+    if (!showOnboarding) {
+      return;
     }
-  }, [selectedGrade, selectedPersona]);
+
+    if (onboardingStep === 1 && selectedGrade) {
+      const timer = window.setTimeout(() => {
+        setOnboardingStep(2);
+      }, 1000);
+      return () => window.clearTimeout(timer);
+    }
+
+    if (onboardingStep === 2 && selectedPersona) {
+      const timer = window.setTimeout(() => {
+        setShowOnboarding(false);
+      }, 2000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [showOnboarding, onboardingStep, selectedGrade, selectedPersona]);
+
+  useEffect(() => {
+    if (selectedGrade && selectedPersona) {
+      const personaDescriptor = personaLabel
+        ? personaLabel.toLowerCase()
+        : selectedPersona;
+      setHeadingText(
+        `Got it! I'll teach you like a ${personaDescriptor} for ${selectedGrade}.`
+      );
+    }
+  }, [selectedGrade, selectedPersona, personaLabel]);
 
   useEffect(() => {
     if (isConnected) {
@@ -556,7 +590,7 @@ export default function RealtimeAssistant(): React.ReactElement {
     return "Start conversation";
   })();
   const primaryButtonClassName = isConnected
-    ? "inline-flex w-full min-w-[180px] items-center justify-center rounded-full border border-gray-200 bg-white px-8 py-2 text-sm font-semibold text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-2 justify-center"
+    ? "inline-flex w-full min-w-[180px] items-center justify-center rounded-full border border-gray-200 px-8 py-2 text-sm font-semibold text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-2 justify-center"
     : "inline-flex w-full min-w-[180px] items-center justify-center rounded-full bg-primary px-8 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-2 justify-center";
 
   const handlePrimaryAction = useCallback(() => {
@@ -571,16 +605,19 @@ export default function RealtimeAssistant(): React.ReactElement {
   const floatingSelectors = (
     <div className="pointer-events-none">
       <div
-        className="pointer-events-auto fixed top-8 right-8 z-40 flex flex-col items-end gap-3"
+        className={`pointer-events-auto fixed top-8 right-8 ${showOnboarding ? "z-[70]" : "z-40"} flex flex-col items-end gap-3`}
         onClick={(event) => event.stopPropagation()}
       >
         <TwoSelectPill
-          className="drop-shadow-xl backdrop-blur"
+          className={`drop-shadow-xl backdrop-blur ${showOnboarding ? "z-[75]" : ""}`}
           left={{
             label: "Grade",
             displayValue: selectedGrade,
             options: grades,
             showDropdown: showGradeDropdown,
+            highlight: showOnboarding && onboardingStep === 1,
+            highlightClassName:
+              " transition-all duration-300 ",
             onToggle: () => {
               setShowGradeDropdown((value) => !value);
               setShowPersonaDropdown(false);
@@ -595,6 +632,9 @@ export default function RealtimeAssistant(): React.ReactElement {
             displayValue: personaLabel,
             options: personaOptions,
             showDropdown: showPersonaDropdown,
+            highlight: showOnboarding && onboardingStep === 2,
+            highlightClassName:
+              " transition-all duration-300 ",
             onToggle: () => {
               setShowPersonaDropdown((value) => !value);
               setShowGradeDropdown(false);
@@ -614,6 +654,72 @@ export default function RealtimeAssistant(): React.ReactElement {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-rose-50 via-white to-white text-gray-900">
+      {showOnboarding && (
+        <div className="fixed top-0 left-0 z-50 h-full w-full bg-black/50" />
+      )}
+
+      {showOnboarding && onboardingStep === 1 && (
+        <div className="fixed top-[100px] right-28 sm:right-32 lg:right-40 z-[60]">
+          <img
+            src="/images/arrow.svg"
+            alt="onboarding"
+            className="mx-auto mb-5 h-[59px] w-[19px] object-cover"
+          />
+          <div className="w-[280px] rounded-lg bg-primary p-4 text-center text-primary-foreground mb-2">
+            {selectedGrade ? (
+              <div>
+                <div className="mb-2">Great! You've selected:</div>
+                <div className="text-sm opacity-90">Class: {selectedGrade}</div>
+                <div className="mt-2 text-xs opacity-75">
+                  Now let's choose your persona...
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2">
+                  First, choose your class/grade level.
+                </div>
+                <div className="text-xs opacity-75">
+                  This helps me teach at the right level for you.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showOnboarding && onboardingStep === 2 && (
+        <div className="fixed top-[100px] right-10 sm:right-14 lg:right-10 z-[60]">
+          <img
+            src="/images/arrow.svg"
+            alt="onboarding"
+            className="mx-auto mb-5 h-[59px] w-[19px] object-cover"
+          />
+          <div className="w-[280px] rounded-lg bg-primary p-4 text-center text-primary-foreground mb-2">
+            {selectedPersona ? (
+              <div>
+                <div className="mb-2">Perfect! You've selected:</div>
+                <div className="text-sm opacity-90">
+                  Persona: {personaLabel ?? selectedPersona}
+                </div>
+                <div className="mt-2 text-xs opacity-75">
+                  Now you can start your voice conversation...
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2">
+                  Now choose how you'd like me to talk to you.
+                </div>
+                <div className="text-xs opacity-75">
+                  Professor or Friend - pick your style!
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {floatingSelectors}
 
       <div className="relative z-10 flex min-h-screen flex-col">

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from 'axios';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 type QuestionConfig =
   | {
@@ -43,12 +43,16 @@ export default function CreateExamPage() {
   const [error, setError] = useState('');
 
   const subjectOptions = [
-    'Math',
-    'Science', 
-    'Social studies',
-    'English',
-    'UG',
-    'PG'
+    'Mathematics',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'Zoology',
+    'History',
+    'Economics',
+    'Civics',
+    'Geography',
+    'English'
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -102,9 +106,7 @@ export default function CreateExamPage() {
     try {
       const token = getTokenFromCookie();
       if (!token) {
-        setError('No auth token found. Please login.');
-        setLoading(false);
-        setShowModal(false);
+        redirectToLogin();
         return;
       }
       
@@ -134,6 +136,11 @@ export default function CreateExamPage() {
         setShowModal(false);
       }
     } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       console.log(err);
       setError('An error occurred. Please try again.');
       setShowModal(false);
@@ -212,7 +219,7 @@ export default function CreateExamPage() {
         </div>
       )}
       
-      <div className='max-w-4xl w-full bg-transparent bg-gray-100 rounded-2xl shadow-lg p-8 relative z-10'>
+  <div className='max-w-4xl w-full bg-gray-100 rounded-2xl shadow-lg p-8 relative z-10'>
         <h2 className='text-2xl font-bold text-black mb-2'>Create Exam</h2>
         <hr className='border-gray-600 mb-6' />
         <form

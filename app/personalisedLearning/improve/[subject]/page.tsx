@@ -6,7 +6,7 @@ import { ArrowLeft, MessageCircle, RefreshCw, FileText, Lightbulb } from 'lucide
 import { useRouter, useParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { Toaster } from '@/components/ui/toaster'
-import axios from 'axios'
+import axios, { redirectToLogin } from '@/lib/axiosInstance'
 
 // Utility to get token from 'auth' cookie
 function getTokenFromCookie() {
@@ -59,8 +59,7 @@ function ImprovementPage() {
       try {
         const token = getTokenFromCookie();
         if (!token) {
-          setError("Authentication token not found");
-          setLoading(false);
+          redirectToLogin();
           return;
         }
 
@@ -81,6 +80,11 @@ function ImprovementPage() {
           throw new Error(response.data.message || 'Failed to fetch topic insight');
         }
       } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
         console.error('Error fetching topic insight:', err);
         if (axios.isAxiosError(err)) {
           setError(err.response?.data?.message || err.message || 'An error occurred');

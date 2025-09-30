@@ -14,7 +14,7 @@ import { usePathname } from "next/navigation";
 import { fetchHistory, getFilteredHistory, HistoryItem } from "@/lib/historyService";
 import HistorySlider from "@/components/HistorySlider";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
-import axios from 'axios';
+import { redirectToLogin } from '@/lib/axiosInstance';
 import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 
 // Helper function to format chat response with markdown support
@@ -375,45 +375,139 @@ export default function AiChatsChatPage() {
     setApiLoading(true);
     setChatHistory((prev) => [...prev, { role: "user", text: sendMsg.trim() }]);
     setInputValue("");
+
+    // Add initial AI message for streaming
+    setChatHistory((prev) => {
+      const newHistory = [...prev, { role: "ai" as const, text: "" }];
+      setStreamingMessageIndex(newHistory.length - 1);
+      setIsStreaming(true);
+      return newHistory;
+    });
+
     try {
+      // Construct question with persona context
+      const personaPrompt = selectedStyle ?
+        `Respond as a ${selectedStyle}. ` : "";
+      const questionWithPersona = `${personaPrompt}${sendMsg.trim()}`;
+
       const payload = {
-        class: formatGradeForAPI(selectedGrade),
-        style: selectedStyle,
-        message: sendMsg.trim(),
+        collection_name: "aitut",
+        question: questionWithPersona,
+        llm: "gpt-3.5-turbo-16k"
       };
       const authCookie = Cookies.get("auth");
       let token: string | undefined;
-      if (authCookie) {
+      if (authCookie) { 
         try {
           token = JSON.parse(authCookie).token;
         } catch {}
       }
-      const response = await axios.post(
-        "https://apisimplylearn.selflearnai.in/api/v1/ai/chat",
-        payload,
+
+      // Create streaming request
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        "https://chat.selflearnai.in/api/v1/rag/asyncStreamQuery",
         {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
         }
       );
-      
-      const data = response.data;
-      const responseText = data?.data?.response || data?.response || "";
-      console.log("🔍 [CHAT] Response text:", data);
-      // Add AI message and trigger streaming
-      setChatHistory((prev) => {
-        const newHistory = [
-          ...prev,
-          { role: "ai" as const, text: responseText },
-        ];
-        setStreamingMessageIndex(newHistory.length - 1);
-        setIsStreaming(true);
-        return newHistory;
-      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = "";
+      let finalResponse: any = null;
+
+      if (reader) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6)); // Remove 'data: ' prefix
+
+                  if (data.type === 'content') {
+                    // Accumulate streaming content
+                    accumulatedContent += data.content;
+
+                    // Update the streaming display
+                    setChatHistory((prev) => {
+                      const newHistory = [...prev];
+                      const streamingIndex = streamingMessageIndex ?? newHistory.length - 1;
+
+                      if (streamingIndex >= 0 && newHistory[streamingIndex].role === 'ai') {
+                        newHistory[streamingIndex] = {
+                          ...newHistory[streamingIndex],
+                          text: accumulatedContent
+                        };
+                      }
+
+                      return newHistory;
+                    });
+                  } else if (data.type === 'complete') {
+                    // Store the final complete response and stop streaming
+                    finalResponse = data;
+                    console.log("🔍 [CHAT] Complete response:", data);
+
+                    // Update with final content and stop streaming
+                    setChatHistory((prev) => {
+                      const newHistory = [...prev];
+                      const streamingIndex = streamingMessageIndex ?? newHistory.length - 1;
+
+                      if (streamingIndex >= 0 && newHistory[streamingIndex].role === 'ai') {
+                        newHistory[streamingIndex] = {
+                          ...newHistory[streamingIndex],
+                          text: data.content || accumulatedContent
+                        };
+                      }
+
+                      return newHistory;
+                    });
+
+                    setIsStreaming(false);
+                    setStreamingMessageIndex(null);
+                  }
+                } catch (parseError) {
+                  console.error("Error parsing streaming data:", parseError);
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+
+          // Stop streaming if it's still active
+          if (isStreaming) {
+            setIsStreaming(false);
+            setStreamingMessageIndex(null);
+          }
+        }
+      }
     } catch (err) {
-      console.error(err);
+      // Handle authentication errors (401)
+      if (err instanceof Error && err.message.includes('401')) {
+        redirectToLogin();
+        return;
+      }
+
+      console.error("Chat error:", err);
     } finally {
       setApiLoading(false);
       inputRef.current?.focus();
@@ -804,7 +898,7 @@ export default function AiChatsChatPage() {
                   )}
                 </div>
               ))}
-              {apiLoading && (
+              {/* {apiLoading && !isStreaming && (
                 <div className="flex items-end gap-3 justify-start">
                   <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold flex-shrink-0">
                     AI
@@ -813,7 +907,7 @@ export default function AiChatsChatPage() {
                     <div className="text-sm md:text-base leading-relaxed">Thinking...</div>
                   </div>
                 </div>
-              )}
+              )} */}
               <div ref={chatBottomRef} className="h-4" />
             </div>
           </div>

@@ -18,7 +18,7 @@ import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { useLogo } from '@/lib/LogoContext';
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
-import axios from 'axios';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 const poppins = Poppins({ weight: ['400', '600', '700'], subsets: ['latin'] });
 
@@ -260,7 +260,7 @@ export default function Home() {
         }
 
         if (!authCookie || !token) {
-          router.push('/login');
+          redirectToLogin();
           return;
         }
 
@@ -310,10 +310,20 @@ export default function Home() {
               console.log('Profile Data from API:', profileResponse.data.data);
             }
           } catch (profileErr) {
+            if (axios.isAxiosError(profileErr) && profileErr.response?.status === 401) {
+              redirectToLogin();
+              return;
+            }
+
             console.error('Error fetching profile:', profileErr);
           }
         }
       } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
         console.error('Error fetching data:', err);
         setError('Failed to load dashboard data');
       } finally {
