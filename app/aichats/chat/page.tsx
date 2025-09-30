@@ -385,14 +385,19 @@ export default function AiChatsChatPage() {
     });
 
     try {
+      // Construct question with persona context
+      const personaPrompt = selectedStyle ?
+        `Respond as a ${selectedStyle}. ` : "";
+      const questionWithPersona = `${personaPrompt}${sendMsg.trim()}`;
+
       const payload = {
         collection_name: "aitut",
-        question: sendMsg.trim(),
+        question: questionWithPersona,
         llm: "gpt-3.5-turbo-16k"
       };
       const authCookie = Cookies.get("auth");
       let token: string | undefined;
-      if (authCookie) {
+      if (authCookie) { 
         try {
           token = JSON.parse(authCookie).token;
         } catch {}
