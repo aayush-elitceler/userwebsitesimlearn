@@ -120,6 +120,16 @@ const renderFormattedText = (text: string) => {
   return text;
 };
 
+interface UserProfile {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  className?: string;
+  curriculumMode?: string;
+  [key: string]: unknown;
+}
+
 type StyleOption = {
   label: string;
   value: string;
@@ -172,6 +182,66 @@ const grades = [
   "UG",
   "PG",
 ];
+const getOrdinalSuffix = (value: number) => {
+  const remainder = value % 100;
+  if (remainder >= 11 && remainder <= 13) {
+    return "th";
+  }
+
+  switch (value % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+};
+
+const mapClassNameToGradeOption = (className?: string | null): string | null => {
+  if (!className) return null;
+
+  const trimmed = className.trim();
+  if (!trimmed) return null;
+
+  const normalized = trimmed.toLowerCase();
+
+  if (normalized === "ug" || normalized === "pg") {
+    return normalized.toUpperCase();
+  }
+
+  if (/^\d+$/.test(normalized)) {
+    const numeric = parseInt(normalized, 10);
+    if (!Number.isNaN(numeric)) {
+      const candidate = `${numeric}${getOrdinalSuffix(numeric)} grade`;
+      const match = grades.find(
+        (grade) => grade.toLowerCase() === candidate.toLowerCase()
+      );
+      if (match) return match;
+    }
+  }
+
+  if (/^\d+(st|nd|rd|th)$/.test(normalized)) {
+    const numeric = parseInt(normalized, 10);
+    if (!Number.isNaN(numeric)) {
+      const candidate = `${numeric}${getOrdinalSuffix(numeric)} grade`;
+      const match = grades.find(
+        (grade) => grade.toLowerCase() === candidate.toLowerCase()
+      );
+      if (match) return match;
+    }
+  }
+
+  const exactMatch = grades.find((grade) => grade.toLowerCase() === normalized);
+  if (exactMatch) return exactMatch;
+
+  const partialMatch = grades.find((grade) =>
+    grade.toLowerCase().startsWith(normalized)
+  );
+  return partialMatch ?? null;
+};
 const styles = [
   {
     label: "Professor",
@@ -235,6 +305,18 @@ const styles = [
   },
 ];
 
+const mapStyleToApiStyle = (style: string | null) => {
+  if (!style) {
+    return "teacher";
+  }
+
+  if (style.toLowerCase() === "professor") {
+    return "teacher";
+  }
+
+  return style;
+};
+
 const suggestions = [
   "What is gravity and why don't we float like astronauts?",
   "How do plants make their own food using sunlight and water?",
@@ -259,8 +341,127 @@ export default function AiChatsChatPage() {
   >(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [displayedText, setDisplayedText] = useState<string>("");
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [gptSessionId, setGptSessionId] = useState<string | null>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const cachedProfile = sessionStorage.getItem("ai-chat-user-profile");
+    if (cachedProfile) {
+      try {
+        const parsedProfile = JSON.parse(cachedProfile);
+        if (parsedProfile && typeof parsedProfile === "object") {
+          setUserProfile(parsedProfile as UserProfile);
+        }
+      } catch (error) {
+        console.error("Error parsing cached profile: ", error);
+        sessionStorage.removeItem("ai-chat-user-profile");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      if (!baseUrl) {
+        console.warn("NEXT_PUBLIC_BASE_URL is not configured.");
+        return;
+      }
+
+      const authCookie = Cookies.get("auth");
+      if (!authCookie) {
+        return;
+      }
+
+      let token: string | undefined;
+      try {
+        token = JSON.parse(authCookie).token;
+      } catch (error) {
+        console.error("Error parsing auth cookie for profile fetch:", error);
+      }
+
+      if (!token) {
+        return;
+      }
+
+      try {
+        const sanitizedBaseUrl = baseUrl.endsWith("/")
+          ? baseUrl.slice(0, -1)
+          : baseUrl;
+
+        const response = await fetch(
+          `${sanitizedBaseUrl}/users/auth/get-profile`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.status === 401) {
+          redirectToLogin();
+          throw new Error("401");
+        }
+
+        const clonedResponse = response.clone();
+        let profileResult: any = null;
+
+        try {
+          profileResult = await response.json();
+        } catch (error) {
+          const errorText = await clonedResponse.text();
+          throw new Error(
+            errorText || `Failed to parse profile response: ${response.status}`
+          );
+        }
+
+        if (!response.ok || !profileResult?.success) {
+          const message =
+            profileResult?.message ||
+            `Failed to fetch profile: ${response.status}`;
+          throw new Error(message);
+        }
+
+        if (profileResult?.data) {
+          setUserProfile(profileResult.data as UserProfile);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.message === "401") {
+          return;
+        }
+        console.error("Error fetching user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  useEffect(() => {
+    if (userProfile && typeof window !== "undefined") {
+      sessionStorage.setItem(
+        "ai-chat-user-profile",
+        JSON.stringify(userProfile)
+      );
+    }
+  }, [userProfile]);
+
+  useEffect(() => {
+    if (!userProfile) {
+      return;
+    }
+
+    if (!selectedGrade) {
+      const derivedGrade = mapClassNameToGradeOption(userProfile.className);
+      if (derivedGrade) {
+        setSelectedGrade(derivedGrade);
+      }
+    }
+  }, [userProfile, selectedGrade]);
 
   // === START: New Onboarding Code ===
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -367,6 +568,13 @@ export default function AiChatsChatPage() {
     const sendMsg = typeof msg === "string" ? msg : inputValue;
     if (!selectedGrade || !selectedStyle || !sendMsg.trim()) return;
 
+    const isNewConversation = chatHistory.length === 0;
+    const sessionIdForRequest = isNewConversation ? null : gptSessionId;
+
+    if (isNewConversation && gptSessionId) {
+      setGptSessionId(null);
+    }
+
     // Clear history indicator when starting a new conversation
     if (selectedChatId) {
       setSelectedChatId(null);
@@ -403,12 +611,107 @@ export default function AiChatsChatPage() {
         } catch {}
       }
 
-      // Create streaming request
+      // Create request headers and determine curriculum mode
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      const sanitizedBaseUrl = baseUrl
+        ? baseUrl.endsWith("/")
+          ? baseUrl.slice(0, -1)
+          : baseUrl
+        : "";
+      const curriculumMode = userProfile?.curriculumMode
+        ? String(userProfile.curriculumMode).toUpperCase()
+        : undefined;
+      const shouldUseGptApi =
+        curriculumMode === "GPT" && Boolean(sanitizedBaseUrl);
+
+      if (shouldUseGptApi) {
+        const classForApi =
+          userProfile?.className ??
+          (selectedGrade ? formatGradeForAPI(selectedGrade) : "");
+
+        const gptPayload: Record<string, unknown> = {
+          style: mapStyleToApiStyle(selectedStyle),
+          message: sendMsg.trim(),
+        };
+
+        if (classForApi) {
+          gptPayload.class = classForApi;
+        }
+
+        if (sessionIdForRequest) {
+          gptPayload.sessionId = sessionIdForRequest;
+        }
+
+        const gptResponse = await fetch(`${sanitizedBaseUrl}/ai/chat`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(gptPayload),
+        });
+
+        if (gptResponse.status === 401) {
+          redirectToLogin();
+          throw new Error("401");
+        }
+
+        const gptResponseClone = gptResponse.clone();
+        let gptResult: any = null;
+
+        try {
+          gptResult = await gptResponse.json();
+        } catch (parseError) {
+          const errorText = await gptResponseClone.text();
+          throw new Error(
+            errorText ||
+              `Failed to parse chat response: ${gptResponse.status}`
+          );
+        }
+
+        if (!gptResponse.ok || !gptResult?.success) {
+          const message =
+            gptResult?.message ||
+            `Chat request failed with status ${gptResponse.status}`;
+          throw new Error(message);
+        }
+
+        const aiResponseText: string =
+          gptResult?.data?.response ?? gptResult?.response ?? "";
+
+        setChatHistory((prev) => {
+          const newHistory = [...prev];
+          const streamingIndex =
+            streamingMessageIndex ?? newHistory.length - 1;
+
+          if (
+            streamingIndex >= 0 &&
+            newHistory[streamingIndex]?.role === "ai"
+          ) {
+            newHistory[streamingIndex] = {
+              ...newHistory[streamingIndex],
+              text: aiResponseText,
+            };
+          }
+
+          return newHistory;
+        });
+
+        const nextSessionId =
+          typeof gptResult?.data?.sessionId === "string"
+            ? gptResult.data.sessionId
+            : null;
+        setGptSessionId(nextSessionId);
+
+        return;
+      }
+
+      if (gptSessionId) {
+        setGptSessionId(null);
       }
 
       const response = await fetch(
@@ -501,13 +804,22 @@ export default function AiChatsChatPage() {
         }
       }
     } catch (err) {
-      // Handle authentication errors (401)
-      if (err instanceof Error && err.message.includes('401')) {
+      if (err instanceof Error && err.message.includes("401")) {
         redirectToLogin();
-        return;
+      } else {
+        console.error("Chat error:", err);
       }
 
-      console.error("Chat error:", err);
+      setChatHistory((prev) => {
+        if (!prev.length) return prev;
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage.role === "ai" && lastMessage.text === "") {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
+      setIsStreaming(false);
+      setStreamingMessageIndex(null);
     } finally {
       setApiLoading(false);
       inputRef.current?.focus();
@@ -599,6 +911,7 @@ export default function AiChatsChatPage() {
         setChatHistory(formattedMessages);
         setInputValue(chatTitle);
         setSelectedChatId(chatId);
+        setGptSessionId(null);
         handleCloseHistory();
         
         // Scroll to the chat area
@@ -793,6 +1106,7 @@ export default function AiChatsChatPage() {
           setSelectedChatId(null);
           setChatHistory([]);
           setInputValue("");
+          setGptSessionId(null);
         }}
         onViewChat={handleViewChat}
       />
