@@ -154,7 +154,7 @@ export default function QuizesPage() {
         }
       `}</style>
       <div className="max-w-6xl mx-auto animate-fade-in-up">
-        <div 
+        <div
           className="flex items-center justify-between mb-2"
           style={{
             ...getAnimationDelay(0, 150),
@@ -162,27 +162,42 @@ export default function QuizesPage() {
           }}
         >
           <h2 className="text-2xl md:text-3xl font-bold text-black">Exam Preparation</h2>
+          <button
+            onClick={() => router.push('/exams/create')}
+            className="flex items-center gap-2 point-ask-gradient text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg"
+            style={{
+              ...getAnimationDelay(1, 150),
+              animation: 'slideInRight 0.6s ease-out forwards'
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            Create Exam
+          </button>
         </div>
-        <div 
+        <div
           className="w-full px-4 md:px-0 mb-6"
           style={{
-            ...getAnimationDelay(1, 150),
+            ...getAnimationDelay(2, 150),
             animation: 'slideInRight 0.6s ease-out forwards'
           }}
         >
         
         </div>
-        <div 
+        <div
           className="text-base md:text-lg text-black mb-8"
           style={{
-            ...getAnimationDelay(2, 150),
+            ...getAnimationDelay(3, 150),
             animation: 'fadeInUp 0.6s ease-out forwards'
           }}
         >
         AI-powered preparation to help you perform your best.{' '}
           <span className="align-middle">🏅✨</span>
         </div>
-        <div className="flex items-center justify-between mb-4 gap-4">
+        <div className="flex items-center justify-between mb-4 gap-4"
+          style={{
+            ...getAnimationDelay(4, 150),
+            animation: 'slideInLeft 0.6s ease-out forwards'
+          }}>
           <h3 className="text-xl font-bold text-black">Upcoming Exams</h3>
           <a
             href="#"
