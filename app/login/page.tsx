@@ -115,7 +115,7 @@ const handleGoogleSignIn = () => {
         <Card className="w-full max-w-md border-none shadow-none">
           <CardHeader className="text-left mb-4">
             <h1 className="text-[45px] font-bold text-black leading-tight font-">
-              SIGN IN TO YOUR <span className="text-[#006a3d]">ADVENTURE!</span>
+              SIGN IN TO YOUR <span className="text-[#ffa902]">ADVENTURE!</span>
             </h1>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -158,7 +158,8 @@ const handleGoogleSignIn = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full text-lg point-ask-gradient cursor-pointer hover:bg-yellow-600 text-white font-normal py-6 rounded-lg transition"
+                className="w-full text-lg cursor-pointer text-white font-normal py-6 rounded-lg transition hover:opacity-90"
+                style={{ background: 'linear-gradient(90deg, #FFB31F 0%, #FF4949 100%)' }}
               >
                 {loading ? "Signing in..." : "Sign in"}
               </Button>
@@ -186,7 +187,7 @@ const handleGoogleSignIn = () => {
 
             <div className="text-center text-sm text-black">
               Don't have an account?{" "}
-              <Link href="/register" className="text-[#006a3d] font-normal underline cursor-pointer">
+              <Link href="/register" className="text-[#ff5146] font-normal underline cursor-pointer">
                 Create one
               </Link>
             </div>

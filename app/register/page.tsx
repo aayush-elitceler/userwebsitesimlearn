@@ -16,12 +16,11 @@ export default function Register() {
   const [showCalendar, setShowCalendar] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-   const toggleCalendar = () => {
+  const toggleCalendar = () => {
     setShowCalendar(true);
     dateInputRef.current?.showPicker?.(); // Works in modern browsers
   };
 
-  
   // Step 1 form
   const [accountData, setAccountData] = useState({
     name: "",
@@ -62,8 +61,20 @@ export default function Register() {
 
   // Class options
   const classOptions = [
-    "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7", "Class 8", "Class 9", "Class 10",
-    "Class 11", "Class 12", "UG", "PG"
+    "Class 1",
+    "Class 2",
+    "Class 3",
+    "Class 4",
+    "Class 5",
+    "Class 6",
+    "Class 7",
+    "Class 8",
+    "Class 9",
+    "Class 10",
+    "Class 11",
+    "Class 12",
+    "UG",
+    "PG",
   ];
 
   const handleAccountChange = (field: string, value: string) => {
@@ -115,7 +126,8 @@ export default function Register() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data?.message || "Registration failed");
+      if (!res.ok || !data.success)
+        throw new Error(data?.message || "Registration failed");
 
       const token = data?.data?.token;
       if (token) {
@@ -154,63 +166,66 @@ export default function Register() {
   }, [step]);
 
   const handleFinalSubmit = async () => {
-  if (!token) {
-    alert("No auth token");
-    return;
-  }
-
-  // File size check
-  if (formData.photo && formData.photo.size > 2 * 1024 * 1024) {
-    alert("Image size must be less than 2MB");
-    return;
-  }
-
-  // Validate phone format (basic validation)
-  const phoneRegex = /^\d{10}$/;
-  if (!phoneRegex.test(formData.phone) || !phoneRegex.test(formData.altPhone)) {
-    alert("Phone numbers must be 10 digits.");
-    return;
-  }
-
-  // Email check (removed .edu restriction)
-  if (!/\S+@\S+\.\S+/.test(formData.schoolEmail)) {
-    alert("Invalid school email address");
-    return;
-  }
-
-  try {
-    setLoading(true);
-    const fd = new FormData();
-    fd.append("name", formData.studentName.trim());
-    fd.append("dob", formData.dob); // YYYY-MM-DD
-    fd.append("gender", formData.gender.toUpperCase()); 
-    fd.append("class", formData.class.trim());
-    fd.append("section", formData.section.trim().toUpperCase()); // Ensure A/B/C uppercase
-    fd.append("schoolMailId", formData.schoolEmail.trim());
-    fd.append("phone", "+91" + formData.phone); // Add country code
-    fd.append("alternatePhone", "+91" + formData.altPhone); // Add country code
-    if (formData.photo) {
-      fd.append("profilePic", formData.photo);
+    if (!token) {
+      alert("No auth token");
+      return;
     }
 
-    const res = await fetch(`${baseURL}/users/auth/update-profile`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: fd,
-    });
-
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      throw new Error(data?.message || "Profile update failed");
+    // File size check
+    if (formData.photo && formData.photo.size > 2 * 1024 * 1024) {
+      alert("Image size must be less than 2MB");
+      return;
     }
 
-    router.push("/");
-  } catch (err: Error | unknown) {
-    alert(err instanceof Error ? err.message : "Profile update failed");
-  } finally {
-    setLoading(false);
-  }
-};
+    // Validate phone format (basic validation)
+    const phoneRegex = /^\d{10}$/;
+    if (
+      !phoneRegex.test(formData.phone) ||
+      !phoneRegex.test(formData.altPhone)
+    ) {
+      alert("Phone numbers must be 10 digits.");
+      return;
+    }
+
+    // Email check (removed .edu restriction)
+    if (!/\S+@\S+\.\S+/.test(formData.schoolEmail)) {
+      alert("Invalid school email address");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const fd = new FormData();
+      fd.append("name", formData.studentName.trim());
+      fd.append("dob", formData.dob); // YYYY-MM-DD
+      fd.append("gender", formData.gender.toUpperCase());
+      fd.append("class", formData.class.trim());
+      fd.append("section", formData.section.trim().toUpperCase()); // Ensure A/B/C uppercase
+      fd.append("schoolMailId", formData.schoolEmail.trim());
+      fd.append("phone", "+91" + formData.phone); // Add country code
+      fd.append("alternatePhone", "+91" + formData.altPhone); // Add country code
+      if (formData.photo) {
+        fd.append("profilePic", formData.photo);
+      }
+
+      const res = await fetch(`${baseURL}/users/auth/update-profile`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data?.message || "Profile update failed");
+      }
+
+      router.push("/");
+    } catch (err: Error | unknown) {
+      alert(err instanceof Error ? err.message : "Profile update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Function to go back to previous step
   const goBack = () => {
@@ -249,58 +264,67 @@ export default function Register() {
         <Card className="w-full max-w-md border-none shadow-none">
           <CardHeader className="text-left mb-4">
             <h1 className="text-[45px] font-bold text-black leading-tight">
-              SIGN UP TO YOUR <span className="text-[#006a3d]">ADVENTURE!</span>
+              SIGN UP TO YOUR <span className="text-[#ffa902]">ADVENTURE!</span>
             </h1>
           </CardHeader>
 
           <CardContent className="space-y-5">
-                         {/* Stepper */}
-             <div 
-               className="relative w-full p-6 rounded-lg"
-               style={{
-                 background: "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)"
-               }}
-             >
-                             <div className="absolute top-10 left-6 right-6 h-[2px] bg-gray-300 z-0" />
-               <div
-                 className="absolute top-10 left-6 h-[2px] bg-red-500 z-0 transition-all duration-300"
-                 style={{ width: `calc(${((step - 1) / 3) * 100}% - 48px)` }}
-               />
-               <div className="relative flex justify-between z-10 px-4">
-                {["Basic Information", "Academic Details", "Contact Details", "Photo Upload"].map(
-                  (label, index) => {
-                    const stepNumber = index + 1;
-                    const isCompleted = step > stepNumber;
-                    const isActive = step === stepNumber;
-                    return (
-                      <div key={label} className="flex flex-col items-center text-center">
-                        <span
-                          className={`w-8 h-8 flex items-center justify-center rounded-full border-2 text-sm font-medium
+            {/* Stepper */}
+            <div
+              className="relative w-full p-6 rounded-lg"
+              style={{
+                background:
+                  "linear-gradient(90deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)",
+              }}
+            >
+              <div className="absolute top-10 left-6 right-6 h-[2px] bg-gray-300 z-0" />
+              <div
+                className="absolute top-10 left-6 h-[2px] z-0 transition-all duration-300"
+                style={{ width: `calc(${((step - 1) / 3) * 100}% - 48px)` }}
+              />
+              <div className="relative flex justify-between z-10 px-4">
+                {[
+                  "Basic Information",
+                  "Academic Details",
+                  "Contact Details",
+                  "Photo Upload",
+                ].map((label, index) => {
+                  const stepNumber = index + 1;
+                  const isCompleted = step > stepNumber;
+                  const isActive = step === stepNumber;
+                  return (
+                    <div
+                      key={label}
+                      className="flex flex-col items-center text-center"
+                    >
+                      <span
+                        className={`w-8 h-8 flex items-center justify-center rounded-full border-2 text-sm font-medium
                           ${
                             isActive
-                              ? "border-[#006a3d] bg-white text-[#006a3d]"
+                              ? "border-[#ff5146] bg-white text-[#ff5146]"
                               : isCompleted
-                              ? "border-[#006a3d] bg-[#006a3d] text-white"
-                              : "border-[#006a3d] bg-white text-[#006a3d]"
+                              ? "border-[#ff5146] bg-[#ff5146] text-white"
+                              : "border-[#ff5146] bg-white text-[#ff5146]"
                           }`}
-                        >
-                          {stepNumber}
-                        </span>
-                        <span
-                          className={`text-xs mt-2 px-1 ${
-                            isActive || isCompleted ? "text-[#006a3d] font-medium" : "text-gray-600"
-                          }`}
-                          style={{
-                            fontSize: 'clamp(10px, 2vw, 12px)',
-                            lineHeight: '1.2'
-                          }}
-                        >
-                          {label}
-                        </span>
-                      </div>
-                    );
-                  }
-                )}
+                      >
+                        {stepNumber}
+                      </span>
+                      <span
+                        className={`text-xs mt-2 px-1 ${
+                          isActive || isCompleted
+                            ? "text-[#ff5146] font-medium"
+                            : "text-gray-600"
+                        }`}
+                        style={{
+                          fontSize: "clamp(10px, 2vw, 12px)",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -314,7 +338,9 @@ export default function Register() {
                   <Input
                     placeholder="Enter your name"
                     value={accountData.name}
-                    onChange={(e) => handleAccountChange("name", e.target.value)}
+                    onChange={(e) =>
+                      handleAccountChange("name", e.target.value)
+                    }
                     className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
                   />
                 </div>
@@ -326,7 +352,9 @@ export default function Register() {
                     type="email"
                     placeholder="Enter your email"
                     value={accountData.email}
-                    onChange={(e) => handleAccountChange("email", e.target.value)}
+                    onChange={(e) =>
+                      handleAccountChange("email", e.target.value)
+                    }
                     className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
                   />
                 </div>
@@ -338,7 +366,9 @@ export default function Register() {
                     type="password"
                     placeholder="Enter your password"
                     value={accountData.password}
-                    onChange={(e) => handleAccountChange("password", e.target.value)}
+                    onChange={(e) =>
+                      handleAccountChange("password", e.target.value)
+                    }
                     className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
                   />
                 </div>
@@ -354,7 +384,9 @@ export default function Register() {
                   <Input
                     placeholder="Enter student name"
                     value={formData.studentName}
-                    onChange={(e) => handleChange("studentName", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("studentName", e.target.value)
+                    }
                     className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
                   />
                 </div>
@@ -366,7 +398,11 @@ export default function Register() {
                     className="w-full border border-[#E5E5E5] rounded-lg bg-white flex items-center justify-between px-4 py-3 cursor-pointer relative"
                     onClick={toggleCalendar}
                   >
-                    <span className={formData.dob ? "text-gray-700" : "text-gray-400"}>
+                    <span
+                      className={
+                        formData.dob ? "text-gray-700" : "text-gray-400"
+                      }
+                    >
                       {formData.dob || "Select date of birth"}
                     </span>
                     <img
@@ -441,7 +477,9 @@ export default function Register() {
                     type="email"
                     placeholder="Enter school email"
                     value={formData.schoolEmail}
-                    onChange={(e) => handleChange("schoolEmail", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("schoolEmail", e.target.value)
+                    }
                     className="w-full border border-[#E5E5E5] rounded-lg py-6 bg-white"
                   />
                 </div>
@@ -450,7 +488,7 @@ export default function Register() {
                     Phone Number <span className="text-red-500">*</span>
                   </label>
                   <div className="flex gap-2">
-                    <select 
+                    <select
                       className="border border-[#E5E5E5] rounded-lg py-3 px-2 bg-white text-gray-700 min-w-[80px]"
                       aria-label="Country code"
                     >
@@ -464,7 +502,9 @@ export default function Register() {
                       placeholder="Enter 10-digit phone number"
                       value={formData.phone}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        const value = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 10);
                         handleChange("phone", value);
                       }}
                       className="flex-1 border border-[#E5E5E5] rounded-lg py-6 bg-white"
@@ -473,10 +513,11 @@ export default function Register() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Alternative Phone Number <span className="text-red-500">*</span>
+                    Alternative Phone Number{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="flex gap-2">
-                    <select 
+                    <select
                       className="border border-[#E5E5E5] rounded-lg py-3 px-2 bg-white text-gray-700 min-w-[80px]"
                       aria-label="Alternative phone country code"
                     >
@@ -490,7 +531,9 @@ export default function Register() {
                       placeholder="Enter 10-digit phone number"
                       value={formData.altPhone}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        const value = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 10);
                         handleChange("altPhone", value);
                       }}
                       className="flex-1 border border-[#E5E5E5] rounded-lg py-6 bg-white"
@@ -500,45 +543,51 @@ export default function Register() {
               </>
             )}
 
-                         {step === 4 && (
-               <div className="flex flex-col items-center">
-                 <label className="text-sm font-medium text-gray-700 mb-4">
-                   Profile Photo <span className="text-gray-400">(Optional)</span>
-                 </label>
-                 <label
-                   htmlFor="photo"
-                   className="w-48 h-48 border-2 border-dashed border-green-300 rounded-full flex items-center justify-center cursor-pointer"
-                 >
-                   {formData.photo ? (
-                     <img
-                       src={URL.createObjectURL(formData.photo)}
-                       alt="Preview"
-                       className="w-full h-full object-cover rounded-full"
-                     />
-                   ) : (
-                     <img
-                       src="/images/camera.svg"
-                       alt="Camera"
-                       className="w-12 h-12"
-                       style={{ filter: 'brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)' }}
-                     />
-                   )}
-                 </label>
-                 <input
-                   type="file"
-                   id="photo"
-                   className="hidden"
-                   accept="image/*"
-                   onChange={handlePhotoChange}
-                 />
-                 <Button
-                   variant="outline"
-                   className="mt-4 bg-[#006a3d] text-white hover:bg-red-600 rounded-full px-6"
-                 >
-                   Add photo
-                 </Button>
-               </div>
-             )}
+            {step === 4 && (
+              <div className="flex flex-col items-center">
+                <label className="text-sm font-medium text-gray-700 mb-4">
+                  Profile Photo{" "}
+                  <span className="text-gray-400">(Optional)</span>
+                </label>
+                <label
+                  htmlFor="photo"
+                  className="w-40 h-40 sm:w-48 sm:h-48 border-2 border-dashed rounded-full flex items-center justify-center cursor-pointer mx-auto"
+                  style={{ borderColor: '#ff5146' }}
+                >
+                  {formData.photo ? (
+                    <img
+                      src={URL.createObjectURL(formData.photo)}
+                      alt="Preview"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <img
+                      src="/images/camera.svg"
+                      alt="Camera"
+                      className="w-12 h-12"
+                      style={{
+                        filter:
+                          "brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)",
+                      }}
+                    />
+                  )}
+                </label>
+                <input
+                  type="file"
+                  id="photo"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                />
+                <Button
+                  variant="outline"
+                  className="mt-4 text-white rounded-full px-6"
+                  style={{ background: 'linear-gradient(90deg, #FFB31F 0%, #FF4949 100%)' }}
+                >
+                  Add photo
+                </Button>
+              </div>
+            )}
 
             {/* Navigation Buttons */}
             <div className="flex justify-between gap-2">
@@ -551,11 +600,20 @@ export default function Register() {
                   Back
                 </Button>
               )}
+              {step === 4 && step > 1 && (
+                <div className="flex-1"></div>
+              )}
                              {step < 4 && (
                  <Button
                    type="button"
                    onClick={handleNextStep}
-                   className={`bg-gradient-to-r from-green-700 to-green-900 text-white py-6 px-6 rounded-lg ${step === 1 ? 'w-full' : 'flex-1'}`}
+                   className={`text-white py-6 px-6 rounded-lg ${
+                     step === 1 ? "w-full" : "flex-1"
+                   }`}
+                   style={{
+                     background:
+                       "linear-gradient(90deg, #FFB31F 0%, #FF4949 100%)",
+                   }}
                    disabled={loading}
                  >
                    {loading ? "Loading..." : "Next"}
@@ -565,7 +623,11 @@ export default function Register() {
                 <Button
                   type="button"
                   onClick={handleFinalSubmit}
-                  className="w-full bg-gradient-to-r from-green-700 to-green-900 text-white py-6 rounded-lg"
+                  className="text-white py-6 px-6 rounded-lg flex-1"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #FFB31F 0%, #FF4949 100%)",
+                  }}
                   disabled={loading}
                 >
                   {loading ? "Saving..." : "Sign up"}
@@ -575,7 +637,10 @@ export default function Register() {
 
             <div className="text-center text-sm text-black">
               Already have an account?{" "}
-              <span onClick={() => router.push("/login")} className="text-[#006a3d] cursor-pointer">
+              <span
+                onClick={() => router.push("/login")}
+                className="text-[#ff5146] cursor-pointer"
+              >
                 Sign In
               </span>
             </div>
