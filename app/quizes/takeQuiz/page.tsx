@@ -11,28 +11,40 @@ interface Teacher {
   email?: string;
 }
 
+interface Option {
+  id: string;
+  optionText: string;
+  isCorrect: boolean;
+  questionId: string;
+}
+
 interface Question {
   id: string;
   questionText: string;
-  // Add other fields as needed
+  bloomTaxonomy?: string | null;
+  quizId: string;
+  options?: Option[];
 }
 
 interface Quiz {
   id: string;
   title: string;
+  description?: string | null;
   instructions: string;
   timeLimitMinutes: number;
   topic: string;
   difficulty: string;
   createdAt: string;
-  userId: string;
+  userId?: string | null;
   completed: boolean;
+  createdBy: string;
   score?: number;
   date?: string;
   questions?: Question[];
   time?: string;
   teacher?: string | Teacher;
   subject?: string;
+  assignedAt?: string;
   assignmentDetails?: {
     endTime: string;
   };
@@ -177,15 +189,20 @@ export default function QuizesPage() {
         );
         const data = await res.json();
         if (data.success && data.data) {
-          // Combine upcoming and previous for user quizzes
-          const userObj = data.data.userGeneratedQuizzes || {};
-          const userCombined = [
-            ...(Array.isArray(userObj.upcoming) ? userObj.upcoming : []),
-            ...(Array.isArray(userObj.previous) ? userObj.previous : []),
+          const userQuizzes = data.data.userGeneratedQuizzes || {};
+          const institutionQuizzes = data.data.institutionGeneratedQuizzes || {};
+
+          const allQuizzes = [
+            ...(Array.isArray(userQuizzes.upcoming) ? userQuizzes.upcoming : []),
+            ...(Array.isArray(userQuizzes.previous) ? userQuizzes.previous : []),
+            ...(Array.isArray(institutionQuizzes.upcoming) ? institutionQuizzes.upcoming : []),
+            ...(Array.isArray(institutionQuizzes.previous) ? institutionQuizzes.previous : []),
           ];
-          // Reverse the array to show newest first
-          setUserQuizzes(userCombined.reverse());
-          // Combine upcoming and previous for institution quizzes
+
+          // Sort by createdAt date, newest first
+          const sortByDate = (a: Quiz, b: Quiz) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+          setUserQuizzes(allQuizzes.sort(sortByDate));
         }
       } catch (e) {
         // handle error

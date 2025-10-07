@@ -12,6 +12,7 @@ interface Option {
 interface Question {
   id: string;
   questionText: string;
+  bloomTaxonomy?: string | null;
   quizId: string;
   options: Option[];
   userSelectedOptionId: string;
@@ -78,6 +79,13 @@ export default function QuizAnswersPage() {
             <div className="text-black font-semibold mb-2">
               Q{idx + 1}. {q.questionText}
             </div>
+            {q.bloomTaxonomy && (
+              <div className="mb-3 p-2 bg-gray-50 rounded border">
+                <div className="text-xs text-gray-600">
+                  <span className="font-semibold">Bloom Taxonomy:</span> {q.bloomTaxonomy}
+                </div>
+              </div>
+            )}
             <div className="flex flex-col gap-2">
               {q.options.map((opt) => {
                 const isUserSelected = opt.id === q.userSelectedOptionId;

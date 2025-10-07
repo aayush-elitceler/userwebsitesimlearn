@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 
 type GradingResult = {
   score: number;
@@ -15,6 +16,7 @@ type ExamReport = {
   exam: {
     id: string;
     title: string;
+    description?: string | null;
     instructions: string;
     timeLimitMinutes: number;
     topic: string;
@@ -34,6 +36,7 @@ type ExamReport = {
       options: any[];
       studentAnswer?: string;
       gradingResult?: GradingResult;
+      bloomTaxonomy?: string | null;
     }[];
   };
   score: number;
@@ -213,25 +216,17 @@ export default function ExamReportPage() {
   };
 
   if (loading) {
+    const reportLoadingStates = [
+      { text: "Fetching your exam data" },
+      { text: "Analyzing your answers" },
+      { text: "Scoring responses" },
+      { text: "Summarizing insights" },
+      { text: "Preparing your report" },
+    ];
+    // 45 seconds total: divide across steps evenly
+    const perStepMs = Math.floor(45000 / reportLoadingStates.length);
     return (
-      <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white flex flex-col items-center">
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60'>
-          <div className='rounded-2xl shadow-lg p-8 min-w-[420px] max-w-[90vw] flex flex-col items-center' style={{
-            background: 'linear-gradient(180deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)'
-          }}>
-            <div className='mb-6'>
-              <img 
-                src="/images/loadingSpinner.svg" 
-                alt="Loading" 
-                className='w-24 h-24 animate-spin'
-              />
-            </div>
-            <div className='text-black font-semibold text-lg mb-6'>
-              Loading your exam report....
-            </div>
-          </div>
-        </div>
-      </div>
+      <MultiStepLoader loading loadingStates={reportLoadingStates} duration={perStepMs} loop={false} />
     );
   }
   
@@ -310,6 +305,14 @@ export default function ExamReportPage() {
             <div className="text-black">
               {result.exam.title} • Difficulty - {difficultyLabel}
             </div>
+            {result.exam.description && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 max-w-2xl">
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">Note: </span>
+                  <span>{result.exam.description}</span>
+                </div>
+              </div>
+            )}
           </div>
           <button
             onClick={handleRefreshReport}
@@ -405,6 +408,15 @@ export default function ExamReportPage() {
                   <div className="text-black font-medium">
                     Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ''}
                   </div>
+
+                  {/* Bloom Taxonomy */}
+                  {q.bloomTaxonomy && (
+                    <div className="mt-2 mb-3 p-2 bg-gray-50 rounded border">
+                      <div className="text-xs text-gray-600">
+                        <span className="font-semibold">Bloom Taxonomy:</span> {q.bloomTaxonomy}
+                      </div>
+                    </div>
+                  )}
                   {q.gradingResult && (
                     <span className="inline-flex items-center rounded-full border border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-700 whitespace-nowrap">
                       Score {q.gradingResult.score}/{q.marks || 0}

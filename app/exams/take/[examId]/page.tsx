@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 
 interface Question {
   id: string;
@@ -10,11 +11,14 @@ interface Question {
   marks?: number;
   examId: string;
   options: any[];
+  bloomTaxonomy?: string | null;
+  correctAnswer?: string | null;
 }
 
 interface Exam {
   id: string;
   title: string;
+  description?: string | null;
   instructions: string;
   timeLimitMinutes: number;
   topic: string;
@@ -255,6 +259,19 @@ export default function TakeExamPage() {
 
   return (
     <div className="fixed inset-0 min-h-screen min-w-screen bg-background py-8 px-2 md:px-0 flex flex-col items-center z-10">
+      {/* Submission overlay */}
+      <MultiStepLoader
+        loading={submitting}
+        loadingStates={[
+          { text: "Packaging your answers" },
+          { text: "Securing submission" },
+          { text: "Evaluating responses" },
+          { text: "Generating your report" },
+          { text: "Redirecting to results" },
+        ]}
+        duration={Math.floor(45000 / 5)}
+        loop={false}
+      />
       {/* Warning Modal */}
       {showWarning && warningCount > 0 && warningCount < 5 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -476,6 +493,14 @@ export default function TakeExamPage() {
         <div className="mb-4">
           <div className="text-muted-foreground font-semibold">Difficulty: {exam.difficulty?.charAt(0).toUpperCase() + exam.difficulty?.slice(1)}</div>
           <div className="text-2xl font-bold text-foreground mb-2">{exam.title}</div>
+          {exam.description && (
+            <div className="mb-4 p-3 bg-muted/20 rounded-lg border border-border/30">
+              <div className="text-sm text-muted-foreground">
+                <span className="font-medium">Note: </span>
+                <span className="text-card-foreground">{exam.description}</span>
+              </div>
+            </div>
+          )}
         </div>
        
         {exam.questions.map((q, idx) => (
@@ -490,6 +515,17 @@ export default function TakeExamPage() {
             <div className="font-semibold text-card-foreground mb-4 text-lg">
               Q{idx + 1}. {q.questionText} {q.marks ? `(${q.marks} marks)` : ""}
             </div>
+
+            {/* Bloom Taxonomy */}
+            {q.bloomTaxonomy && (
+              <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-border/50">
+                <div className="mb-2">
+                  <span className="text-sm font-medium text-muted-foreground">Bloom Taxonomy: </span>
+                  <span className="text-sm font-semibold text-primary">{q.bloomTaxonomy}</span>
+                </div>
+              </div>
+            )}
+
             <textarea
               className="w-full p-4 rounded bg-primary/10 text-card-foreground min-h-[60px] transition-all duration-200 focus:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
               placeholder="Type your short answer here"

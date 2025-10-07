@@ -98,26 +98,104 @@ const formatChatResponse = (text: string) => {
   });
 };
 
-// Helper function to render formatted text with bold support
+// Helper function to render formatted text with bold support and clickable video links
 const renderFormattedText = (text: string) => {
   if (!text) return text;
 
+  // Video URL regex pattern - supports multiple video platforms
+  const videoRegex = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|vimeo\.com\/|dailymotion\.com\/video\/|twitch\.tv\/videos\/|facebook\.com\/watch\/|instagram\.com\/p\/|tiktok\.com\/@[\w.-]+\/video\/|rumble\.com\/v[\w-]+|bitchute\.com\/video\/|odysee\.com\/@[\w.-]+\/[\w-]+)([a-zA-Z0-9_-]+)/g;
+  
+  // Check if text contains video URLs
+  if (videoRegex.test(text)) {
+    // Reset regex lastIndex
+    videoRegex.lastIndex = 0;
+    
+    // Find all video URLs and their positions
+    const matches: Array<{ url: string; start: number; end: number }> = [];
+    let match;
+    
+    while ((match = videoRegex.exec(text)) !== null) {
+      matches.push({
+        url: match[0],
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+    
+    // If no matches found, return original text
+    if (matches.length === 0) {
+      return text;
+    }
+    
+    // Build the result by processing text segments
+    const result: React.ReactNode[] = [];
+    let lastIndex = 0;
+    
+    matches.forEach((match, index) => {
+      // Add text before the URL
+      if (match.start > lastIndex) {
+        const beforeText = text.slice(lastIndex, match.start);
+        if (beforeText.includes('**')) {
+          result.push(renderBoldText(beforeText, `before-${index}`));
+        } else {
+          result.push(beforeText);
+        }
+      }
+      
+      // Add the clickable URL with "View the Video" text
+      const fullUrl = match.url.startsWith('http') ? match.url : `https://${match.url}`;
+      const displayText = "View the Video";
+      
+      result.push(
+        <a
+          key={`url-${index}`}
+          href={fullUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium"
+        >
+          {displayText}
+        </a>
+      );
+      
+      lastIndex = match.end;
+    });
+    
+    // Add remaining text after the last URL
+    if (lastIndex < text.length) {
+      const afterText = text.slice(lastIndex);
+      if (afterText.includes('**')) {
+        result.push(renderBoldText(afterText, 'after'));
+      } else {
+        result.push(afterText);
+      }
+    }
+    
+    return <>{result}</>;
+  }
+
+  // Handle bold text if no video URLs found
   if (text.includes('**')) {
-    const parts = text.split('**');
-    return (
-      <>
-        {parts.map((part, index) =>
-          index % 2 === 1 ? (
-            <strong key={index} className="font-semibold">{part}</strong>
-          ) : (
-            part
-          )
-        )}
-      </>
-    );
+    return renderBoldText(text, 'bold-only');
   }
 
   return text;
+};
+
+// Helper function to render bold text
+const renderBoldText = (text: string, key: string) => {
+  const parts = text.split('**');
+  return (
+    <span key={key}>
+      {parts.map((part, index) =>
+        index % 2 === 1 ? (
+          <strong key={index} className="font-semibold">{part}</strong>
+        ) : (
+          part
+        )
+      )}
+    </span>
+  );
 };
 
 interface UserProfile {
