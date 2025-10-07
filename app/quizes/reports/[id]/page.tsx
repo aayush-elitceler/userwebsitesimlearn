@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 
 type QuizResult = {
   quizTitle: string;
@@ -103,7 +104,19 @@ export default function QuizReportPage() {
     fetchSuggestedQuizzes();
   }, []);
 
-  if (loading) return <div className="text-black p-8">Loading...</div>;
+  if (loading) {
+    const reportLoadingStates = [
+      { text: "Fetching your quiz data" },
+      { text: "Analyzing your answers" },
+      { text: "Calculating your score" },
+      { text: "Summarizing insights" },
+      { text: "Preparing your report" },
+    ];
+    const perStepMs = Math.floor(45000 / reportLoadingStates.length);
+    return (
+      <MultiStepLoader loading loadingStates={reportLoadingStates} duration={perStepMs} loop={false} />
+    );
+  }
   if (!result) return <div className="text-black p-8">Result not found.</div>;
 
   // Calculate score percentage based on correct answers instead of fixed per-question marks

@@ -19,11 +19,13 @@ interface Question {
   marks?: number;
   examId: string;
   options: any[];
+  bloomTaxonomy?: string | null;
 }
 
 interface Quiz {
   id: string;
   title: string;
+  description?: string | null;
   instructions: string;
   timeLimitMinutes: number;
   topic: string;
@@ -165,7 +167,7 @@ export default function AllExamsPage() {
                   }}
                   previous={type === 'previous'}
                   date={exam.assignmentDetails?.endTime || exam.createdAt}
-                  description={exam.instructions}
+                  description={exam.description || exam.instructions}
                   difficulty={exam.difficulty}
                   onStartExam={type === 'upcoming' ? () => router.push(`/exams/take/${exam.id}`) : undefined}
                   onViewReport={type === 'previous' ? () => router.push(`/exams/reports/${exam.id}`) : undefined}

@@ -16,6 +16,7 @@ interface Option {
 interface Question {
   id: string;
   questionText: string;
+  bloomTaxonomy?: string | null;
   quizId: string;
   options: Option[];
 }
@@ -23,13 +24,15 @@ interface Question {
 interface Quiz {
   id: string;
   title: string;
+  description?: string | null;
   instructions: string;
   timeLimitMinutes: number;
   topic: string;
   difficulty: string;
   createdAt: string;
-  userId: string;
+  userId?: string | null;
   completed: boolean;
+  createdBy: string;
   questions: Question[];
 }
 
@@ -263,6 +266,14 @@ export default function QuizStartPage() {
                 <div className='text-2xl md:text-3xl font-bold text-black mb-1'>
                   {quiz.title}
                 </div>
+                {quiz.description && (
+                  <div className="mb-4 p-3 bg-muted/20 rounded-lg border border-border/30">
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-medium">Note: </span>
+                      <span className="text-card-foreground">{quiz.description}</span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className='flex items-center gap-2'>
                 <div className='bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold flex items-center gap-2'>
@@ -311,6 +322,14 @@ export default function QuizStartPage() {
                 <div className='font-semibold text-black mb-4 text-lg'>
                   {idx + 1}. {q.questionText}
                 </div>
+                {q.bloomTaxonomy && (
+                  <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-border/50">
+                    <div className="mb-2">
+                      <span className="text-sm font-medium text-muted-foreground">Bloom Taxonomy: </span>
+                      <span className="text-sm font-semibold text-primary">{q.bloomTaxonomy}</span>
+                    </div>
+                  </div>
+                )}
                 <div className='flex flex-col gap-3'>
                   {q.options.map((opt, i) => (
                     <label

@@ -21,22 +21,20 @@ const getSubjectClass = (subject: string | undefined) => {
   }
 };
 
-interface Exam {
-  id: string;
-  title: string;
-  subject?: string;
-  createdAt: string;
-  previous?: boolean;
-  date?: string;
-  description?: string;
-  difficulty?: string;
-  instructions?: string;
-  topic?: string;
-  [key: string]: any; // For additional properties
-}
-
 interface ExamCardProps {
-  exam: Exam;
+  exam: {
+    id: string;
+    title: string;
+    subject?: string;
+    createdAt: string;
+    previous?: boolean;
+    date?: string;
+    description?: string | null | undefined;
+    difficulty?: string;
+    instructions?: string;
+    topic?: string;
+    [key: string]: any; // For additional properties
+  };
   previous?: boolean;
   date?: string;
   description?: string;
@@ -65,6 +63,10 @@ export default function ExamCard({
     description ||
     exam.description ||
     "Comprehensive exam covering all topics with detailed analysis and scoring.";
+
+  const displayDescription = examDescription && examDescription !== "Comprehensive exam covering all topics with detailed analysis and scoring."
+    ? examDescription
+    : null;
 
   const handleStartExam = () => {
     if (onStartExam) {
@@ -106,7 +108,7 @@ export default function ExamCard({
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
             <div className={"break-words line-clamp-2"}>
-              {examDescription}
+              {displayDescription || "Comprehensive exam covering all topics with detailed analysis and scoring."}
             </div>
           </div>
         </div>

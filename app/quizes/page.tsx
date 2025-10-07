@@ -5,27 +5,40 @@ import { Plus } from "lucide-react";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 
 // Update the Quiz type to match API
+interface Option {
+  id: string;
+  optionText: string;
+  isCorrect: boolean;
+  questionId: string;
+}
+
 interface Question {
   id: string;
   questionText: string;
+  bloomTaxonomy?: string | null;
+  quizId: string;
+  options?: Option[];
 }
 
 interface Quiz {
   id: string;
   title: string;
+  description?: string | null;
   instructions: string;
   timeLimitMinutes: number;
   topic: string;
   difficulty: string;
   createdAt: string;
-  userId: string;
+  userId?: string | null;
   completed: boolean;
+  createdBy: string;
   score?: number;
   date?: string;
   questions?: Question[];
   time?: string;
   teacher?: string;
   subject?: string;
+  assignedAt?: string;
 }
 type Submission = {
   id: string;
@@ -68,7 +81,7 @@ function QuizCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [shouldTruncate, setShouldTruncate] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
-  const description = quiz.instructions || "Learn with AI Tutor the core of grammar with help of new age solutions in your test";
+  const description = quiz.description || quiz.instructions || "Learn with AI Tutor the core of grammar with help of new age solutions in your test";
 
   // Check if content actually overflows
   useEffect(() => {
@@ -273,14 +286,24 @@ export default function QuizesPage() {
         );
         const data = await res.json();
         if (data.success && data.data) {
-          const userObj = data.data.userGeneratedQuizzes || {};
-          const userCombined = [
-            ...(Array.isArray(userObj.upcoming) ? userObj.upcoming : []),
-            ...(Array.isArray(userObj.previous) ? userObj.previous : []),
+          const userQuizzes = data.data.userGeneratedQuizzes || {};
+          const institutionQuizzes = data.data.institutionGeneratedQuizzes || {};
+
+          const allUpcoming = [
+            ...(Array.isArray(userQuizzes.upcoming) ? userQuizzes.upcoming : []),
+            ...(Array.isArray(institutionQuizzes.upcoming) ? institutionQuizzes.upcoming : []),
           ];
-          // Reverse the array to show newest first
-          setUpcomingQuizzes(userCombined.reverse());
-          setPreviousQuizzes(userCombined.reverse());
+
+          const allPrevious = [
+            ...(Array.isArray(userQuizzes.previous) ? userQuizzes.previous : []),
+            ...(Array.isArray(institutionQuizzes.previous) ? institutionQuizzes.previous : []),
+          ];
+
+          // Sort by createdAt date, newest first
+          const sortByDate = (a: Quiz, b: Quiz) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+          setUpcomingQuizzes(allUpcoming.sort(sortByDate));
+          setPreviousQuizzes(allPrevious.sort(sortByDate));
         }
       } catch (e) {
         // handle error
@@ -323,7 +346,7 @@ export default function QuizesPage() {
 
   // Filter quizzes based on completion status
   const startQuizzes = upcomingQuizzes.filter(quiz => !quiz.completed);
-  const completedQuizzes = upcomingQuizzes.filter(quiz => quiz.completed);
+  const completedQuizzes = [...upcomingQuizzes, ...previousQuizzes].filter(quiz => quiz.completed);
 
   return (
     <div className="min-h-screen w-full px-4 md:px-8 lg:px-12 py-8 bg-gray-100">

@@ -27,27 +27,40 @@ interface Teacher {
   email?: string;
 }
 
+interface Option {
+  id: string;
+  optionText: string;
+  isCorrect: boolean;
+  questionId: string;
+}
+
 interface Question {
   id: string;
   questionText: string;
+  bloomTaxonomy?: string | null;
+  quizId: string;
+  options?: Option[];
 }
 
 interface Quiz {
   id: string;
   title: string;
+  description?: string | null;
   instructions: string;
   timeLimitMinutes: number;
   topic: string;
   difficulty: string;
   createdAt: string;
-  userId: string;
+  userId?: string | null;
   completed: boolean;
+  createdBy: string;
   score?: number;
   date?: string;
   questions?: Question[];
   time?: string;
   teacher?: string | Teacher;
   subject?: string;
+  assignedAt?: string;
   assignmentDetails?: {
     endTime: string;
   };
@@ -83,6 +96,7 @@ export default function QuizCard({
   const [shouldTruncate, setShouldTruncate] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
   const description =
+    quiz.description ||
     quiz.instructions ||
     "Learn with AI Tutor the core of grammar with help of new age solutions in your test";
 
