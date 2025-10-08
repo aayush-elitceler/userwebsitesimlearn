@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
+import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 
 type QuestionConfig =
   | {
@@ -32,6 +33,7 @@ export default function CreateExamPage() {
     topic: "",
     examType: "Questions & Answers",
     level: "medium",
+    description: "",
     questionType: "both",
     longCount: 0,
     longMarks: 5,
@@ -41,6 +43,14 @@ export default function CreateExamPage() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState('');
+
+  const loadingStates = [
+    { text: 'Analyzing exam requirements...' },
+    { text: 'Generating exam questions...' },
+    { text: 'Creating answer options...' },
+    { text: 'Finalizing your exam...' },
+    { text: 'Exam ready!' }
+  ];
 
   const subjectOptions = [
     'Mathematics',
@@ -55,7 +65,7 @@ export default function CreateExamPage() {
     'English'
   ];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -99,6 +109,7 @@ export default function CreateExamPage() {
       topic: form.topic,
       examType: form.examType,
       level: form.level,
+      description: form.description,
       questionType: form.questionType,
       questionConfig,
     };
@@ -151,70 +162,54 @@ export default function CreateExamPage() {
 
   return (
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white flex flex-col items-center">
-      {/* Modal Popup */}
-      {showModal && (
+      {/* Multi-step Loader */}
+      <MultiStepLoader
+        loadingStates={loadingStates}
+        loading={loading}
+        duration={9500}
+      />
+
+      {/* Success Modal */}
+      {!loading && !error && showModal && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60'>
           <div className='rounded-2xl shadow-lg p-8 min-w-[420px] max-w-[90vw] flex flex-col items-center' style={{
             background: 'linear-gradient(180deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)'
           }}>
-            {loading ? (
-              <>
-                {/* Loading Spinner */}
-                <div className='mb-6'>
-                  <img 
-                    src="/images/loadingSpinner.svg" 
-                    alt="Loading" 
-                    className='w-24 h-24 animate-spin'
-                  />
-                </div>
+            <div className='text-black text-2xl font-bold mb-2'>
+              Exam created!
+            </div>
+            <div className='text-black mb-6'>
+              Your exam has been generated successfully.
+            </div>
+            <button
+              className='text-white cursor-pointer rounded-lg px-8 py-3 font-semibold shadow hover:opacity-90 transition'
+              style={{
+                background: 'linear-gradient(90deg, #FF9F27 0%, hsl(var(--primary)) 100%)'
+              }}
+              onClick={() => {
+                setShowModal(false);
+                router.push("/exams");
+              }}
+            >
+              Start Exam
+            </button>
+          </div>
+        </div>
+      )}
 
-                <div className='text-black font-semibold text-lg mb-6'>
-                  Generating your exam....
-                </div>
-
-                {/* Exam Details */}
-                <div className='flex flex-col gap-3 mb-8'>
-                  <div className='flex items-center gap-3 bg-red-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-red-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/>
-                      <polyline points='14,2 14,8 20,8'/>
-                      <line x1='16' y1='13' x2='8' y2='13'/>
-                      <line x1='16' y1='17' x2='8' y2='17'/>
-                      <polyline points='10,9 9,9 8,9'/>
-                    </svg>
-                    <span className='text-black font-medium'>{form.subject || 'Subject'}</span>
-                  </div>
-                  
-                  <div className='flex items-center gap-3 bg-red-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-red-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path d='M9 12l2 2 4-4'/>
-                      <path d='M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z'/>
-                      <path d='M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z'/>
-                      <path d='M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z'/>
-                      <path d='M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z'/>
-                    </svg>
-                    <span className='text-black font-medium'>{form.level.charAt(0).toUpperCase() + form.level.slice(1)} Level</span>
-                  </div>
-                  
-                  <div className='flex items-center gap-3 bg-red-100 rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-red-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path d='M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'/>
-                    </svg>
-                    <span className='text-black font-medium'>{form.questionType.charAt(0).toUpperCase() + form.questionType.slice(1)} Questions</span>
-                  </div>
-                </div>
-              </>
-            ) : error ? (
-              <>
-                <div className='text-red-400 font-semibold mb-4'>{error}</div>
-                <button
-                  className='mt-2 px-6 py-2 rounded bg-gray-700 text-black'
-                  onClick={() => setShowModal(false)}
-                >
-                  Close
-                </button>
-              </>
-            ) : null}
+      {/* Error Modal */}
+      {error && !loading && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60'>
+          <div className='rounded-2xl shadow-lg p-8 min-w-[420px] max-w-[90vw] flex flex-col items-center' style={{
+            background: 'linear-gradient(180deg, rgba(255, 159, 39, 0.12) 0%, rgba(255, 81, 70, 0.12) 100%)'
+          }}>
+            <div className='text-red-400 font-semibold mb-4'>{error}</div>
+            <button
+              className='mt-2 px-6 py-2 rounded bg-gray-700 text-black'
+              onClick={() => setError('')}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
@@ -237,7 +232,19 @@ export default function CreateExamPage() {
               required
             />
           </div>
-          
+
+          <div className='flex flex-col'>
+            <label className='text-black mb-1 font-semibold'>Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none resize-none'
+              placeholder="Enter a description for your exam (optional)"
+              rows={3}
+            />
+          </div>
+
           <div className='flex flex-col'>
             <label htmlFor="level" className='text-black mb-1 font-semibold'>Difficulty</label>
             <div className='relative'>
