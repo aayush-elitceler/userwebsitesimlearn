@@ -166,7 +166,7 @@ export default function CreateExamPage() {
       <MultiStepLoader
         loadingStates={loadingStates}
         loading={loading}
-        duration={9500}
+        duration={2000}
       />
 
       {/* Success Modal */}
@@ -182,7 +182,7 @@ export default function CreateExamPage() {
               Your exam has been generated successfully.
             </div>
             <button
-              className='text-white cursor-pointer rounded-lg px-8 py-3 font-semibold shadow hover:opacity-90 transition'
+              className='text-primary cursor-pointer rounded-lg px-8 py-3 font-semibold shadow hover:opacity-90 transition'
               style={{
                 background: 'linear-gradient(90deg, #FF9F27 0%, hsl(var(--primary)) 100%)'
               }}
@@ -214,59 +214,13 @@ export default function CreateExamPage() {
         </div>
       )}
       
-  <div className='max-w-4xl w-full bg-gray-100 rounded-2xl shadow-lg p-8 relative z-10'>
+  <div className='max-w-4xl w-full bg-muted/50 rounded-2xl shadow-lg p-8'>
         <h2 className='text-2xl font-bold text-black mb-2'>Create Exam</h2>
-        <hr className='border-gray-600 mb-6' />
+        <hr className='border-border mb-6' />
         <form
           onSubmit={handleSubmit}
           className='grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6'
         >
-          <div className='flex flex-col'>
-            <label className='text-black mb-1 font-semibold'>Topic</label>
-            <input
-              name="topic"
-              value={form.topic}
-              onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none'
-              placeholder="e.g. Fractions, Photosynthesis"
-              required
-            />
-          </div>
-
-          <div className='flex flex-col'>
-            <label className='text-black mb-1 font-semibold'>Description</label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none resize-none'
-              placeholder="Enter a description for your exam (optional)"
-              rows={3}
-            />
-          </div>
-
-          <div className='flex flex-col'>
-            <label htmlFor="level" className='text-black mb-1 font-semibold'>Difficulty</label>
-            <div className='relative'>
-              <select
-                id="level"
-                name="level"
-                value={form.level}
-                onChange={handleChange}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
           <div className='flex flex-col'>
             <label className='text-black mb-1 font-semibold'>Subject</label>
             <div className='relative'>
@@ -274,7 +228,7 @@ export default function CreateExamPage() {
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
-                className='w-full rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                 required
               >
                 <option value="">Select a subject</option>
@@ -291,6 +245,52 @@ export default function CreateExamPage() {
               </div>
             </div>
           </div>
+
+          <div className='flex flex-col'>
+            <label className='text-black mb-1 font-semibold'>Topic</label>
+            <input
+              name="topic"
+              value={form.topic}
+              onChange={handleChange}
+              className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200'
+              placeholder="e.g. Fractions, Photosynthesis"
+              required
+            />
+          </div>
+
+          <div className='flex flex-col md:col-span-2'>
+            <label className='text-black mb-1 font-semibold'>Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200 resize-none'
+              placeholder="Enter a description for your exam (optional)"
+              rows={3}
+            />
+          </div>
+
+          <div className='flex flex-col'>
+            <label htmlFor="level" className='text-black mb-1 font-semibold'>Difficulty</label>
+            <div className='relative'>
+              <select
+                id="level"
+                name="level"
+                value={form.level}
+                onChange={handleChange}
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
+          </div>
           
           <div className='flex flex-col'>
             <label htmlFor="questionType" className='text-black mb-1 font-semibold'>Question Type</label>
@@ -300,7 +300,7 @@ export default function CreateExamPage() {
                 name="questionType"
                 value={form.questionType}
                 onChange={handleChange}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
               >
                 <option value="long">Long</option>
                 <option value="short">Short</option>
@@ -324,7 +324,7 @@ export default function CreateExamPage() {
                     name="longCount"
                     value={form.longCount}
                     onChange={handleChange}
-                    className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                    className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                   >
                     {Array.from({length: 15}, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
@@ -347,7 +347,7 @@ export default function CreateExamPage() {
                   min={1}
                   value={form.longMarks}
                   onChange={handleChange}
-                  className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none'
+                  className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200'
                 />
               </div>
             </>
@@ -363,7 +363,7 @@ export default function CreateExamPage() {
                     name="shortCount"
                     value={form.shortCount}
                     onChange={handleChange}
-                    className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                    className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                   >
                     {Array.from({length: 15}, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
@@ -386,7 +386,7 @@ export default function CreateExamPage() {
                   min={1}
                   value={form.shortMarks}
                   onChange={handleChange}
-                  className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none'
+                  className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200'
                 />
               </div>
             </>
@@ -394,10 +394,10 @@ export default function CreateExamPage() {
         </form>
         
         {/* Buttons */}
-        <div className='flex justify-end gap-4 mt-8'>
+        <div className='flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-4 border-t border-border'>
           <button
             type='button'
-            className='border border-red-400 text-red-400 rounded-lg px-8 py-2 font-semibold bg-transparent hover:bg-white/10 transition'
+            className='border border-destructive text-destructive rounded-lg px-6 py-3 font-semibold bg-transparent hover:bg-muted transition-all duration-200 min-w-[120px] order-2 sm:order-1'
             onClick={() => router.back()}
             disabled={loading}
           >
@@ -405,16 +405,16 @@ export default function CreateExamPage() {
           </button>
           <button
             type='button'
-            className='point-ask-gradient text-white cursor-pointer rounded-lg px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition disabled:opacity-60'
+            className='bg-primary text-primary-foreground cursor-pointer rounded-lg px-6 py-3 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed min-w-[140px] order-1 sm:order-2'
             disabled={loading}
             onClick={handleSubmit}
           >
-            {loading ? 'Creating...' : 'Create exam'}
+            {loading ? 'Creating...' : 'Create Exam'}
           </button>
         </div>
-        
+
         {error && (
-          <div className='text-red-400 font-semibold mt-4'>{error}</div>
+          <div className='text-destructive font-semibold mt-4'>{error}</div>
         )}
       </div>
     </div>
