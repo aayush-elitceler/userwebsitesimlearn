@@ -299,8 +299,8 @@ export default function QuizesPage() {
                   y2="8"
                   gradientUnits="userSpaceOnUse"
                 >
-                  <stop stopColor="hsl(var(--primary))" />
-                  <stop offset="1" stopColor="hsl(var(--primary))" />
+                  <stop stopColor="var(--primary)" />
+                  <stop offset="1" stopColor="var(--primary)" />
                 </linearGradient>
               </defs>
             </svg>
@@ -368,8 +368,8 @@ export default function QuizesPage() {
                   y2="8"
                   gradientUnits="userSpaceOnUse"
                 >
-                  <stop stopColor="hsl(var(--primary))" />
-                  <stop offset="1" stopColor="hsl(var(--primary))" />
+                  <stop stopColor="var(--primary)" />
+                  <stop offset="1" stopColor="var(--primary)" />
                 </linearGradient>
               </defs>
             </svg>

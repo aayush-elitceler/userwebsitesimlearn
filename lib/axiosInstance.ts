@@ -17,6 +17,12 @@ const redirectToLogin = () => {
 
 	try {
 		Cookies.remove('auth');
+		try {
+			if (typeof window !== 'undefined') {
+				localStorage.removeItem('institution-theme');
+				localStorage.removeItem('user-profile');
+			}
+		} catch {}
 	} catch (error) {
 		console.error('Failed to clear auth cookie', error);
 	}

@@ -4,8 +4,6 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import Logo from '@/public/images/logoAiDash.svg';
-import { useLogo } from '@/lib/LogoContext';
 import quizWhite from '@/public/images/quiz.svg';
 import { LayoutDashboard } from 'lucide-react';
 import PointerBlack from '@/public/images/pointerBlack.svg'
@@ -144,7 +142,18 @@ const projectSubRoutes = [
 
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
-  const logoUrl = '/logo.png';
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user-profile');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const fromProfile = parsed?.photoUrl || parsed?.profilePictureUrl || null;
+        if (fromProfile) setLogoUrl(fromProfile);
+      }
+    } catch {}
+  }, []);
 
   const [aiOpen, setAiOpen] = useState(false);
   const [pointOpen, setPointOpen] = useState(false);
@@ -223,7 +232,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               <div className="py-2 px-4">
                 <Link href="/">
                   <Image
-                    src={logoUrl || Logo}
+                    src={logoUrl ?? '/logo.png'}
                     alt="Logo"
                     width={50}
                     height={40}
@@ -605,7 +614,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 <div className="">
                   <Link href="/">
                   <Image
-                    src="/logo.png"
+                    src={logoUrl ?? '/logo.png'}
                     alt="Logo"
                     width={180}
                     height={70}

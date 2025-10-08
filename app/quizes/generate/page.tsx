@@ -187,7 +187,7 @@ export default function GenerateQuizPage() {
                 <button
                   className='text-white cursor-pointer rounded-lg px-8 py-3 font-semibold shadow hover:opacity-90 transition'
                   style={{
-                    background: 'linear-gradient(90deg, #FF9F27 0%, hsl(var(--primary)) 100%)'
+                    background: 'linear-gradient(90deg, #FF9F27 0%, var(--primary) 100%)'
                   }}
                   onClick={() => {
                     setShowModal(false);
