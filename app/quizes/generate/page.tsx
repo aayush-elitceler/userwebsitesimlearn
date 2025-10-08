@@ -120,7 +120,7 @@ export default function GenerateQuizPage() {
       <MultiStepLoader 
         loadingStates={loadingStates} 
         loading={loading} 
-        duration={5500}
+        duration={2000}
       />
       
       {/* Success Modal */}
