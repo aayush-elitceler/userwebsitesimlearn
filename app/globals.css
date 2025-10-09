@@ -175,13 +175,61 @@ body {
 
 
 .point-ask-gradient {
-  background: linear-gradient(90deg, var(--primary) 0%, var(--primary) 100%);
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
 }
 .point-ask-gradient-text {
-  background: linear-gradient(90deg, var(--primary) 0%, var(--primary) 100%);
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* New gradient utility classes */
+.bg-gradient-primary {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+}
+
+.bg-gradient-primary-hover {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.bg-gradient-primary-hover:hover {
+  background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);
+  color: white;
+}
+
+.btn-gradient-primary {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  color: var(--primary-foreground);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient-primary:hover {
+  background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.text-gradient-primary {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-gradient-primary {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  border-radius: inherit;
+  padding: 1px;
+}
+
+.border-gradient-primary > * {
+  background: var(--background);
+  border-radius: inherit;
 }
 
 .sidebar-indicator {

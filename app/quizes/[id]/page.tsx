@@ -173,7 +173,7 @@ export default function QuizStartPage() {
                 <div className="text-2xl md:text-3xl font-bold text-black mb-1">{quiz.title}</div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+                <div className="bg-gradient-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
                   <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/><path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2"/></svg>
                   Time left {secondsLeft !== null ? formatTime(secondsLeft) : `00:${quiz.timeLimitMinutes?.toString().padStart(2, "0")}:00`}
                 </div>
@@ -205,7 +205,7 @@ export default function QuizStartPage() {
                 </div>
               </div>
             ))}
-            <button className="bg-primary text-primary-foreground p-4" onClick={() => submitQuiz(quiz, selected, quizStartedAt)}>Submit Quiz</button>
+            <button className="bg-gradient-primary text-primary-foreground p-4" onClick={() => submitQuiz(quiz, selected, quizStartedAt)}>Submit Quiz</button>
           </>
         ) : null}
       </div>

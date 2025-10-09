@@ -235,7 +235,7 @@ export default function QuizReportPage() {
                       </div>
                     </div>
                     <button
-                      className="flex-shrink-0 bg-gradient-to-r from-primary to-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold text-sm cursor-pointer"
+                      className="flex-shrink-0 bg-gradient-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold text-sm cursor-pointer"
                       onClick={() => router.push(`/quizes/${quiz.id}/start`)}
                     >
                       Start Quiz

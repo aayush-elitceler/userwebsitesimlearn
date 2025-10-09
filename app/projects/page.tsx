@@ -101,7 +101,7 @@ export default function ProjectsPage() {
         <div className="w-full px-4 md:px-0 mb-6">
           <div className="flex justify-end">
             <button
-              className="flex items-center gap-2 bg-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer font-semibold px-5 py-3 rounded-lg shadow"
+              className="flex items-center gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer font-semibold px-5 py-3 rounded-lg shadow"
               onClick={() => router.push("/projects/create")}
             >
               <Plus size={20} />
@@ -119,14 +119,14 @@ export default function ProjectsPage() {
           <h3 className="text-xl font-bold text-black">Your Created Projects</h3>
           <a
             href="#"
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-primary flex-shrink-0"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-gradient-primary flex-shrink-0"
             onClick={(e) => {
               e.preventDefault();
               router.push('/projects/all');
             }}
           >
             View all
-            <ArrowRight className="w-4 h-4 text-primary" />
+            <ArrowRight className="w-4 h-4 text-gradient-primary" />
           </a>
         </div>
         <div className="mb-10 py-4">

@@ -109,7 +109,7 @@ function ExamCard({
             : "-"}
         </div>
         <button
-          className="bg-primary text-primary-foreground rounded-lg px-6 py-2 font-semibold shadow hover:bg-primary/90 transition"
+          className="bg-gradient-primary text-primary-foreground rounded-lg px-6 py-2 font-semibold shadow hover:opacity-90 transition"
           onClick={onStart}
         >
           {buttonText}
@@ -272,7 +272,7 @@ export default function QuizesPage() {
           <h3 className="text-xl font-bold text-black">Upcoming quizzes</h3>
           <a
             href="#"
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary flex-shrink-0"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-gradient-primary flex-shrink-0"
             onClick={(e) => {
               e.preventDefault();
               router.push("/quizes/takeQuiz/all?type=start");
@@ -341,7 +341,7 @@ export default function QuizesPage() {
           <h3 className="text-xl font-bold text-black">Previous quizzes</h3>
           <a
             href="#"
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary flex-shrink-0"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-gradient-primary flex-shrink-0"
             onClick={(e) => {
               e.preventDefault();
               router.push("/quizes/takeQuiz/all?type=completed");

@@ -103,7 +103,7 @@ export default function ExamCard({
             Difficulty:{" "}
             {difficulty || exam.difficulty || "Medium"}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-primary to-primary text-transparent bg-clip-text mb-2 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold text-gradient-primary mb-2 break-words leading-tight">
             {exam.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
@@ -115,14 +115,14 @@ export default function ExamCard({
         <div className="mt-auto pt-3">
           {previous ? (
             <button
-              className="bg-gradient-to-r from-primary to-primary text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-primary text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={handleViewReport}
             >
               View Report
             </button>
           ) : (
             <button
-              className="bg-gradient-to-r from-primary to-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={handleStartExam}
             >
               Start Exam

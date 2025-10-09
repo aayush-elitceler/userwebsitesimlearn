@@ -271,7 +271,7 @@ export default function CreateExamPage() {
                   onClick={() => setForm({ ...form, questionType: type.value })}
                   className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
                     form.questionType === type.value
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-gradient-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   }`}
                 >
@@ -384,7 +384,7 @@ export default function CreateExamPage() {
           </button>
           <button
             type="submit"
-            className="px-6 py-3 rounded-lg point-ask-gradient cursor-pointer text-primary-foreground font-semibold"
+            className="px-6 py-3 rounded-lg bg-gradient-primary cursor-pointer text-primary-foreground font-semibold"
             disabled={loading}
           >
             {loading ? "Creating..." : "Create Practice Sets"}

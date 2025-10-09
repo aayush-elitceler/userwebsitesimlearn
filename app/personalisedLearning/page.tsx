@@ -372,7 +372,7 @@ function PersonalisedLearningPage() {
                   </div>
                   {(data?.microGoal?.quizId || data?.microGoal?.link) && (
                     <Button
-                      className='mt-2 cursor-pointer point-ask-gradient text-white'
+                      className='mt-2 cursor-pointer bg-gradient-primary text-white'
                       onClick={() => {
                         const l = data?.microGoal?.link;
                         const qid = data?.microGoal?.quizId || (l && l.includes('/users/quiz-by-id?id=') ? l.split('id=')[1]?.split('&')[0] : undefined);
@@ -422,7 +422,7 @@ function PersonalisedLearningPage() {
                       </div>
                       <Button
                         onClick={() => handleImproveClick(topic.subject || 'Unknown', topic.concept || 'Unknown')}
-                        className='cursor-pointer point-ask-gradient hover:bg-primary/90 text-white text-sm px-4 py-2'
+                        className='cursor-pointer bg-gradient-primary hover:bg-primary/90 text-white text-sm px-4 py-2'
                       >
                         {topic.action || 'Improve'}
                       </Button>
@@ -440,7 +440,7 @@ function PersonalisedLearningPage() {
                       </div>
                       <Button
                         onClick={() => handleImproveClick('General', 'Learning')}
-                        className='cursor-pointer point-ask-gradient hover:bg-primary/90 text-white'
+                        className='cursor-pointer bg-gradient-primary hover:bg-primary/90 text-white'
                       >
                         Explore
                       </Button>
@@ -463,7 +463,7 @@ function PersonalisedLearningPage() {
               </CardHeader>
               <CardContent className='space-y-3'>
                 <Button
-                  className='cursor-pointer w-full point-ask-gradient hover:bg-primary/90 text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-lg transform'
+                  className='cursor-pointer w-full bg-gradient-primary hover:bg-primary/90 text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-lg transform'
                   onClick={handlePracticeSetsClick}
                   style={{ 
                     opacity: 0,

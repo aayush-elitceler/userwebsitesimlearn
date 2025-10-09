@@ -144,7 +144,8 @@ export default function ContentCard({
   };
 
   const getDisplayDifficulty = () => {
-    return content.difficulty?.charAt(0).toUpperCase() + content.difficulty?.slice(1) || "";
+    if (!content?.difficulty) return "";
+    return content.difficulty.charAt(0).toUpperCase() + content.difficulty.slice(1);
   };
 
   return (
@@ -166,7 +167,7 @@ export default function ContentCard({
             {content.type === 'project' ? 'Subject' : 'Difficulty'}:{" "}
             {content.type === 'project' ? getDisplaySubject() : getDisplayDifficulty()}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-primary to-primary text-transparent bg-clip-text mb-2 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold text-gradient-primary mb-2 break-words leading-tight">
             {content.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
@@ -181,7 +182,7 @@ export default function ContentCard({
             </div>
             {shouldTruncate && (
               <button
-                className="text-primary hover:text-primary/80 text-xs mt-1 font-medium"
+                className="text-gradient-primary hover:opacity-80 text-xs mt-1 font-medium"
                 onClick={() => setIsExpanded(!isExpanded)}
               >
                 {isExpanded ? "Read less" : "Read more"}
@@ -202,21 +203,21 @@ export default function ContentCard({
         <div className="mt-auto pt-3">
           {previous ? (
             <button
-              className="bg-gradient-to-r from-primary to-primary text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-primary text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={handleViewAnswers}
             >
               View answers
             </button>
           ) : content.type === 'project' ? (
             <button
-              className="bg-gradient-to-r from-primary to-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={handleDownload}
             >
               Download Project
             </button>
           ) : (
             <button
-              className="bg-gradient-to-r from-primary to-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={handleStart}
             >
               Start {type === 'exam' ? 'Exam' : 'Quiz'}

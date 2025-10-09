@@ -342,7 +342,7 @@ export default function GenerateQuizPage() {
           <button
             type='submit'
             form='quiz-gen-form'
-            className='bg-primary text-primary-foreground cursor-pointer rounded-lg px-6 py-3 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed min-w-[140px] order-1 sm:order-2'
+            className='bg-gradient-primary text-primary-foreground cursor-pointer rounded-lg px-6 py-3 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed min-w-[140px] order-1 sm:order-2'
             onClick={handleSubmit}
             disabled={loading}
           >

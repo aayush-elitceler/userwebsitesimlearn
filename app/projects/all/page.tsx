@@ -122,7 +122,7 @@ export default function AllProjectsPage() {
               <div className="text-gray-600 mb-4">Start creating your first project!</div>
               <button
                 onClick={() => router.push("/projects/create")}
-                className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                className="bg-gradient-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
               >
                 Create Your First Project
               </button>

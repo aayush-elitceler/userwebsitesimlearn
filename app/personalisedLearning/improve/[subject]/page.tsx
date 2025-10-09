@@ -177,7 +177,7 @@ function ImprovementPage() {
             Improve Your Skill in {data?.concept?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Loading...'}
           </h1>
         </div>
-        <Button className="point-ask-gradient cursor-pointer hover:bg-primary/90 text-primary-foreground flex items-center gap-2">
+        <Button className="bg-gradient-primary cursor-pointer hover:bg-primary/90 text-primary-foreground flex items-center gap-2">
           <MessageCircle className="h-4 w-4" />
           Ask AI Chat
         </Button>

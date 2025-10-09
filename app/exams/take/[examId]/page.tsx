@@ -470,7 +470,7 @@ export default function TakeExamPage() {
           </div>
           <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-500 ease-out relative"
+              className="h-full bg-gradient-primary rounded-full transition-all duration-500 ease-out relative"
               style={{
                 width: `${(answers.filter(answer => answer.trim() !== "").length / exam.questions.length) * 100}%`
               }}
@@ -535,7 +535,7 @@ export default function TakeExamPage() {
           </div>
         ))}
         <button
-          className="bg-primary text-primary-foreground hover:bg-primary/90 p-4 rounded-lg w-full max-w-xs mx-auto block disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-gradient-primary text-primary-foreground hover:opacity-90 p-4 rounded-lg w-full max-w-xs mx-auto block disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => handleSubmit(false)}
           disabled={submitting}
         >

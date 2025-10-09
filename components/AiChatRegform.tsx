@@ -43,12 +43,12 @@ const inputClass =
 const Stepper = ({ completed }: { step: number, completed: boolean[] }) => (
   <div className="w-full mb-8 relative">
     {/* Full yellow line behind all steps */}
-    <div className="absolute top-1/2 left-0 right-0 h-0.5 point-ask-gradient z-0" style={{ transform: 'translateY(-50%)' }} />
+    <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-primary z-0" style={{ transform: 'translateY(-50%)' }} />
     <div className="flex items-center justify-between gap-x-8 bg-[#888888]/60 rounded-2xl px-4 py-3 relative z-10 overflow-x-auto">
       {steps.map((label, idx) => (
         <div key={label} className="flex flex-col items-center flex-1 relative min-w-[80px]">
           <div
-            className={`w-6 h-6 rounded-full flex items-center justify-center z-10 ${completed[idx] ? 'point-ask-gradient' : 'bg-[#888888] border-2 border-[#fff]'}`}
+            className={`w-6 h-6 rounded-full flex items-center justify-center z-10 ${completed[idx] ? 'bg-gradient-primary' : 'bg-[#888888] border-2 border-[#fff]'}`}
           >
             {completed[idx] ? (
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6.5L5 8.5L9 4.5" stroke="#222" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -270,7 +270,7 @@ const InstitutionalRegistrationForm = () => {
                 </div>
                 <Button
                   type="button"
-                  className="point-ask-gradient text-black font-semibold rounded-full px-8 py-2 text-lg mt-2"
+                  className="bg-gradient-primary text-white font-semibold rounded-full px-8 py-2 text-lg mt-2"
                 >
                   Add photo
                 </Button>
@@ -299,7 +299,7 @@ const InstitutionalRegistrationForm = () => {
         )}
         <Button
           type={step === steps.length - 1 ? "submit" : "button"}
-          className="rounded-2xl px-8 py-3 point-ask-gradient text-white font-semibold ml-auto text-lg hover:opacity-90"
+          className="rounded-2xl px-8 py-3 bg-gradient-primary text-white font-semibold ml-auto text-lg hover:opacity-90"
           onClick={step === steps.length - 1 ? undefined : handleNext}
           disabled={nextDisabled}
         >

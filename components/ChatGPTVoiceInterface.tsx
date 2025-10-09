@@ -372,7 +372,7 @@ export default function ChatGPTVoiceInterface({
                 }`}
               >
                 {msg.role === 'user' ? (
-                  <div className='max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 point-ask-gradient text-white'>
+                  <div className='max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 bg-gradient-primary text-white'>
                     <p className='text-sm md:text-base leading-relaxed'>
                       {msg.text}
                     </p>
@@ -424,7 +424,7 @@ export default function ChatGPTVoiceInterface({
             {!listening && !thinking && !aiSpeaking && (
               <button
                 onClick={handleStartListening}
-                className='point-ask-gradient text-white px-6 py-3 rounded-full flex items-center gap-2'
+                className='bg-gradient-primary text-white px-6 py-3 rounded-full flex items-center gap-2'
                 disabled={apiLoading}
               >
                 <svg

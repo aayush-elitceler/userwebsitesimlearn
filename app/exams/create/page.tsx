@@ -182,10 +182,7 @@ export default function CreateExamPage() {
               Your exam has been generated successfully.
             </div>
             <button
-              className='text-white cursor-pointer rounded-lg px-8 py-3 font-semibold shadow hover:opacity-90 transition'
-              style={{
-                background: 'linear-gradient(90deg, #FF9F27 0%, hsl(var(--primary)) 100%)'
-              }}
+              className='bg-gradient-primary text-primary-foreground cursor-pointer rounded-lg px-8 py-3 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200'
               onClick={() => {
                 setShowModal(false);
                 router.push("/exams");
@@ -227,7 +224,7 @@ export default function CreateExamPage() {
               name="topic"
               value={form.topic}
               onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none'
+              className='rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200'
               placeholder="e.g. Fractions, Photosynthesis"
               required
             />
@@ -239,7 +236,7 @@ export default function CreateExamPage() {
               name="description"
               value={form.description}
               onChange={handleChange}
-              className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none resize-none'
+              className='rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200 resize-none'
               placeholder="Enter a description for your exam (optional)"
               rows={3}
             />
@@ -253,7 +250,7 @@ export default function CreateExamPage() {
                 name="level"
                 value={form.level}
                 onChange={handleChange}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
               >
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
@@ -274,7 +271,7 @@ export default function CreateExamPage() {
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
-                className='w-full rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none appearance-none cursor-pointer pr-8'
+                className='w-full rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200 appearance-none cursor-pointer pr-8'
                 required
               >
                 <option value="">Select a subject</option>
@@ -300,7 +297,7 @@ export default function CreateExamPage() {
                 name="questionType"
                 value={form.questionType}
                 onChange={handleChange}
-                className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
               >
                 <option value="long">Long</option>
                 <option value="short">Short</option>
@@ -324,7 +321,7 @@ export default function CreateExamPage() {
                     name="longCount"
                     value={form.longCount}
                     onChange={handleChange}
-                    className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                    className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                   >
                     {Array.from({length: 15}, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
@@ -347,7 +344,7 @@ export default function CreateExamPage() {
                   min={1}
                   value={form.longMarks}
                   onChange={handleChange}
-                  className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none'
+                  className='rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200'
                 />
               </div>
             </>
@@ -363,7 +360,7 @@ export default function CreateExamPage() {
                     name="shortCount"
                     value={form.shortCount}
                     onChange={handleChange}
-                    className='w-full rounded-lg px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                    className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-red-300 focus:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
                   >
                     {Array.from({length: 15}, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
@@ -386,7 +383,7 @@ export default function CreateExamPage() {
                   min={1}
                   value={form.shortMarks}
                   onChange={handleChange}
-                  className='rounded px-3 py-2 bg-gradient-to-r from-red-100 to-red-200 text-black focus:outline-none'
+                  className='rounded px-3 py-2 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent shadow-sm hover:shadow-md transition-all duration-200'
                 />
               </div>
             </>
@@ -405,7 +402,7 @@ export default function CreateExamPage() {
           </button>
           <button
             type='button'
-            className='point-ask-gradient text-white cursor-pointer rounded-lg px-8 py-2 font-semibold shadow hover:bg-[#16a34a] transition disabled:opacity-60'
+            className='bg-gradient-primary text-primary-foreground cursor-pointer rounded-lg px-8 py-2 font-semibold shadow hover:opacity-90 hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed'
             disabled={loading}
             onClick={handleSubmit}
           >

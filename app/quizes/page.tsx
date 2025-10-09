@@ -129,7 +129,7 @@ function QuizCard({
           <div className="text-[#626262] text-xs sm:text-sm font-medium mb-1.5">
             Difficulty: {quiz.difficulty?.charAt(0).toUpperCase() + quiz.difficulty?.slice(1)}
           </div>
-          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold bg-gradient-to-r from-primary to-primary text-transparent bg-clip-text mb-3 break-words leading-tight">
+          <div className="text-base sm:text-lg md:text-base lg:text-lg xl:text-xl font-semibold text-gradient-primary mb-3 break-words leading-tight">
             {quiz.title}
           </div>
           <div className="text-black text-xs sm:text-sm mb-3 leading-relaxed">
@@ -192,14 +192,14 @@ function QuizCard({
         <div className="mt-auto pt-3">
           {previous ? (
             <button
-              className="bg-gradient-to-r from-primary to-primary text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-primary text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={() => router.push(`/quizes/reports/${submissionId}`)}
             >
               View answers
             </button>
           ) : (
             <button
-              className="bg-gradient-to-r from-primary to-primary cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
+              className="bg-gradient-primary cursor-pointer text-white rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={() => router.push(`/quizes/${quiz.id}/start`)}
             >
               Start Quiz
@@ -391,7 +391,7 @@ export default function QuizesPage() {
             <h3 className="text-xl font-bold text-black">Upcoming quizzes</h3>
             <a
               href="#"
-              className="font-semibold flex items-center gap-2 hover:opacity-80 hover:scale-105 transition-all duration-200 text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary flex-shrink-0"
+              className="font-semibold flex items-center gap-2 hover:opacity-80 hover:scale-105 transition-all duration-200 text-sm sm:text-base text-gradient-primary flex-shrink-0"
               onClick={(e) => {
                 e.preventDefault();
                 router.push('/quizes/takeQuiz/all?type=start');
@@ -444,7 +444,7 @@ export default function QuizesPage() {
             <h3 className="text-xl font-bold text-black">Previous quizzes</h3>
             <a
               href="#"
-              className="font-semibold flex items-center gap-2 hover:opacity-80 hover:scale-105 transition-all duration-200 text-sm sm:text-base text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary flex-shrink-0"
+              className="font-semibold flex items-center gap-2 hover:opacity-80 hover:scale-105 transition-all duration-200 text-sm sm:text-base text-gradient-primary flex-shrink-0"
               onClick={(e) => {
                 e.preventDefault();
                 router.push('/quizes/takeQuiz/all?type=completed');

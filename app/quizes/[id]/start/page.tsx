@@ -223,7 +223,7 @@ export default function QuizStartPage() {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className='mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90'
+              className='mt-4 bg-gradient-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90'
             >
               Refresh Page
             </button>
@@ -276,7 +276,7 @@ export default function QuizStartPage() {
                 )}
               </div>
               <div className='flex items-center gap-2'>
-                <div className='bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold flex items-center gap-2'>
+                <div className='bg-gradient-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold flex items-center gap-2'>
                   <svg
                     width='20'
                     height='20'
@@ -336,7 +336,7 @@ export default function QuizStartPage() {
                       key={opt.id}
                       className={`block rounded-md px-4 py-3 cursor-pointer transition-all border border-transparent ${
                         selected[q.id] === opt.id
-                          ? 'bg-primary text-primary-foreground border-amber-400'
+                          ? 'bg-gradient-primary text-primary-foreground border-amber-400'
                           : 'bg-gradient-to-r from-orange-100 to-red-200 text-[#646464] hover:bg-primary/40'
                       }`}
                     >
@@ -360,7 +360,7 @@ export default function QuizStartPage() {
               </div>
             ))}
             <button
-              className='bg-primary text-primary-foreground p-3 cursor-pointer rounded-xl'
+              className='bg-gradient-primary text-primary-foreground p-3 cursor-pointer rounded-xl'
               onClick={() => submitQuiz(quiz, selected, quizStartedAt, router)}
             >
               Submit Quiz
