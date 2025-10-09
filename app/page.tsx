@@ -308,6 +308,34 @@ export default function Home() {
             if (profileResponse.data.success) {
               setProfileData(profileResponse.data.data);
               console.log('Profile Data from API:', profileResponse.data.data);
+              try {
+                // Persist profile + theme
+                localStorage.setItem('user-profile', JSON.stringify(profileResponse.data.data));
+                const primary = profileResponse.data.data?.institution?.primaryColor;
+                const secondary = profileResponse.data.data?.institution?.secondaryColor;
+                if (primary || secondary) {
+                  localStorage.setItem('institution-theme', JSON.stringify({ primary, secondary }));
+                  const root = document.documentElement;
+                  if (primary) {
+                    root.style.setProperty('--primary', primary);
+                    const hex = String(primary).replace('#','');
+                    const h = hex.length === 3 ? hex.split('').map(c=>c+c).join('') : hex;
+                    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+                    const yiq = (r*299 + g*587 + b*114)/1000;
+                    root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+                    root.style.setProperty('--accent', primary);
+                    root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+                  }
+                  if (secondary) {
+                    root.style.setProperty('--secondary', secondary);
+                    const hex2 = String(secondary).replace('#','');
+                    const h2 = hex2.length === 3 ? hex2.split('').map(c=>c+c).join('') : hex2;
+                    const r2 = parseInt(h2.slice(0,2),16), g2 = parseInt(h2.slice(2,4),16), b2 = parseInt(h2.slice(4,6),16);
+                    const yiq2 = (r2*299 + g2*587 + b2*114)/1000;
+                    root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
+                  }
+                }
+              } catch {}
             }
           } catch (profileErr) {
             if (axios.isAxiosError(profileErr) && profileErr.response?.status === 401) {
@@ -317,6 +345,33 @@ export default function Home() {
 
             console.error('Error fetching profile:', profileErr);
           }
+        } else {
+          try {
+            const primary = userFromCookie?.institution?.primaryColor;
+            const secondary = userFromCookie?.institution?.secondaryColor;
+            if (primary || secondary) {
+              localStorage.setItem('institution-theme', JSON.stringify({ primary, secondary }));
+              const root = document.documentElement;
+              if (primary) {
+                root.style.setProperty('--primary', primary);
+                const hex = String(primary).replace('#','');
+                const h = hex.length === 3 ? hex.split('').map(c=>c+c).join('') : hex;
+                const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+                const yiq = (r*299 + g*587 + b*114)/1000;
+                root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+                root.style.setProperty('--accent', primary);
+                root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+              }
+              if (secondary) {
+                root.style.setProperty('--secondary', secondary);
+                const hex2 = String(secondary).replace('#','');
+                const h2 = hex2.length === 3 ? hex2.split('').map(c=>c+c).join('') : hex2;
+                const r2 = parseInt(h2.slice(0,2),16), g2 = parseInt(h2.slice(2,4),16), b2 = parseInt(h2.slice(4,6),16);
+                const yiq2 = (r2*299 + g2*587 + b2*114)/1000;
+                root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
+              }
+            }
+          } catch {}
         }
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -462,10 +517,10 @@ export default function Home() {
             className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer overflow-hidden relative'
             title='Profile'
           >
-            {dashboardData.user.profilePictureUrl ? (
+            {(profileData?.photoUrl || dashboardData.user.profilePictureUrl) ? (
               <>
                 <img 
-                  src={dashboardData.user.profilePictureUrl} 
+                  src={(profileData?.photoUrl as string) || (dashboardData.user.profilePictureUrl as string)} 
                   alt="Profile" 
                   className="w-full h-full object-cover rounded-full"
                   onError={(e) => {

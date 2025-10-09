@@ -402,8 +402,8 @@ export default function QuizesPage() {
                 <path d="M12.627 8.75H0.5V7.25H12.627L6.93075 1.55375L8 0.5L15.5 8L8 15.5L6.93075 14.4462L12.627 8.75Z" fill="url(#paint0_linear_1309_2561)"/>
                 <defs>
                   <linearGradient id="paint0_linear_1309_2561" x1="0.5" y1="8" x2="15.5" y2="8" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="hsl(var(--primary))"/>
-                    <stop offset="1" stopColor="hsl(var(--primary))"/>
+                    <stop stopColor="var(--primary)"/>
+                    <stop offset="1" stopColor="var(--primary)"/>
                   </linearGradient>
                 </defs>
               </svg>
@@ -455,8 +455,8 @@ export default function QuizesPage() {
                 <path d="M12.627 8.75H0.5V7.25H12.627L6.93075 1.55375L8 0.5L15.5 8L8 15.5L6.93075 14.4462L12.627 8.75Z" fill="url(#paint0_linear_1309_2563)"/>
                 <defs>
                   <linearGradient id="paint0_linear_1309_2563" x1="0.5" y1="8" x2="15.5" y2="8" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="hsl(var(--primary))"/>
-                    <stop offset="1" stopColor="hsl(var(--primary))"/>
+                    <stop stopColor="var(--primary)"/>
+                    <stop offset="1" stopColor="var(--primary)"/>
                   </linearGradient>
                 </defs>
               </svg>
