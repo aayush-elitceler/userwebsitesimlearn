@@ -175,7 +175,7 @@ export default function ProjectDetailPage() {
                 href={project.pdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 bg-primary text-primary-foreground text-center py-3 px-6 rounded-lg font-semibold hover:opacity-90 transition shadow"
+                className="flex-1 bg-gradient-primary text-primary-foreground text-center py-3 px-6 rounded-lg font-semibold hover:opacity-90 transition shadow"
               >
                 📄 Download Project PDF
               </a>

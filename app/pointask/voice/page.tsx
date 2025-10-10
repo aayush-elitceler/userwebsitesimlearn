@@ -45,7 +45,7 @@ const personaOptions: OptionWithLabel[] = [
     label: "Professor",
     value: "professor",
     icon: (
-      <span className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+      <span className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground">
         <svg
           width="24"
           height="24"
@@ -66,7 +66,7 @@ const personaOptions: OptionWithLabel[] = [
     label: "Friend",
     value: "friend",
     icon: (
-      <span className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+      <span className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground">
         <svg
           width="24"
           height="24"

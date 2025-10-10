@@ -84,6 +84,39 @@ const handleGoogleSignIn = () => {
       }), {
         expires: 1,
       });
+      // Fetch profile -> persist to localStorage and set CSS vars
+      try {
+        const profileRes = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/get-profile`);
+        const profile = profileRes?.data?.data;
+        if (profile) {
+          localStorage.setItem('user-profile', JSON.stringify(profile));
+          const primary = profile?.institution?.primaryColor;
+          const secondary = profile?.institution?.secondaryColor;
+          if (primary || secondary) {
+            const theme = { primary, secondary };
+            localStorage.setItem('institution-theme', JSON.stringify(theme));
+            const root = document.documentElement;
+            if (primary) {
+              root.style.setProperty('--primary', primary);
+              const hex = String(primary).replace('#','');
+              const h = hex.length === 3 ? hex.split('').map(c=>c+c).join('') : hex;
+              const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+              const yiq = (r*299 + g*587 + b*114)/1000;
+              root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+              root.style.setProperty('--accent', primary);
+              root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+            }
+            if (secondary) {
+              root.style.setProperty('--secondary', secondary);
+              const hex2 = String(secondary).replace('#','');
+              const h2 = hex2.length === 3 ? hex2.split('').map(c=>c+c).join('') : hex2;
+              const r2 = parseInt(h2.slice(0,2),16), g2 = parseInt(h2.slice(2,4),16), b2 = parseInt(h2.slice(4,6),16);
+              const yiq2 = (r2*299 + g2*587 + b2*114)/1000;
+              root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
+            }
+          }
+        }
+      } catch {}
       router.push("/");
     } catch (err) {
       console.error(err);

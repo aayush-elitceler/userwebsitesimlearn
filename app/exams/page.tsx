@@ -167,7 +167,7 @@ export default function QuizesPage() {
           <h2 className="text-2xl md:text-3xl font-bold text-black">Exam Preparation</h2>
           <button
             onClick={() => router.push('/exams/create')}
-            className="flex items-center gap-2 point-ask-gradient text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg"
+            className="flex items-center gap-2 bg-gradient-primary text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg"
             style={{
               ...getAnimationDelay(1, 150),
               animation: 'slideInRight 0.6s ease-out forwards'

@@ -52,7 +52,7 @@ const styles = [
     label: "Professor",
     value: "professor",
     icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
+      <span className="bg-gradient-primary rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
           width="24"
           height="24"
@@ -73,7 +73,7 @@ const styles = [
     label: "Friend",
     value: "friend",
     icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
+      <span className="bg-gradient-primary rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
           width="24"
           height="24"
@@ -92,7 +92,7 @@ const styles = [
     label: "Robot",
     value: "robot",
     icon: (
-      <span className="point-ask-gradient rounded-full w-10 h-10 flex items-center justify-center mr-4">
+      <span className="bg-gradient-primary rounded-full w-10 h-10 flex items-center justify-center mr-4">
         <svg
           width="24"
           height="24"
@@ -400,7 +400,7 @@ export default function PointAskChatPage() {
               <button
                 className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${
                   value
-                    ? "point-ask-gradient text-white shadow-lg shadow-orange-500/25"
+                    ? "bg-gradient-primary text-white shadow-lg shadow-orange-500/25"
                     : "bg-white/90 hover:bg-white text-gray-700 border border-gray-200/60 hover:border-gray-300 hover:shadow-md shadow-sm"
                 }`}
                 onClick={onClick}
@@ -611,7 +611,7 @@ export default function PointAskChatPage() {
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
-          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg bg-gradient-primary text-white mb-2">
             {selectedGrade ? (
               <div>
                 <div className="mb-2">Great! You've selected:</div>
@@ -640,7 +640,7 @@ export default function PointAskChatPage() {
             alt="onboarding"
             className="w-[19px] h-[59px] object-cover mx-auto mb-5"
           />
-          <div className="w-[280px] p-4 text-center rounded-lg point-ask-gradient text-white mb-2">
+          <div className="w-[280px] p-4 text-center rounded-lg bg-gradient-primary text-white mb-2">
             {selectedStyle ? (
               <div>
                 <div className="mb-2">Perfect! You've selected:</div>
@@ -720,7 +720,7 @@ export default function PointAskChatPage() {
                 text-black w-full md:w-1/2 border border-black hover:bg-gradient-to-r hover:from-[#006a3d] hover:to-[#006a3d] hover:text-white hover:border-[#006a3d] "
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <span className="point-ask-gradient rounded-full w-12 h-12 flex items-center justify-center">
+                  <span className="bg-gradient-primary rounded-full w-12 h-12 flex items-center justify-center">
                     <svg
                       width="28"
                       height="28"
@@ -762,7 +762,7 @@ export default function PointAskChatPage() {
 
                 {/* Image captured indicator with icon */}
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-white font-medium text-lg rounded-lg px-6 py-2 point-ask-gradient">
+                  <span className="text-white font-medium text-lg rounded-lg px-6 py-2 bg-gradient-primary">
                     Image captured
                   </span>
                 </div>
@@ -1021,7 +1021,7 @@ export default function PointAskChatPage() {
             autoComplete="off"
           />
           <button
-            className="rounded-full p-2 sm:p-3 point-ask-gradient text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
+            className="rounded-full p-2 sm:p-3 bg-gradient-primary text-white disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center min-w-[40px] sm:min-w-[48px]"
             onClick={() => handleSend()}
             disabled={
               !message.trim() ||

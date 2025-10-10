@@ -4,8 +4,6 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import Logo from '@/public/images/logoAiDash.svg';
-import { useLogo } from '@/lib/LogoContext';
 import quizWhite from '@/public/images/quiz.svg';
 import { LayoutDashboard } from 'lucide-react';
 import PointerBlack from '@/public/images/pointerBlack.svg'
@@ -78,7 +76,7 @@ const aiTutorSubRoutes = [
     label: 'AI Tutor Chat',
     href: '/aichats/chat',
     icon: <ChatIcon />,
-    bg: 'point-ask-gradient border-t border-primary-foreground/30',
+    bg: 'bg-gradient-primary border-t border-primary-foreground/30',
   },
 ];
 
@@ -87,7 +85,7 @@ const pointAskSubRoutes = [
     label: 'Point & Ask ',
     href: '/pointask/voice',
     icon: <MicIcon />,
-    bg: 'point-ask-gradient',
+    bg: 'bg-gradient-primary',
   },
   // {
   //   label: 'Point & Ask Chat',
@@ -108,7 +106,7 @@ const quizSubRoutes = [
     label: 'Generate Quiz',
     href: '/quizes/generate',
     icon: quizWhite,
-    bg: 'point-ask-gradient border-t border-primary-foreground/30',
+    bg: 'bg-gradient-primary border-t border-primary-foreground/30',
   },
 ];
 
@@ -123,7 +121,7 @@ const examSubRoutes = [
     label: 'Take Exam',
     href: '/exams/generate',
     icon: examsWhite,
-    bg: 'point-ask-gradient border-t border-primary-foreground/30',
+    bg: 'bg-gradient-primary border-t border-primary-foreground/30',
   },
 ];
 
@@ -138,13 +136,24 @@ const projectSubRoutes = [
     label: 'Projects',
     href: '/projects/teacherproject',
     icon: projectsWhite,
-    bg: 'point-ask-gradient border-t border-primary-foreground/30',
+    bg: 'bg-gradient-primary border-t border-primary-foreground/30',
   },
 ];
 
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
-  const logoUrl = '/logo.png';
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user-profile');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const fromProfile = parsed?.photoUrl || parsed?.profilePictureUrl || null;
+        if (fromProfile) setLogoUrl(fromProfile);
+      }
+    } catch {}
+  }, []);
 
   const [aiOpen, setAiOpen] = useState(false);
   const [pointOpen, setPointOpen] = useState(false);
@@ -223,7 +232,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               <div className="py-2 px-4">
                 <Link href="/">
                   <Image
-                    src={logoUrl || Logo}
+                    src={logoUrl ?? '/logo.png'}
                     alt="Logo"
                     width={50}
                     height={40}
@@ -265,7 +274,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 relative ${
                       pathname === '/'
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
                     }`}
                   >
@@ -283,7 +292,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setAiOpen(!aiOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isAiTutorActive
-                          ? 'bg-primary text-primary-foreground shadow-md'
+                          ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
                       }`}
                     >
@@ -332,7 +341,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setPointOpen(!pointOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isPointAskActive
-                          ? 'bg-primary text-primary-foreground shadow-md'
+                          ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
                       }`}
                     >
@@ -381,7 +390,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setQuizOpen(!quizOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isQuizActive
-                          ? 'bg-primary text-primary-foreground shadow-md'
+                          ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
                       }`}
                     >
@@ -436,13 +445,13 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 <div className='mb-2'>
                   <div className='relative'>
                     {isExamActive && (
-                      <div className='sidebar-indicator sidebar-indicator-quiz'></div>
+                      <div className='sidebar-indicator sidebar-indicator-exams'></div>
                     )}
                     <button
                       onClick={() => setExamOpen(!examOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isExamActive
-                          ? 'bg-primary text-primary-foreground shadow-md'
+                          ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
                       }`}
                     >
@@ -503,7 +512,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       onClick={() => setProjectOpen(!projectsOpen)}
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                         isProjectsActive
-                          ? 'bg-primary text-primary-foreground shadow-md'
+                          ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
                       }`}
                     >
@@ -563,7 +572,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     href='/personalisedLearning'
                     className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/personalisedLearning'
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
                     }`}
                   >
@@ -605,7 +614,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 <div className="">
                   <Link href="/">
                   <Image
-                    src="/logo.png"
+                    src={logoUrl ?? '/logo.png'}
                     alt="Logo"
                     width={180}
                     height={70}
@@ -659,7 +668,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                   } py-3 rounded-md font-medium transition-all duration-200 relative ${
                     pathname === '/'
-                      ? 'bg-primary text-primary-foreground shadow-md'
+                      ? 'bg-gradient-primary text-primary-foreground shadow-md'
                       : 'text-[#222] hover:bg-primary/20'
                   }`}
                 >
@@ -679,7 +688,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isAiTutorActive
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -737,7 +746,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isPointAskActive
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -797,7 +806,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isQuizActive
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -859,7 +868,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               <div className='mb-2'>
                 <div className='relative'>
                   {isExamActive && (
-                    <div className='sidebar-indicator sidebar-indicator-quiz'></div>
+                    <div className='sidebar-indicator sidebar-indicator-exams'></div>
                   )}
                   <button
                     onClick={() => !collapsed && setExamOpen(!examOpen)}
@@ -867,7 +876,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isExamActive
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -937,7 +946,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'justify-between px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       isProjectsActive
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
                     } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
@@ -1007,7 +1016,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       collapsed ? 'justify-center px-2' : 'gap-3 px-4'
                     } py-3 rounded-md font-medium transition-all duration-200 ${
                       pathname === '/personalisedLearning'
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
                     }`}
                   >

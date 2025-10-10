@@ -308,6 +308,34 @@ export default function Home() {
             if (profileResponse.data.success) {
               setProfileData(profileResponse.data.data);
               console.log('Profile Data from API:', profileResponse.data.data);
+              try {
+                // Persist profile + theme
+                localStorage.setItem('user-profile', JSON.stringify(profileResponse.data.data));
+                const primary = profileResponse.data.data?.institution?.primaryColor;
+                const secondary = profileResponse.data.data?.institution?.secondaryColor;
+                if (primary || secondary) {
+                  localStorage.setItem('institution-theme', JSON.stringify({ primary, secondary }));
+                  const root = document.documentElement;
+                  if (primary) {
+                    root.style.setProperty('--primary', primary);
+                    const hex = String(primary).replace('#','');
+                    const h = hex.length === 3 ? hex.split('').map(c=>c+c).join('') : hex;
+                    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+                    const yiq = (r*299 + g*587 + b*114)/1000;
+                    root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+                    root.style.setProperty('--accent', primary);
+                    root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+                  }
+                  if (secondary) {
+                    root.style.setProperty('--secondary', secondary);
+                    const hex2 = String(secondary).replace('#','');
+                    const h2 = hex2.length === 3 ? hex2.split('').map(c=>c+c).join('') : hex2;
+                    const r2 = parseInt(h2.slice(0,2),16), g2 = parseInt(h2.slice(2,4),16), b2 = parseInt(h2.slice(4,6),16);
+                    const yiq2 = (r2*299 + g2*587 + b2*114)/1000;
+                    root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
+                  }
+                }
+              } catch {}
             }
           } catch (profileErr) {
             if (axios.isAxiosError(profileErr) && profileErr.response?.status === 401) {
@@ -317,6 +345,33 @@ export default function Home() {
 
             console.error('Error fetching profile:', profileErr);
           }
+        } else {
+          try {
+            const primary = userFromCookie?.institution?.primaryColor;
+            const secondary = userFromCookie?.institution?.secondaryColor;
+            if (primary || secondary) {
+              localStorage.setItem('institution-theme', JSON.stringify({ primary, secondary }));
+              const root = document.documentElement;
+              if (primary) {
+                root.style.setProperty('--primary', primary);
+                const hex = String(primary).replace('#','');
+                const h = hex.length === 3 ? hex.split('').map(c=>c+c).join('') : hex;
+                const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+                const yiq = (r*299 + g*587 + b*114)/1000;
+                root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+                root.style.setProperty('--accent', primary);
+                root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
+              }
+              if (secondary) {
+                root.style.setProperty('--secondary', secondary);
+                const hex2 = String(secondary).replace('#','');
+                const h2 = hex2.length === 3 ? hex2.split('').map(c=>c+c).join('') : hex2;
+                const r2 = parseInt(h2.slice(0,2),16), g2 = parseInt(h2.slice(2,4),16), b2 = parseInt(h2.slice(4,6),16);
+                const yiq2 = (r2*299 + g2*587 + b2*114)/1000;
+                root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
+              }
+            }
+          } catch {}
         }
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -386,7 +441,7 @@ export default function Home() {
         className={`min-h-screen flex items-center justify-center bg-gray-50 ${poppins.className}`}
       >
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-20 w-20 border-b-2 border-primary mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-20 w-20 border-b-2 border-white bg-gradient-primary mx-auto mb-4'></div>
           <p className='text-gray-600'>Loading dashboard...</p>
         </div>
       </div>
@@ -402,7 +457,7 @@ export default function Home() {
           <p className='text-red-600 text-lg mb-4'>{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className='px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90'
+            className='px-4 py-2 bg-gradient-primary text-primary-foreground rounded-lg hover:bg-primary/90'
           >
             Retry
           </button>
@@ -462,10 +517,10 @@ export default function Home() {
             className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer overflow-hidden relative'
             title='Profile'
           >
-            {dashboardData.user.profilePictureUrl ? (
+            {(profileData?.photoUrl || dashboardData.user.profilePictureUrl) ? (
               <>
                 <img 
-                  src={dashboardData.user.profilePictureUrl} 
+                  src={(profileData?.photoUrl as string) || (dashboardData.user.profilePictureUrl as string)} 
                   alt="Profile" 
                   className="w-full h-full object-cover rounded-full"
                   onError={(e) => {
@@ -505,7 +560,7 @@ export default function Home() {
             <div
               key={idx}
               className={`flex-1 flex flex-col items-center py-2 rounded-xl ${
-                day.isActive ? 'text-primary' : 'text-gray-400'
+                day.isActive ? 'text-gradient-primary' : 'text-gray-400'
               }`}
             >
               <img
@@ -521,7 +576,7 @@ export default function Home() {
         </div>
 
         <div 
-          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-primary/20 bg-gradient-to-r from-yellow-50 to-red-50 shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-primary/30 transition-all duration-200'
+          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-primary/20 bg-gradient-primary shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-primary/30 transition-all duration-200'
           onClick={() => {
             if (primaryChallenge) {
               if (primaryChallenge.quizId) {
@@ -543,7 +598,7 @@ export default function Home() {
         >
           <img src='/images/medal.svg' alt='' className='w-[50px] h-[50px]' />
           <div className='flex-1 font-semibold'>
-            <span className='text-primary'>
+            <span className='text-gradient-primary'>
               {primaryChallenge ? primaryChallenge.title : 'Badge Challenge'}
             </span>
             {challenges.length > 1 && (
@@ -553,7 +608,7 @@ export default function Home() {
           <div className='text-sm text-gray-600'>
             {primaryChallenge ? (
               primaryChallenge.current >= primaryChallenge.target ? (
-                <span className='text-primary font-semibold'>🎉 Earned!</span>
+                <span className='text-gradient-primary font-semibold'>🎉 Earned!</span>
               ) : (
                 <>
                   {primaryChallenge.current}/{primaryChallenge.target}
@@ -561,7 +616,7 @@ export default function Home() {
               )
             ) : null}
           </div>
-          <div className='w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 hover:shadow-lg hover:scale-110 transition-all duration-200'>
+          <div className='w-10 h-10 bg-gradient-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 hover:shadow-lg hover:scale-110 transition-all duration-200'>
             <ArrowRight size={20} />
           </div>
         </div>
@@ -621,7 +676,7 @@ export default function Home() {
             </p>
             <button
               onClick={() => router.push(card.link)}
-              className='bg-primary text-primary-foreground text-base px-4 py-1.5 rounded-lg transition-all duration-200 w-full sm:w-auto hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+              className='bg-gradient-primary text-primary-foreground text-base px-4 py-1.5 rounded-lg transition-all duration-200 w-full sm:w-auto hover:bg-primary/90 hover:shadow-lg hover:scale-105'
             >
               {card.buttonText}
             </button>
@@ -663,8 +718,8 @@ export default function Home() {
                     onClick={() => handleMissionClick(mission)}
                     className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-white w-[150px] h-[40px]  ${
                       mission.completed
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105 cursor-default'
-                        : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+                        ? 'bg-gradient-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105 cursor-default'
+                        : 'bg-gradient-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105'
                     }`}
                   >
                     {mission.completed
@@ -738,8 +793,8 @@ export default function Home() {
                     onClick={() => handleQuickLinkClick(link)}
                     className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-primary-foreground w-[150px] h-[40px] ${
                       link.status === 'Completed'
-                        ? 'bg-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
-                        : 'bg-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+                        ? 'bg-gradient-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+                        : 'bg-gradient-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
                     }`}
                   >
                     {link.status === 'Completed' 
@@ -768,7 +823,7 @@ export default function Home() {
                   </div>
                   <div className='w-full bg-gray-200 rounded-full h-3'>
                     <div
-                      className='h-3 rounded-full bg-primary transition-all duration-500'
+                      className='h-3 rounded-full bg-gradient-primary transition-all duration-500'
                       style={{ width: `${item.percentage}%` }}
                     ></div>
                   </div>
@@ -836,7 +891,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-gray-600">Completed:</span>
-                    <span className="font-semibold text-primary">{challenges[selectedChallengeIndex]?.current} tasks</span>
+                    <span className="font-semibold text-gradient-primary">{challenges[selectedChallengeIndex]?.current} tasks</span>
                   </div>
                   
                   <div className="flex items-center justify-between mb-3">
@@ -857,7 +912,7 @@ export default function Home() {
                         className="h-3 rounded-full transition-all duration-500"
                         style={{ 
                           width: `${Math.min(100, (((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100))}%`,
-                          background: 'var(--primary)'
+                          background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)'
                         }}
                       ></div>
                     </div>
@@ -865,7 +920,7 @@ export default function Home() {
                   
                   {/* Status */}
                   {(challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0) ? (
-                    <div className="flex items-center gap-2 text-primary font-semibold">
+                    <div className="flex items-center gap-2 text-gradient-primary font-semibold">
                       🎉 Badge Completed!
                     </div>
                   ) : (
@@ -911,7 +966,7 @@ export default function Home() {
                       }
                       router.push('/quizes/generate');
                     }}
-                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
+                    className="flex-1 bg-gradient-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105"
                   >
                     Start Challenge
                   </button>
