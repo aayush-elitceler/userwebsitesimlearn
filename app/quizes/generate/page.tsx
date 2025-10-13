@@ -4,6 +4,18 @@ import { useRouter } from 'next/navigation';
 import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 
 const difficulties = ['easy', 'medium', 'hard'];
+const subjects = [
+  'Mathematics',
+  'Physics',
+  'Chemistry',
+  'Biology',
+  'Zoology',
+  'History',
+  'Economics',
+  'Civics',
+  'Geography',
+  'English'
+];
 const numQuestionsOptions = Array.from({length: 26}, (_, i) => i); // 0 to 25
 const timeLimits = [5, 10, 15, 20, 30, 60];
 
@@ -39,6 +51,7 @@ interface QuizGenerationResult {
 export default function GenerateQuizPage() {
   const [grade, setGrade] = useState(8);
   const [persona, setPersona] = useState('teacher');
+  const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState('medium');
@@ -92,6 +105,7 @@ export default function GenerateQuizPage() {
         body: JSON.stringify({
           grade: String(grade),
           persona,
+          subject,
           description,
           topic: topic,
           difficulty,
@@ -266,8 +280,33 @@ export default function GenerateQuizPage() {
               </div>
             </div>
           </div>
+          {/* Subject and Description in same row */}
+          <div className='flex flex-col'>
+            <label htmlFor="subject" className='text-black mb-1 font-semibold'>Subject</label>
+            <div className='relative'>
+              <select
+                id="subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className='w-full rounded-lg px-4 py-3 bg-input text-foreground border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent appearance-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-200'
+                required
+              >
+                <option value="">Select a subject</option>
+                {subjects.map((subj) => (
+                  <option key={subj} value={subj}>
+                    {subj}
+                  </option>
+                ))}
+              </select>
+              <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+            </div>
+          </div>
           {/* Description */}
-          <div className='flex flex-col md:col-span-2'>
+          <div className='flex flex-col'>
             <label htmlFor="description" className='text-black mb-1 font-semibold'>Description</label>
             <textarea
               id="description"
@@ -374,6 +413,7 @@ export default function GenerateQuizPage() {
             onClick={() => {
               setDescription('');
               setTopic('');
+              setSubject('');
               setDifficulty('medium');
               setNumQuestions(5);
               setTimer(20);

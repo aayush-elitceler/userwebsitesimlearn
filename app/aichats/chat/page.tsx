@@ -676,11 +676,15 @@ export default function AiChatsChatPage() {
         `Respond as a ${selectedStyle}. ` : "";
       const questionWithPersona = `${personaPrompt}${sendMsg.trim()}`;
 
-      const payload = {
+      const payload: Record<string, unknown> = {
         collection_name: "aitut",
         question: questionWithPersona,
         llm: "gpt-3.5-turbo-16k"
       };
+
+      if (sessionIdForRequest) {
+        payload.session_id = sessionIdForRequest;
+      }
       const authCookie = Cookies.get("auth");
       let token: string | undefined;
       if (authCookie) { 
@@ -780,8 +784,8 @@ export default function AiChatsChatPage() {
         });
 
         const nextSessionId =
-          typeof gptResult?.data?.sessionId === "string"
-            ? gptResult.data.sessionId
+          typeof gptResult?.data?.session_id === "string"
+            ? gptResult.data.session_id
             : null;
         setGptSessionId(nextSessionId);
 
@@ -846,6 +850,12 @@ export default function AiChatsChatPage() {
                     // Store the final complete response and stop streaming
                     finalResponse = data;
                     console.log("🔍 [CHAT] Complete response:", data);
+
+                    // Extract session_id for next request
+                    const nextSessionId = data.session_id;
+                    if (nextSessionId) {
+                      setGptSessionId(nextSessionId);
+                    }
 
                     // Update with final content and stop streaming
                     setChatHistory((prev) => {

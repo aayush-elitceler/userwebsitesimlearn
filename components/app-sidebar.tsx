@@ -297,9 +297,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       }`}
                     >
                       <span className='flex items-center gap-3'>
-                        <div className={`w-7 h-7 rounded border-2 flex items-center justify-center ${
-                          isAiTutorActive ? 'border-primary-foreground' : 'border-[#222]'
-                        }`}>
+                        <div className={`w-7 h-7 rounded flex items-center justify-center`}>
                           <span className={`text-xs font-bold ${
                             isAiTutorActive ? 'text-white' : 'text-[#222]'
                           }`}>AI</span>
@@ -698,9 +696,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         collapsed ? '' : 'gap-3'
                       }`}
                     >
-                      <div className={`w-7 h-7 rounded border-2 flex items-center justify-center ${
-                        isAiTutorActive ? 'border-primary-foreground' : 'border-[#222]'
-                      }`}>
+                      <div className={`w-7 h-7 rounded flex items-center justify-center`}>
                         <span className={`text-xs font-bold ${
                           isAiTutorActive ? 'text-white' : 'text-[#222]'
                         }`}>AI</span>
