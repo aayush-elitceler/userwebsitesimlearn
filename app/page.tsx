@@ -576,7 +576,7 @@ export default function Home() {
         </div>
 
         <div 
-          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-primary/20 bg-gradient-primary shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-primary/30 transition-all duration-200'
+          className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-primary/20 bg-gradient-primary  shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-primary/30 transition-all duration-200'
           onClick={() => {
             if (primaryChallenge) {
               if (primaryChallenge.quizId) {
@@ -597,18 +597,18 @@ export default function Home() {
           }}
         >
           <img src='/images/medal.svg' alt='' className='w-[50px] h-[50px]' />
-          <div className='flex-1 font-semibold'>
-            <span className='text-gradient-primary'>
+          <div className='flex-1 font-semibold '>
+            <span className='text-white'>
               {primaryChallenge ? primaryChallenge.title : 'Badge Challenge'}
             </span>
             {challenges.length > 1 && (
-              <span className='ml-2 text-xs text-gray-600'>({challenges.length} challenges)</span>
+              <span className='ml-2 text-xs text-white'>({challenges.length} challenges)</span>
             )}
           </div>
-          <div className='text-sm text-gray-600'>
+          <div className='text-sm text-white'>
             {primaryChallenge ? (
               primaryChallenge.current >= primaryChallenge.target ? (
-                <span className='text-gradient-primary font-semibold'>🎉 Earned!</span>
+                <span className='text-white font-semibold'>🎉 Earned!</span>
               ) : (
                 <>
                   {primaryChallenge.current}/{primaryChallenge.target}
