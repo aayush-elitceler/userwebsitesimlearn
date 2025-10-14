@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 type QuizResult = {
   quizTitle: string;
@@ -56,21 +57,17 @@ export default function QuizReportPage() {
     async function fetchResult() {
       setLoading(true);
       try {
-        const token = getTokenFromCookie();
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/result?submissionId=${submissionId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
+        const response = await axios.get(`/users/quiz/result?submissionId=${submissionId}`);
+        const data = response.data;
         if (data.success && data.data && data.data.result) {
           setResult(data.data.result);
         }
-      } catch (e) {
-        // handle error
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching quiz result:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -82,21 +79,17 @@ export default function QuizReportPage() {
     async function fetchSuggestedQuizzes() {
       setSuggestedLoading(true);
       try {
-        const token = getTokenFromCookie();
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/suggested`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
+        const response = await axios.get('/users/quiz/suggested');
+        const data = response.data;
         if (data.success && data.data && data.data.quizzes) {
           setSuggestedQuizzes(data.data.quizzes);
         }
-      } catch (e) {
-        // handle error
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching suggested quizzes:', error);
+        }
       } finally {
         setSuggestedLoading(false);
       }
@@ -250,16 +243,3 @@ export default function QuizReportPage() {
     </div>
   );
 }
-
-function getTokenFromCookie() {
-    if (typeof document === "undefined") return null;
-    const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-    if (!match) return null;
-    try {
-      const decoded = decodeURIComponent(match[1]);
-      const parsed = JSON.parse(decoded);
-      return parsed.token;
-    } catch {
-      return null;
-    }
-  }

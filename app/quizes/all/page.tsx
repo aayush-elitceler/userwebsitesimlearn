@@ -4,23 +4,36 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 import QuizCard from "@/components/QuizCard";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 // Update the Quiz type to match API
+interface Option {
+  id: string;
+  optionText: string;
+  isCorrect: boolean;
+  questionId: string;
+}
+
 interface Question {
   id: string;
   questionText: string;
+  bloomTaxonomy?: string | null;
+  quizId: string;
+  options?: Option[];
 }
 
 interface Quiz {
   id: string;
   title: string;
+  description?: string | null;
   instructions: string;
   timeLimitMinutes: number;
   topic: string;
   difficulty: string;
   createdAt: string;
-  userId: string;
+  userId?: string | null;
   completed: boolean;
+  createdBy: string;
   score?: number;
   date?: string;
   questions?: Question[];
@@ -29,19 +42,6 @@ interface Quiz {
   subject?: string;
 }
 
-// Utility to get token from 'auth' cookie
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
-}
 type Submission = {
   id: string;
   quizId: string;
@@ -81,20 +81,8 @@ export default function AllQuizzesPage() {
     async function fetchQuizzes() {
       setLoading(true);
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
+        const response = await axios.get('/users/quiz');
+        const data = response.data;
         if (
           data.success &&
           data.data &&
@@ -109,8 +97,12 @@ export default function AllQuizzesPage() {
             Array.isArray(userObj.previous) ? userObj.previous.reverse() : []
           );
         }
-      } catch (e) {
-        // handle error
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching quizzes:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -121,22 +113,17 @@ export default function AllQuizzesPage() {
   useEffect(() => {
     async function fetchSubmissions() {
       try {
-        const token = getTokenFromCookie();
-        if (!token) return;
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/submissions`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
+        const response = await axios.get('/users/quiz/submissions');
+        const data = response.data;
         if (data.success && data.data && data.data.submissions) {
           setSubmissions(data.data.submissions);
         }
-      } catch (e) {
-        // handle error
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching submissions:', error);
+        }
       }
     }
     fetchSubmissions();
