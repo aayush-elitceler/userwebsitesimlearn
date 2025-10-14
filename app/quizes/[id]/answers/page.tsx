@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 interface Option {
   id: string;
@@ -39,21 +40,17 @@ export default function QuizAnswersPage() {
     async function fetchResult() {
       setLoading(true);
       try {
-        const token = getTokenFromCookie();
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/result?submissionId=${submissionId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
+        const response = await axios.get(`/users/quiz/result?submissionId=${submissionId}`);
+        const data = response.data;
         if (data.success && data.data && data.data.result) {
           setResult(data.data.result);
         }
-      } catch (e) {
-        // handle error
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching quiz result:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -110,18 +107,4 @@ export default function QuizAnswersPage() {
       </div>
     </div>
   );
-}
-
-// Utility to get token from 'auth' cookie
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
 }

@@ -1,30 +1,26 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 interface Project {
   id: string;
   title: string;
-  subject: string;
-  description: string;
+  subject: string | null;
+  description: string | null;
   class: string;
   persona: string;
   pdfUrl: string;
   createdAt: string;
+  updatedAt: string;
+  userId?: string;
+  institutionId?: string | null;
+  teacherId?: string | null;
+  standardId?: string | null;
+  sectionId?: string | null;
+  createdBy?: string;
 }
 
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
-}
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -37,35 +33,22 @@ export default function ProjectDetailPage() {
     async function fetchProject() {
       setLoading(true);
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setError("Authentication required");
-          return;
-        }
-
         const projectId = params.id as string;
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/projects/${projectId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await axios.get(`/users/projects/${projectId}`);
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.data) {
-            setProject(data.data);
-          } else {
-            setError("Project not found");
-          }
+        const data = response.data;
+        if (data.success && data.data?.project) {
+          setProject(data.data.project);
         } else {
+          setError("Project not found");
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error("Error fetching project:", error);
           setError("Failed to load project");
         }
-      } catch (e) {
-        console.error("Error fetching project:", e);
-        setError("Failed to load project");
       } finally {
         setLoading(false);
       }
@@ -144,7 +127,9 @@ export default function ProjectDetailPage() {
               <div className="space-y-3">
                 <div>
                   <span className="font-medium text-gray-600">Subject:</span>
-                  <span className="ml-2 text-gray-800">{project.subject}</span>
+                  <span className="ml-2 text-gray-800">
+                    {project.subject || "Not specified"}
+                  </span>
                 </div>
                 <div>
                   <span className="font-medium text-gray-600">Class:</span>
@@ -165,7 +150,9 @@ export default function ProjectDetailPage() {
 
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Description</h3>
-              <p className="text-gray-700 leading-relaxed">{project.description}</p>
+              <p className="text-gray-700 leading-relaxed">
+                {project.description || "No description provided"}
+              </p>
             </div>
           </div>
 

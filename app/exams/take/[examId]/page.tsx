@@ -9,7 +9,7 @@ interface Question {
   questionText: string;
   questionType: string;
   marks?: number;
-  examId: string;
+  quizId: string;
   options: any[];
   bloomTaxonomy?: string | null;
   correctAnswer?: string | null;

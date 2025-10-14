@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useRouter } from "next/navigation";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -36,24 +37,6 @@ interface Quiz {
   questions: Question[];
 }
 
-function getTokenFromCookie() {
-  // Ensure we're on the client side
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return null;
-  }
-
-  try {
-    const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-    if (!match) return null;
-
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch (error) {
-    console.error('Error parsing auth cookie:', error);
-    return null;
-  }
-}
 
 async function submitQuiz(
   quiz: Quiz,
@@ -61,43 +44,29 @@ async function submitQuiz(
   quizStartedAt: string,
   router: ReturnType<typeof useRouter>
 ) {
-  const token = getTokenFromCookie();
-  if (!token) {
-    alert('No auth token found. Please login.');
-    return;
-  }
-  // Calculate time taken in minutes
-  const started = new Date(quizStartedAt);
-  const completed = new Date();
-  const timeTaken = Math.max(
-    1,
-    Math.round((completed.getTime() - started.getTime()) / 60000)
-  );
-  const answers = quiz.questions.map((q) => ({
-    questionId: q.id,
-    selectedOptionId: selected[q.id] || '',
-  }));
+  try {
+    // Calculate time taken in minutes
+    const started = new Date(quizStartedAt);
+    const completed = new Date();
+    const timeTaken = Math.max(
+      1,
+      Math.round((completed.getTime() - started.getTime()) / 60000)
+    );
+    const answers = quiz.questions.map((q) => ({
+      questionId: q.id,
+      selectedOptionId: selected[q.id] || '',
+    }));
 
-  const body = {
-    quizId: quiz.id,
-    answers,
-    timeTaken,
-  };
+    const body = {
+      quizId: quiz.id,
+      answers,
+      timeTaken,
+    };
 
-  const res = await fetch(
-    `https://apisimplylearn.selflearnai.in/api/v1/users/quiz/submit`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-    }
-  );
+    const response = await axios.post('/users/quiz/submit', body);
 
-  if (res.ok) {
-    const data = await res.json();
+    if (response.data.success) {
+      const data = response.data;
     const submissionId = data.data?.submission?.id; // Adjust based on your API response
     if (submissionId) {
       router.push(`/quizes/reports/${submissionId}`);
@@ -106,6 +75,14 @@ async function submitQuiz(
     }
   } else {
     alert('Failed to submit quiz.');
+  }
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      redirectToLogin();
+    } else {
+      console.error('Error submitting quiz:', error);
+      alert('Failed to submit quiz.');
+    }
   }
 }
 
@@ -144,41 +121,21 @@ export default function QuizStartPage() {
       setLoading(true);
       setError('');
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setError('No auth token found. Please login.');
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch(
-          `https://apisimplylearn.selflearnai.in/api/v1/users/quiz-by-id?id=${quizId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error('Quiz fetch error:', errorText);
-          setError(`Failed to fetch quiz: ${res.status} ${res.statusText}`);
-          setLoading(false);
-          return;
-        }
-
-        const data = await res.json();
-
-        if (!data.success) {
-          setError(data.message || 'Failed to fetch quiz.');
-        } else {
+        const response = await axios.get(`/users/quiz-by-id?id=${quizId}`);
+        const data = response.data;
+        if (data.success) {
           setQuiz(data.data.quiz || data.data);
           setQuizStartedAt(new Date().toISOString());
+        } else {
+          setError(data.message || 'Failed to fetch quiz.');
         }
-      } catch (err) {
-        console.error('Quiz fetch error:', err);
-        setError('An error occurred. Please try again.');
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching quiz:', error);
+          setError('An error occurred. Please try again.');
+        }
       } finally {
         setLoading(false);
       }

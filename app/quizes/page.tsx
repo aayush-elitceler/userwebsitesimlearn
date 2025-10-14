@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 // Update the Quiz type to match API
 interface Option {
@@ -245,19 +246,6 @@ function QuizCard({
   );
 }
 
-// Utility to get token from 'auth' cookie
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
-}
 
 export default function QuizesPage() {
   const [upcomingQuizzes, setUpcomingQuizzes] = useState<Quiz[]>([]);
@@ -271,20 +259,8 @@ export default function QuizesPage() {
     async function fetchQuizzes() {
       setLoading(true);
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
+        const response = await axios.get('/users/quiz');
+        const data = response.data;
         if (data.success && data.data) {
           const userQuizzes = data.data.userGeneratedQuizzes || {};
           const institutionQuizzes = data.data.institutionGeneratedQuizzes || {};
@@ -305,8 +281,12 @@ export default function QuizesPage() {
           setUpcomingQuizzes(allUpcoming.sort(sortByDate));
           setPreviousQuizzes(allPrevious.sort(sortByDate));
         }
-      } catch (e) {
-        // handle error
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching quizzes:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -318,25 +298,17 @@ export default function QuizesPage() {
     async function fetchSubmissions() {
       setSubmissionsLoading(true);
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setSubmissionsLoading(false);
-          return;
-        }
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/submissions`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
+        const response = await axios.get('/users/quiz/submissions');
+        const data = response.data;
         if (data.success && data.data && data.data.submissions) {
           setSubmissions(data.data.submissions);
         }
-      } catch (e) {
-        // handle error
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching submissions:', error);
+        }
       } finally {
         setSubmissionsLoading(false);
       }

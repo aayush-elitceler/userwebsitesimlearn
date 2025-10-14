@@ -4,6 +4,7 @@ import ContentCard from "@/components/ContentCard";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 
 interface UserProject {
@@ -11,25 +12,11 @@ interface UserProject {
   class: string;
   title: string;
   persona: string;
-  subject: string;
-  description?: string;
+  subject: string | null;
+  description?: string | null;
   createdAt: string;
   pdfUrl: string;
 }
-
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
-}
-
 
 export default function ProjectsPage() {
   const [userProjects, setUserProjects] = useState<UserProject[]>([]);
@@ -40,48 +27,27 @@ export default function ProjectsPage() {
     async function fetchProjects() {
       setLoading(true);
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          console.error("No authentication token found");
-          return;
-        }
-
         console.log("Fetching projects...");
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        const response = await axios.get('/users/projects');
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/projects`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            signal: controller.signal,
+        const data = response.data;
+        console.log("Projects API Response data:", data);
+
+        if (data.success && data.data) {
+          if (data.data["user-generated"]) {
+            // Reverse the array to show newest first
+            setUserProjects(data.data["user-generated"].reverse());
           }
-        );
-
-        clearTimeout(timeoutId);
-
-        console.log("Projects API Response status:", res.status);
-
-        if (res.ok) {
-          const data = await res.json();
-          console.log("Projects API Response data:", data);
-
-          if (data.success && data.data) {
-            if (data.data["user-generated"]) {
-              // Reverse the array to show newest first
-              setUserProjects(data.data["user-generated"].reverse());
-            }
-          }
-        } else {
-          console.error("Failed to fetch projects:", res.status, res.statusText);
         }
-      } catch (e) {
-        console.error("Error fetching projects:", e);
-        if (e instanceof Error) {
-          if (e.name === 'AbortError') {
-            console.error("Request timed out while fetching projects");
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error("Error fetching projects:", error);
+          if (axios.isAxiosError(error)) {
+            if (error.name === 'AbortError') {
+              console.error("Request timed out while fetching projects");
+            }
           }
         }
       } finally {
@@ -144,6 +110,8 @@ export default function ProjectsPage() {
                   key={project.id}
                   content={{
                     ...project,
+                    subject: project.subject || undefined,
+                    description: project.description || undefined,
                     type: 'project',
                     downloadUrl: project.pdfUrl,
                   }}

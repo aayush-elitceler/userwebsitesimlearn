@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 interface ProfileData {
   id: string;
@@ -34,40 +35,21 @@ export default function UserProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const authCookie = Cookies.get('auth');
-        let token: string | undefined;
-        if (authCookie) {
-          try {
-            token = JSON.parse(authCookie).token;
-          } catch (e) {
-            console.error('Error parsing auth cookie', e);
-          }
+        const response = await axios.get('/users/auth/get-profile');
+
+        const data = response.data;
+        if (data.success) {
+          setProfile(data.data);
+        } else {
+          setError(data.message || 'Failed to load profile');
         }
-
-        if (!token) {
-          router.push('/login');
-          return;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching profile:', error);
+          setError('Failed to load profile');
         }
-
-        const res = await fetch(
-          'https://apisimplylearn.selflearnai.in/api/v1/users/auth/get-profile',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch profile');
-        }
-
-        const json: ApiResponse = await res.json();
-        setProfile(json.data);
-      } catch (err: any) {
-        console.error(err);
-        setError('Unable to load profile');
       } finally {
         setLoading(false);
       }
