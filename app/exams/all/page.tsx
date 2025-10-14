@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 import QuizCard from "@/components/QuizCard";
 import ExamCard from "@/components/ExamCard";
 
@@ -17,7 +18,7 @@ interface Question {
   questionText: string;
   questionType: string;
   marks?: number;
-  examId: string;
+  quizId: string;
   options: any[];
   bloomTaxonomy?: string | null;
 }
@@ -48,19 +49,6 @@ interface Quiz {
 
 // (Removed a large inline QuizCard; use components/QuizCard instead)
 
-// Utility to get token from 'auth' cookie
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
-}
 
 // Helper to guess subject from topic
 function guessSubjectFromTopic(topic?: string): string {
@@ -90,20 +78,8 @@ export default function AllExamsPage() {
     async function fetchExams() {
       setLoading(true);
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
+        const response = await axios.get('/users/exams');
+        const data = response.data;
         if (
           data.success &&
           data.data &&
@@ -118,8 +94,12 @@ export default function AllExamsPage() {
             Array.isArray(userObj.previous) ? userObj.previous.reverse() : []
           );
         }
-      } catch (e) {
-        // handle error
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching exams:', error);
+        }
       } finally {
         setLoading(false);
       }

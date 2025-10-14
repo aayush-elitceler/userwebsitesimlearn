@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 interface Option {
   id: string;
@@ -29,25 +30,8 @@ interface Quiz {
   questions: Question[];
 }
 
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
-}
-
 async function submitQuiz(quiz: Quiz, selected: { [questionId: string]: string }, quizStartedAt: string) {
-  const token = getTokenFromCookie();
-  if (!token) {
-    alert("No auth token found. Please login.");
-    return;
-  }
+  try {
   // Calculate time taken in minutes
   const started = new Date(quizStartedAt);
   const completed = new Date();
@@ -63,17 +47,10 @@ async function submitQuiz(quiz: Quiz, selected: { [questionId: string]: string }
     timeTaken,
   };
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz/submit`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
+  const response = await axios.post('/users/quiz/submit', body);
 
-  if (res.ok) {
-    const data = await res.json();
+  if (response.data.success) {
+    const data = response.data;
     const submissionId = data.data?.submission?.id;
     if (submissionId) {
       window.location.href = `/quizes/reports/${submissionId}`;
@@ -82,6 +59,14 @@ async function submitQuiz(quiz: Quiz, selected: { [questionId: string]: string }
     }
   } else {
     alert("Failed to submit quiz.");
+  }
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      redirectToLogin();
+    } else {
+      console.error('Error submitting quiz:', error);
+      alert("Failed to submit quiz.");
+    }
   }
 }
 
@@ -103,26 +88,21 @@ export default function QuizStartPage() {
       setLoading(true);
       setError("");
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setError("No auth token found. Please login.");
-          setLoading(false);
-          return;
-        }
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/quiz-by-id?id=${quizId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          setError(data.message || "Failed to fetch quiz.");
-        } else {
+        const response = await axios.get(`/users/quiz-by-id?id=${quizId}`);
+        const data = response.data;
+        if (data.success) {
           setQuiz(data.data.quiz || data.data);
           setQuizStartedAt(new Date().toISOString());
+        } else {
+          setError(data.message || "Failed to fetch quiz.");
         }
-      } catch (err) {
-        setError("An error occurred. Please try again.");
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          console.error('Error fetching quiz:', error);
+          setError("An error occurred. Please try again.");
+        }
       } finally {
         setLoading(false);
       }
@@ -147,16 +127,9 @@ export default function QuizStartPage() {
     return `00:${m}:${s}`;
   }
 
-  // Progress
   const total = quiz?.questions?.length || 0;
   const answered = Object.keys(selected).length;
   const progress = total ? Math.min(answered / total, 1) : 0;
-
-
-
-
-
-
 
   return (
     <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white">

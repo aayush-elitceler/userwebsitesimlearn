@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 type GradingResult = {
   score: number;
@@ -136,23 +137,8 @@ export default function ExamReportPage() {
       }
       
       try {
-        const token = getTokenFromCookie();
-        if (!token) {
-          setError('No auth token found. Please login.');
-          setLoading(false);
-          return;
-        }
-        
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/report?examId=${examId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        
-        const data = await res.json();
+        const response = await axios.get(`/users/exams/report?examId=${examId}`);
+        const data = response.data;
         if (data.success && data.data && data.data.exam) {
           // Cache the report data
           if (examId) {
@@ -163,8 +149,12 @@ export default function ExamReportPage() {
         } else {
           setError(data.message || 'Failed to load exam report');
         }
-      } catch (e) {
-        setError('An error occurred while loading the report');
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          redirectToLogin();
+        } else {
+          setError('An error occurred while loading the report');
+        }
       } finally {
         setLoading(false);
       }
@@ -183,23 +173,8 @@ export default function ExamReportPage() {
     setError('');
     
     try {
-      const token = getTokenFromCookie();
-      if (!token) {
-        setError('No auth token found. Please login.');
-        setLoading(false);
-        return;
-      }
-      
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/report?examId=${examId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
-      const data = await res.json();
+      const response = await axios.get(`/users/exams/report?examId=${examId}`);
+      const data = response.data;
       if (data.success && data.data && data.data.exam) {
         // Cache the new report data
         setCachedReport(examId as string, data.data);
@@ -208,8 +183,12 @@ export default function ExamReportPage() {
       } else {
         setError(data.message || 'Failed to load exam report');
       }
-    } catch (e) {
-      setError('An error occurred while loading the report');
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        redirectToLogin();
+      } else {
+        setError('An error occurred while loading the report');
+      }
     } finally {
       setLoading(false);
     }
@@ -478,17 +457,4 @@ export default function ExamReportPage() {
       </div>
     </div>
   );
-}
-
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
 }

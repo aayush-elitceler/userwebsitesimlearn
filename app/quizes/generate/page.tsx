@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MultiStepLoader } from '@/components/ui/multi-step-loader';
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
 const difficulties = ['easy', 'medium', 'hard'];
 const subjects = [
@@ -77,52 +78,31 @@ export default function GenerateQuizPage() {
     setError('');
     setResult(null);
     try {
-      const token =
-        typeof document !== 'undefined'
-          ? (() => {
-              const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-              if (!match) return null;
-              try {
-                const decoded = decodeURIComponent(match[1]);
-                const parsed = JSON.parse(decoded);
-                return parsed.token;
-              } catch {
-                return null;
-              }
-            })()
-          : null;
-      if (!token) {
-        setError('No auth token found. Please login.');
-        setLoading(false);
-        return;
-      }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/ai/quiz`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          grade: String(grade),
-          persona,
-          subject,
-          description,
-          topic: topic,
-          difficulty,
-          timer,
-          numQuestions,
-        }),
+      const response = await axios.post('/ai/quiz', {
+        grade: String(grade),
+        persona,
+        subject,
+        description,
+        topic: topic,
+        difficulty,
+        timer,
+        numQuestions,
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.message || 'Failed to generate quiz.');
-      } else {
+
+      const data = response.data;
+      if (data.success) {
         setResult(data.data || data);
         setCreatedQuizId(data.data.quiz?.id || null);
+      } else {
+        setError(data.message || 'Failed to generate quiz.');
       }
-    } catch (err) {
-      console.log(err);
-      setError('An error occurred. Please try again.');
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        redirectToLogin();
+      } else {
+        console.error('Error generating quiz:', error);
+        setError('An error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

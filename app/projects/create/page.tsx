@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios, { redirectToLogin } from '@/lib/axiosInstance';
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 
 export default function CreateProjectPage() {
   const router = useRouter();
@@ -36,44 +38,21 @@ export default function CreateProjectPage() {
     };
 
     try {
-      const token = getTokenFromCookie();
-      if (!token) {
-        setError('No auth token found. Please login.');
-        setLoading(false);
-        setShowModal(false);
-        return;
-      }
-
       console.log("Creating project with data:", body);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/projects/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      const response = await axios.post('/users/projects/generate', body);
 
-      clearTimeout(timeoutId);
+      const data = response.data;
+      console.log("API Response data:", data);
 
-      console.log("API Response status:", res.status);
-
-      if (res.ok) {
-        const data = await res.json();
-        console.log("API Response data:", data);
-        
+      if (data.success && data.data?.project) {
         // Open PDF in new tab if available
-        const pdfUrl = data.data?.project?.pdfUrl;
+        const pdfUrl = data.data.project.pdfUrl;
         if (pdfUrl) {
           window.open(pdfUrl, '_blank');
         }
-        
-        const projectId = data.data?.project?.id || data.project?.id;
+
+        const projectId = data.data.project.id;
         if (projectId) {
           router.push(`/projects/${projectId}`);
         } else {
@@ -83,25 +62,28 @@ export default function CreateProjectPage() {
           router.push("/projects");
         }
       } else {
-        const errorData = await res.json().catch(() => ({}));
+        const errorData = data;
         console.error("API Error:", errorData);
-        setError(`Failed to create project: ${errorData.message || res.statusText}`);
+        setError(`Failed to create project: ${errorData.message || 'Unknown error'}`);
         setLoading(false);
       }
     } catch (error) {
-      console.error("Network error:", error);
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          setError("Request timed out. The server is taking too long to respond. Please try again.");
-        } else {
-          setError(`Network error: ${error.message}. Please check your connection and try again.`);
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        redirectToLogin();
+      } else {
+        console.error("Network error:", error);
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            setError("Request timed out. The server is taking too long to respond. Please try again.");
+          } else {
+            setError(`Network error: ${error.message}. Please check your connection and try again.`);
         }
       } else {
         setError("Network error. Please check your connection and try again.");
       }
       setLoading(false);
     }
-  };
+  };}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -113,50 +95,21 @@ export default function CreateProjectPage() {
           }}>
             {loading ? (
               <>
-                {/* Loading Spinner */}
                 <div className='mb-6'>
-                  <img 
-                    src="/images/loadingSpinner.svg" 
-                    alt="Loading" 
-                    className='w-24 h-24 animate-spin'
+                  <MultiStepLoader
+                    loading={loading}
+                    loadingStates={[
+                      { text: "Analyzing project requirements" },
+                      { text: "Generating project content" },
+                      { text: "Creating project structure" },
+                      { text: "Preparing project files" },
+                      { text: "Finalizing project" },
+                    ]}
+                    duration={6000}
+                    loop={true}
                   />
                 </div>
 
-                <div className='text-black font-semibold text-lg mb-6'>
-                  Generating your project....
-                </div>
-
-                {/* Project Details */}
-                <div className='flex flex-col gap-3 mb-8'>
-                  <div className='flex items-center gap-3 bg-muted rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/>
-                      <polyline points='14,2 14,8 20,8'/>
-                      <line x1='16' y1='13' x2='8' y2='13'/>
-                      <line x1='16' y1='17' x2='8' y2='17'/>
-                      <polyline points='10,9 9,9 8,9'/>
-                    </svg>
-                    <span className='text-foreground font-medium'>{form.subject || 'Subject'}</span>
-                  </div>
-
-                  <div className='flex items-center gap-3 bg-muted rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path d='M9 12l2 2 4-4'/>
-                      <path d='M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z'/>
-                      <path d='M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z'/>
-                      <path d='M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z'/>
-                      <path d='M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z'/>
-                    </svg>
-                    <span className='text-foreground font-medium'>{form.persona}</span>
-                  </div>
-
-                  <div className='flex items-center gap-3 bg-muted rounded-lg px-4 py-2'>
-                    <svg className='w-5 h-5 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path d='M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'/>
-                    </svg>
-                    <span className='text-foreground font-medium'>Class {form.class}</span>
-                  </div>
-                </div>
               </>
             ) : error ? (
               <>
@@ -288,16 +241,3 @@ export default function CreateProjectPage() {
   );
 }
 
-// Utility to get token from 'auth' cookie
-function getTokenFromCookie() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    const decoded = decodeURIComponent(match[1]);
-    const parsed = JSON.parse(decoded);
-    return parsed.token;
-  } catch {
-    return null;
-  }
-}
