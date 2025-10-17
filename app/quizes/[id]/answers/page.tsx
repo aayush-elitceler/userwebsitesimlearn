@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 
 interface Option {
   id: string;
@@ -58,7 +59,18 @@ export default function QuizAnswersPage() {
     if (submissionId) fetchResult();
   }, [submissionId]);
 
-  if (loading) return <div className="text-black p-8">Loading...</div>;
+  if (loading) return (
+    <MultiStepLoader 
+      loading 
+      loadingStates={[
+        { text: "Fetching quiz answers" },
+        { text: "Analyzing your responses" },
+        { text: "Preparing detailed review" },
+      ]} 
+      duration={1000}
+      loop={false} 
+    />
+  );
   if (!result) return <div className="text-black p-8">Result not found.</div>;
 
   return (

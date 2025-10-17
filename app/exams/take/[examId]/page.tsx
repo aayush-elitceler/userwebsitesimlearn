@@ -4,13 +4,20 @@ import { useParams, useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 
+interface Option {
+  id: string;
+  optionText: string;
+  isCorrect: boolean;
+  questionId: string;
+}
+
 interface Question {
   id: string;
   questionText: string;
   questionType: string;
   marks?: number;
-  quizId: string;
-  options: any[];
+  examId: string;
+  options: Option[];
   bloomTaxonomy?: string | null;
   correctAnswer?: string | null;
 }
@@ -197,15 +204,32 @@ export default function TakeExamPage() {
   const handleSubmit = async (autoSubmit = false, isFinalViolation = false) => {
     setSubmitting(true);
     const completedAt = new Date().toISOString();
+    // Process answers to send optionText for MCQ questions instead of option IDs
+    const processedAnswers = exam?.questions.map((q, i) => {
+      const userAnswer = answers[i];
+
+      if (q.questionType === "MCQ" && userAnswer) {
+        // For MCQ questions, find the selected option and send its text
+        const selectedOption = q.options.find(opt => opt.id === userAnswer);
+        return {
+          question: q.id,
+          answer: selectedOption ? selectedOption.optionText : userAnswer,
+        };
+      } else {
+        // For text questions (SHORT/LONG), send the answer as is
+        return {
+          question: q.id,
+          answer: userAnswer,
+        };
+      }
+    });
+
     const body = {
       examId,
       startedAt,
       completedAt,
       violations,
-      answers: exam?.questions.map((q, i) => ({
-        question: q.id,
-        answer: answers[i],
-      })),
+      answers: processedAnswers,
     };
     try {
       const token = getTokenFromCookie();
@@ -465,14 +489,14 @@ export default function TakeExamPage() {
           <div className="flex justify-between items-center mb-1">
             <span className="text-sm font-medium text-muted-foreground">Progress</span>
             <span className="text-sm font-medium text-muted-foreground">
-              {answers.filter(answer => answer.trim() !== "").length} of {exam.questions.length} answered
+              {answers.filter(answer => answer !== undefined && answer !== "").length} of {exam.questions.length} answered
             </span>
           </div>
           <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
             <div
               className="h-full bg-gradient-primary rounded-full transition-all duration-500 ease-out relative"
               style={{
-                width: `${(answers.filter(answer => answer.trim() !== "").length / exam.questions.length) * 100}%`
+                width: `${(answers.filter(answer => answer !== undefined && answer !== "").length / exam.questions.length) * 100}%`
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
@@ -526,12 +550,49 @@ export default function TakeExamPage() {
               </div>
             )}
 
-            <textarea
-              className="w-full p-4 rounded bg-primary/10 text-card-foreground min-h-[60px] transition-all duration-200 focus:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-              placeholder="Type your short answer here"
-              value={answers[idx]}
-              onChange={(e) => handleAnswerChange(idx, e.target.value)}
-            />
+            {q.questionType === "MCQ" ? (
+              // Multiple Choice Questions
+              <div className="space-y-3">
+                {q.options?.map((option, optionIndex) => (
+                  <label
+                    key={option.id}
+                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                      answers[idx] === option.id
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-background hover:bg-muted/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`question-${q.id}`}
+                      value={option.id}
+                      checked={answers[idx] === option.id}
+                      onChange={(e) => handleAnswerChange(idx, e.target.value)}
+                      className="mr-3 w-4 h-4 text-primary focus:ring-primary"
+                    />
+                    <span className="flex-1 text-card-foreground">
+                      <span className="font-medium mr-2">
+                        {String.fromCharCode(65 + optionIndex)}.
+                      </span>
+                      {option.optionText}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              // Short and Long Answer Questions
+              <textarea
+                className="w-full p-4 rounded bg-primary/10 text-card-foreground min-h-[60px] transition-all duration-200 focus:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+                placeholder={
+                  q.questionType === "LONG"
+                    ? "Type your detailed answer here..."
+                    : "Type your answer here..."
+                }
+                value={answers[idx]}
+                onChange={(e) => handleAnswerChange(idx, e.target.value)}
+                rows={q.questionType === "LONG" ? 6 : 3}
+              />
+            )}
           </div>
         ))}
         <button

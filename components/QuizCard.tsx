@@ -77,6 +77,7 @@ interface QuizCardProps {
   showScoreAndDate?: boolean;
   onStartQuiz?: (quizId: string) => void;
   onViewAnswers?: (submissionId: string) => void;
+  buttonText?: string;
 }
 
 export default function QuizCard({
@@ -90,6 +91,7 @@ export default function QuizCard({
   showScoreAndDate = true,
   onStartQuiz,
   onViewAnswers,
+  buttonText,
 }: QuizCardProps) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -205,7 +207,7 @@ export default function QuizCard({
               className="bg-gradient-primary cursor-pointer text-primary-foreground rounded-lg px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-semibold shadow hover:opacity-90 transition-opacity text-xs sm:text-sm whitespace-nowrap"
               onClick={handleStartQuiz}
             >
-              Start Quiz
+              {buttonText || "Start Quiz"}
             </button>
           )}
         </div>
