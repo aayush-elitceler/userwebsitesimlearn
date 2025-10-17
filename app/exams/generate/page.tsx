@@ -24,6 +24,7 @@ interface Question {
 interface Quiz {
   id: string;
   title: string;
+  description?: string | null;
   instructions: string;
   timeLimitMinutes: number;
   topic: string;
@@ -85,8 +86,8 @@ export default function QuizesPage() {
   // const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   // const [submissions, setSubmissions] = useState<Submission[]>([]);
   // const [submissionsLoading, setSubmissionsLoading] = useState(true);
-  const [userExams, setUserExams] = useState<Quiz[]>([]);
-  const [teacherExams, setTeacherExams] = useState<Quiz[]>([]);
+  const [upcomingTeacherExams, setUpcomingTeacherExams] = useState<Quiz[]>([]);
+  const [previousTeacherExams, setPreviousTeacherExams] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -97,11 +98,10 @@ export default function QuizesPage() {
         const response = await axios.get('/users/exams');
         const data = response.data;
         if (data.success && data.data) {
-          const userGen = data.data.userGeneratedExams || {};
           const teacherGen = data.data.teacherAssignedExams || {};
           // Reverse the arrays to show newest first
-          setUserExams([...(userGen.upcoming || []), ...(userGen.previous || [])].reverse());
-          setTeacherExams([...(teacherGen.upcoming || []), ...(teacherGen.previous || [])].reverse());
+          setUpcomingTeacherExams((teacherGen.upcoming || []).reverse());
+          setPreviousTeacherExams((teacherGen.previous || []).reverse());
         }
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -127,40 +127,98 @@ export default function QuizesPage() {
           <span className="align-middle">🏅✨</span>
         </div>
        
-        {/* Teacher Assigned Exams Section */}
-        <div className="flex items-center justify-between mb-4 mt-8 gap-4">
-          <h3 className="text-xl font-bold text-black">Teacher Assigned Exams</h3>
-          <button
+        {/* Upcoming Teacher Assigned Exams Section */}
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <h3 className="text-xl font-bold text-black">Upcoming Teacher Assigned Exams</h3>
+          <a
+            href="#"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-primary flex-shrink-0"
             onClick={(e) => {
               e.preventDefault();
-              router.push('/exams/generate/all');
+              router.push('/exams/generate/all?type=upcoming');
             }}
-            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-primary flex-shrink-0 bg-transparent border-none cursor-pointer"
           >
             View all
             <ArrowRight className="w-4 h-4 text-primary" />
-          </button>
+          </a>
         </div>
         <div className="mb-10 py-4">
           <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 ">
             {loading ? (
               <div className="text-black">Loading...</div>
-            ) : teacherExams.length === 0 ? (
-              <div className="text-black">No teacher-assigned exams found.</div>
+            ) : upcomingTeacherExams.length === 0 ? (
+              <div className="text-black">No upcoming teacher-assigned exams.</div>
             ) : (
-              teacherExams.slice(0, 2).map((quiz) => (
-                <QuizCard
-                  quiz={{
-                    ...quiz,
-                    subject: quiz.subject || guessSubjectFromTopic(quiz.topic),
-                    date: quiz.assignmentDetails?.endTime || quiz.createdAt,
-                    assignmentDetails: quiz.assignmentDetails ? {
-                      endTime: quiz.assignmentDetails.endTime || quiz.createdAt
-                    } : undefined,
+              upcomingTeacherExams.slice(0, 2).map((exam, index) => (
+                <div
+                  key={exam.id}
+                  style={{
+                    animation: 'bounceInUp 0.8s ease-out forwards'
                   }}
-                  key={quiz.id}
-                  onStartQuiz={() => router.push(`/exams/take/${quiz.id}`)}
-                />
+                >
+                  <QuizCard
+                    quiz={{
+                      ...exam,
+                      subject: exam.subject || guessSubjectFromTopic(exam.topic),
+                      description: exam.description || exam.instructions,
+                      assignmentDetails: exam.assignmentDetails?.endTime ? {
+                        endTime: exam.assignmentDetails.endTime
+                      } : undefined,
+                    }}
+                    previous={false}
+                    buttonText="Start Exam"
+                    onStartQuiz={() => router.push(`/exams/take/${exam.id}`)}
+                  />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Previous Teacher Assigned Exams Section */}
+        <div className="flex items-center justify-between mb-4 mt-8 gap-4">
+          <h3 className="text-xl font-bold text-black">Previous Teacher Assigned Exams</h3>
+          <a
+            href="#"
+            className="font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity text-sm sm:text-base text-primary flex-shrink-0"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/exams/generate/all?type=previous');
+            }}
+          >
+            View all
+            <ArrowRight className="w-4 h-4 text-primary" />
+          </a>
+        </div>
+        <div className="mb-10 py-4">
+          <div className="flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 ">
+            {loading ? (
+              <div className="text-black">Loading previous exams...</div>
+            ) : previousTeacherExams.length === 0 ? (
+              <div className="text-black">No previous teacher-assigned exams.</div>
+            ) : (
+              previousTeacherExams.slice(0, 2).map((exam, index) => (
+                <div
+                  key={exam.id}
+                  style={{
+                    animation: 'bounceInUp 0.8s ease-out forwards'
+                  }}
+                >
+                  <QuizCard
+                    quiz={{
+                      ...exam,
+                      subject: exam.subject || guessSubjectFromTopic(exam.topic),
+                      description: exam.description || exam.instructions,
+                      assignmentDetails: exam.assignmentDetails?.endTime ? {
+                        endTime: exam.assignmentDetails.endTime
+                      } : undefined,
+                    }}
+                    previous={true}
+                    date={exam.assignmentDetails?.endTime || exam.createdAt}
+                    score={exam.assignmentDetails?.score}
+                    onViewAnswers={() => router.push(`/exams/reports/${exam.id}`)}
+                  />
+                </div>
               ))
             )}
           </div>
