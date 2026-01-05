@@ -17,6 +17,11 @@ interface ProfileData {
   phone: string | null;
   alternatePhone: string | null;
   photoUrl: string | null;
+  institution?: {
+    name?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+  };
 }
 
 interface ApiResponse {
@@ -31,6 +36,7 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const router = useRouter();
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -107,7 +113,7 @@ export default function UserProfilePage() {
                   Class: Section {profile.section}
                 </div>
               )}
-              <div className='text-sm text-gray-600'>School: Self Learn AI</div>
+              <div className='text-sm text-gray-600'>School: {profile.institution?.name || 'Self Learn AI'}</div>
             </div>
 
             {/* Action Buttons with Icons */}
