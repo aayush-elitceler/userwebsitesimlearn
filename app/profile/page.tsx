@@ -103,10 +103,7 @@ export default function UserProfilePage() {
       <div className='max-w-4xl mx-auto'>
         <div className='flex justify-between items-center mb-6'>
           <h1 className='text-2xl font-semibold text-gray-800'>My Profile</h1>
-
-          {/* Top-right section with class/school info and buttons */}
           <div className='flex flex-col sm:flex-row items-end sm:items-center gap-4 sm:gap-6'>
-            {/* Class and School Info - Vertical Stack */}
             <div className='text-right sm:text-left'>
               {profile.section && (
                 <div className='text-sm text-gray-600 mb-1'>
@@ -115,8 +112,6 @@ export default function UserProfilePage() {
               )}
               <div className='text-sm text-gray-600'>School: {profile.institution?.name || 'Self Learn AI'}</div>
             </div>
-
-            {/* Action Buttons with Icons */}
             <div className='flex items-center gap-3'>
               <button
                 onClick={() => router.push('/')}

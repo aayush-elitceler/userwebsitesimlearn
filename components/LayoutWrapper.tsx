@@ -29,11 +29,15 @@ export default function LayoutWrapper({
     return () => window.removeEventListener('error', handleError);
   }, []);
 
+
+
   const hideSidebar =
     pathname === '/login' ||
     pathname === '/login/otp' ||
     pathname === '/register' ||
-    pathname === '/forgot-password' 
+    pathname === '/forgot-password' ||
+    (pathname.startsWith('/quizes/') && pathname.includes('/start')) ||
+    pathname.startsWith('/exams/take/')
 
   if (!isClient) {
     return null; // Prevent hydration mismatch
@@ -54,9 +58,8 @@ export default function LayoutWrapper({
         <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       )}
       <main
-        className={`flex-1 transition-all duration-300 ${
-          !hideSidebar ? (collapsed ? 'lg:ml-16' : 'lg:ml-64') : ''
-        }`}
+        className={`flex-1 transition-all duration-300 ${!hideSidebar ? (collapsed ? 'lg:ml-16' : 'lg:ml-64') : ''
+          }`}
       >
         {children}
       </main>
