@@ -6,6 +6,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import { fetchHistory, HistoryItem } from "@/lib/historyService";
 import HistorySlider from "@/components/HistorySlider";
+import { getUserGradeFromProfile } from "@/lib/gradeUtils";
 
 
 type StyleOption = {
@@ -154,6 +155,14 @@ export default function PointAskChatPage() {
   const [isSearching, setIsSearching] = useState(false);
   // === END: History Slider State ===
 
+  // Auto-select grade from user profile
+  useEffect(() => {
+    const userGrade = getUserGradeFromProfile();
+    if (userGrade && !selectedGrade) {
+      setSelectedGrade(userGrade);
+    }
+  }, []);
+
   useEffect(() => {
     // Always show onboarding on page refresh, regardless of cookie
     setShowOnboarding(true);
@@ -243,7 +252,7 @@ export default function PointAskChatPage() {
   const fetchHistoryData = async () => {
     console.log("🔍 [HISTORY] Starting to fetch history data...");
     setHistoryLoading(true);
-    
+
     try {
       const history = await fetchHistory();
       setHistoryData(history);
@@ -272,27 +281,27 @@ export default function PointAskChatPage() {
 
   const handleViewChat = async (chatId: string, chatTitle: string) => {
     console.log("🔍 [HISTORY] View chat clicked for:", chatId, chatTitle);
-    
+
     try {
       // Find the chat in history data to get the messages
       const chatItem = historyData.find(item => item.id === chatId);
       console.log("🔍 [HISTORY] Found chat item:", chatItem);
-      
+
       if (chatItem && chatItem.messages && Array.isArray(chatItem.messages) && chatItem.messages.length > 0) {
         console.log("🔍 [HISTORY] Messages found:", chatItem.messages.length);
-        
+
         // Convert the messages to the chat format
         const formattedMessages = chatItem.messages.map((msg: unknown, index: number) => {
           // Type guard to ensure msg has the expected structure
           if (typeof msg === 'object' && msg !== null && 'role' in msg && 'content' in msg) {
             const typedMsg = msg as { role: string; content: string };
             console.log(`🔍 [HISTORY] Processing message ${index}:`, typedMsg);
-            
+
             const role = typedMsg.role === 'USER' ? 'user' : 'ai';
             const text = typedMsg.content || '';
-            
+
             console.log(`🔍 [HISTORY] Message ${index} - Role: ${role}, Text: ${text}`);
-            
+
             return {
               role: role as 'user' | 'ai',
               text: text
@@ -305,14 +314,14 @@ export default function PointAskChatPage() {
             };
           }
         });
-        
+
         console.log("🔍 [HISTORY] Final formatted messages:", formattedMessages);
-        
+
         // Set the chat history and close the slider
         setChatHistory(formattedMessages);
         setSelectedChatId(chatId);
         handleCloseHistory();
-        
+
         // Scroll to the chat area
         setTimeout(() => {
           chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -322,7 +331,7 @@ export default function PointAskChatPage() {
         console.log("🔍 [HISTORY] Messages property:", chatItem?.messages);
         console.log("🔍 [HISTORY] Is messages array:", Array.isArray(chatItem?.messages));
         console.log("🔍 [HISTORY] Messages length:", chatItem?.messages?.length);
-        
+
         // If no messages found, show an alert
         alert(`No messages found for this chat: ${chatTitle}. Please check the console for details.`);
       }
@@ -398,11 +407,10 @@ export default function PointAskChatPage() {
           ].map(({ label, value, onClick, options, showDropdown, onSelect, renderOption }, i) => (
             <div key={i} className="relative dropdown-container">
               <button
-                className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${
-                  value
-                    ? "bg-gradient-primary text-white shadow-lg shadow-orange-500/25"
-                    : "bg-white/90 hover:bg-white text-gray-700 border border-gray-200/60 hover:border-gray-300 hover:shadow-md shadow-sm"
-                }`}
+                className={`flex items-center transition-all duration-200 rounded-xl px-4 py-2.5 min-w-[120px] sm:min-w-[140px] justify-between backdrop-blur-sm ${value
+                  ? "bg-gradient-primary text-white shadow-lg shadow-orange-500/25"
+                  : "bg-white/90 hover:bg-white text-gray-700 border border-gray-200/60 hover:border-gray-300 hover:shadow-md shadow-sm"
+                  }`}
                 onClick={onClick}
               >
                 <div className="flex items-center gap-2">
@@ -413,7 +421,7 @@ export default function PointAskChatPage() {
                   </span>
                 </div>
               </button>
-  
+
               {showDropdown && (
                 <div className="absolute mt-2 z-10 bg-white/95 backdrop-blur-md rounded-xl shadow-xl max-h-[300px] overflow-y-auto w-full border border-gray-200/50 dropdown-container animate-in fade-in-0 zoom-in-95 duration-200">
                   {/* Header */}
@@ -442,7 +450,7 @@ export default function PointAskChatPage() {
             </div>
           ))}
         </div>
-  
+
         {/* View History Button outside gradient */}
         <button
           onClick={handleHistoryClick}
@@ -458,7 +466,7 @@ export default function PointAskChatPage() {
       </div>
     </div>
   );
-  
+
   // Utility: downscale and compress an image for faster uploads
   const compressImage = async (file: File, maxDim = 1024, quality = 0.75): Promise<File> => {
     try {
@@ -519,7 +527,7 @@ export default function PointAskChatPage() {
       const formData = new FormData();
       formData.append("image", imageFile);
       formData.append("prompt", sendMsg.trim());
-              formData.append("class", formatGradeForAPI(selectedGrade));
+      formData.append("class", formatGradeForAPI(selectedGrade));
       formData.append("style", selectedStyle.toLowerCase());
 
       // Get auth token
@@ -912,9 +920,8 @@ export default function PointAskChatPage() {
               {chatHistory.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-end gap-3 ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  } mb-2`}
+                  className={`flex items-end gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"
+                    } mb-2`}
                 >
                   {/* AI Avatar - only show for AI messages */}
                   {msg.role === "ai" && (
@@ -922,14 +929,13 @@ export default function PointAskChatPage() {
                       AI
                     </div>
                   )}
-                  
+
                   {/* Message Bubble */}
                   <div
-                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
-                      msg.role === "user"
-                        ? "bg-[#DDDDDD] text-[#000000]"
-                        : "bg-[#FFEFD3] text-[#006a3d]"
-                    }`}
+                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${msg.role === "user"
+                      ? "bg-[#DDDDDD] text-[#000000]"
+                      : "bg-[#FFEFD3] text-[#006a3d]"
+                      }`}
                   >
                     {/* Show image with the user's first message */}
                     {msg.role === "user" && msg.image && (
@@ -943,13 +949,13 @@ export default function PointAskChatPage() {
                     )}
                     <p className="text-sm md:text-base leading-relaxed">
                       {msg.role === "ai" &&
-                      idx === streamingMessageIndex &&
-                      isStreaming
+                        idx === streamingMessageIndex &&
+                        isStreaming
                         ? `${displayedText}${displayedText ? "|" : ""}`
                         : msg.text}
                     </p>
                   </div>
-                  
+
                   {/* User Avatar - only show for user messages */}
                   {msg.role === "user" && (
                     <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
@@ -988,15 +994,14 @@ export default function PointAskChatPage() {
       {/* Chat input bar, only enabled after all options are selected and image uploaded */}
       {selectedGrade && selectedStyle && image && (
         <div
-          className={`fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 bg-[rgba(255,255,255,0.1)] py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
-            pathname === "/login" ||
+          className={`fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-4 flex items-center gap-2 sm:gap-3 bg-[rgba(255,255,255,0.1)] py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${pathname === "/login" ||
             pathname === "/login/otp" ||
             pathname === "/register"
-              ? ""
-              : state === "collapsed"
+            ? ""
+            : state === "collapsed"
               ? "sidebar-collapsed"
               : ""
-          }`}
+            }`}
           style={{
             backdropFilter: "blur(10px)",
             borderRadius: "12px",

@@ -50,6 +50,11 @@ interface DailyStreak {
   days: DayStreak[];
   currentStreak: number;
 }
+interface LoginStreak {
+  currentStreak: number;
+  longestStreak: number;
+  lastLoginDate: string;
+}
 interface BadgeChallenge {
   title: string;
   description: string;
@@ -71,9 +76,9 @@ interface Activities {
     title: string;
     remainingQuestions: number;
     lastActivity: string;
-  // Optional routing info
-  quizId?: string;
-  link?: string;
+    // Optional routing info
+    quizId?: string;
+    link?: string;
   };
   progress: {
     subjects: Subject[];
@@ -110,6 +115,7 @@ interface DashboardData {
   logo?: string;
   user: User;
   dailyStreak: DailyStreak;
+  loginStreak?: LoginStreak;
   badgeChallenge?: BadgeChallenge;
   badgeChallenges?: BadgeChallenge[];
   activities: Activities;
@@ -178,7 +184,7 @@ export default function Home() {
       router.push(`/quizes/${mission.quizId}/start`);
       return;
     }
-    
+
     // Use the link from API if available
     if (mission.link) {
       if (mission.link.startsWith('http')) {
@@ -187,8 +193,8 @@ export default function Home() {
       } else {
         // Transform API link format to desired format
         let finalLink = mission.link;
-        
-  // Check if it's the quiz-by-id format and transform it
+
+        // Check if it's the quiz-by-id format and transform it
         if (mission.link.includes('/users/quiz-by-id?id=')) {
           const quizId = mission.link.split('id=')[1]?.split('&')[0];
           if (quizId) {
@@ -199,13 +205,13 @@ export default function Home() {
         if (/^\/quizes\/[A-Za-z0-9_-]+$/.test(mission.link)) {
           finalLink = `${mission.link}/start`;
         }
-        
+
         // Internal route - navigate using router
         router.push(finalLink);
       }
       return;
     }
-    
+
     // Fallback logic for missions without links
     if (mission.title.toLowerCase().includes('doubt') || mission.title.toLowerCase().includes('chat') || mission.title.toLowerCase().includes('voice') || mission.title.toLowerCase().includes('image')) {
       router.push('/aichats/chat');
@@ -231,7 +237,7 @@ export default function Home() {
       }
       return;
     }
-    
+
     // Fallback to old logic if no link provided
     if (link.title.toLowerCase().includes('project') || link.title.toLowerCase().includes('due')) {
       router.push('/projects/teacherproject');
@@ -248,7 +254,7 @@ export default function Home() {
         const authCookie = Cookies.get('auth');
         let token: string | undefined;
         let userFromCookie: any = null;
-        
+
         if (authCookie) {
           try {
             const parsedAuth = JSON.parse(authCookie);
@@ -318,24 +324,24 @@ export default function Home() {
                   const root = document.documentElement;
                   if (primary) {
                     root.style.setProperty('--primary', primary);
-                    const hex = String(primary).replace('#','');
-                    const h = hex.length === 3 ? hex.split('').map(c=>c+c).join('') : hex;
-                    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
-                    const yiq = (r*299 + g*587 + b*114)/1000;
+                    const hex = String(primary).replace('#', '');
+                    const h = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+                    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+                    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
                     root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
                     root.style.setProperty('--accent', primary);
                     root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
                   }
                   if (secondary) {
                     root.style.setProperty('--secondary', secondary);
-                    const hex2 = String(secondary).replace('#','');
-                    const h2 = hex2.length === 3 ? hex2.split('').map(c=>c+c).join('') : hex2;
-                    const r2 = parseInt(h2.slice(0,2),16), g2 = parseInt(h2.slice(2,4),16), b2 = parseInt(h2.slice(4,6),16);
-                    const yiq2 = (r2*299 + g2*587 + b2*114)/1000;
+                    const hex2 = String(secondary).replace('#', '');
+                    const h2 = hex2.length === 3 ? hex2.split('').map(c => c + c).join('') : hex2;
+                    const r2 = parseInt(h2.slice(0, 2), 16), g2 = parseInt(h2.slice(2, 4), 16), b2 = parseInt(h2.slice(4, 6), 16);
+                    const yiq2 = (r2 * 299 + g2 * 587 + b2 * 114) / 1000;
                     root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
                   }
                 }
-              } catch {}
+              } catch { }
             }
           } catch (profileErr) {
             if (axios.isAxiosError(profileErr) && profileErr.response?.status === 401) {
@@ -354,24 +360,24 @@ export default function Home() {
               const root = document.documentElement;
               if (primary) {
                 root.style.setProperty('--primary', primary);
-                const hex = String(primary).replace('#','');
-                const h = hex.length === 3 ? hex.split('').map(c=>c+c).join('') : hex;
-                const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
-                const yiq = (r*299 + g*587 + b*114)/1000;
+                const hex = String(primary).replace('#', '');
+                const h = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+                const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+                const yiq = (r * 299 + g * 587 + b * 114) / 1000;
                 root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
                 root.style.setProperty('--accent', primary);
                 root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
               }
               if (secondary) {
                 root.style.setProperty('--secondary', secondary);
-                const hex2 = String(secondary).replace('#','');
-                const h2 = hex2.length === 3 ? hex2.split('').map(c=>c+c).join('') : hex2;
-                const r2 = parseInt(h2.slice(0,2),16), g2 = parseInt(h2.slice(2,4),16), b2 = parseInt(h2.slice(4,6),16);
-                const yiq2 = (r2*299 + g2*587 + b2*114)/1000;
+                const hex2 = String(secondary).replace('#', '');
+                const h2 = hex2.length === 3 ? hex2.split('').map(c => c + c).join('') : hex2;
+                const r2 = parseInt(h2.slice(0, 2), 16), g2 = parseInt(h2.slice(2, 4), 16), b2 = parseInt(h2.slice(4, 6), 16);
+                const yiq2 = (r2 * 299 + g2 * 587 + b2 * 114) / 1000;
                 root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
               }
             }
-          } catch {}
+          } catch { }
         }
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -485,7 +491,7 @@ export default function Home() {
       <style jsx>{pageAnimationStyles}</style>
 
       {/* Header with greeting and School/Class Info side by side */}
-      <div 
+      <div
         className='flex justify-between items-center mb-4'
         style={{
           ...getAnimationDelay(0, 150),
@@ -497,31 +503,42 @@ export default function Home() {
         </h1>
         <div className='flex items-center gap-3'>
           {/* School and Class Info */}
-          <div 
+          <div
             className='text-sm text-gray-600 text-right transform transition-all duration-300 hover:scale-105'
             style={{
               ...getAnimationDelay(0.5, 150),
               animation: 'slideInRight 0.8s ease-out forwards'
             }}
           >
+            {dashboardData.loginStreak && (
+              <div
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-600 rounded-full border border-orange-100 shadow-sm mr-4 mb-2 sm:mb-0"
+                title="Daily Login Streak"
+              >
+                <span className="text-lg">🔥</span>
+                <span className="font-bold text-sm text-orange-700">{dashboardData.loginStreak.currentStreak}</span>
+              </div>
+            )}
             {profileData?.class && (
               <div className='animate-pulse'>
                 {getOrdinal(parseInt(profileData.class))} Class
                 {profileData?.section && ` - ${profileData.section}`}
               </div>
             )}
-            <div className='animate-pulse delay-100'>Self Learn AI</div>
+            {profileData?.institution?.name && (
+              <div className='animate-pulse delay-100'>{profileData.institution.name}</div>
+            )}
           </div>
-          <div 
+          <div
             onClick={() => router.push('/profile')}
             className='w-10 h-10 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 hover:shadow-md hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer overflow-hidden relative'
             title='Profile'
           >
             {(profileData?.photoUrl || dashboardData.user.profilePictureUrl) ? (
               <>
-                <img 
-                  src={(profileData?.photoUrl as string) || (dashboardData.user.profilePictureUrl as string)} 
-                  alt="Profile" 
+                <img
+                  src={(profileData?.photoUrl as string) || (dashboardData.user.profilePictureUrl as string)}
+                  alt="Profile"
                   className="w-full h-full object-cover rounded-full"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -540,7 +557,7 @@ export default function Home() {
       </div>
 
       {/* Streak + Badge */}
-      <div 
+      <div
         className='flex flex-col md:flex-row gap-4 mb-4'
         style={{
           ...getAnimationDelay(1, 150),
@@ -559,14 +576,12 @@ export default function Home() {
           {dashboardData.dailyStreak.days.map((day, idx) => (
             <div
               key={idx}
-              className={`flex-1 flex flex-col items-center py-2 rounded-xl ${
-                day.isActive ? 'text-gradient-primary' : 'text-gray-400'
-              }`}
+              className={`flex-1 flex flex-col items-center py-2 rounded-xl ${day.isActive ? 'text-gradient-primary' : 'text-gray-400'
+                }`}
             >
               <img
-                src={`${
-                  day.isActive ? '/images/Thunder.svg' : '/images/Frame.svg'
-                }`}
+                src={`${day.isActive ? '/images/Thunder.svg' : '/images/Frame.svg'
+                  }`}
                 alt=''
                 className={`w-[18px] h-[24px] transition-transform duration-300 ${day.isActive ? 'animate-pulse' : ''}`}
               />
@@ -575,7 +590,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div 
+        <div
           className='flex-1 cursor-pointer flex items-center gap-3 px-6 py-4 rounded-xl border border-primary/20 bg-gradient-primary  shadow-sm hover:shadow-lg hover:scale-[1.02] hover:border-primary/30 transition-all duration-200'
           onClick={() => {
             if (primaryChallenge) {
@@ -626,67 +641,66 @@ export default function Home() {
       <div className='mb-10 mt-6'>
         <h2 className='text-xl font-semibold text-gray-800 mb-10 mt-10'>Your Activities</h2>
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-        {[
-          {
-            title: 'Continue where you left off:',
-            description: dashboardData.activities.continueLearning.title,
-      buttonText: 'Resume Quiz',
-            link: dashboardData.activities.continueLearning.link
-              ? (dashboardData.activities.continueLearning.link.includes('/users/quiz-by-id?id=')
+          {[
+            {
+              title: 'Continue where you left off:',
+              description: dashboardData.activities.continueLearning.title,
+              buttonText: 'Resume Quiz',
+              link: dashboardData.activities.continueLearning.link
+                ? (dashboardData.activities.continueLearning.link.includes('/users/quiz-by-id?id=')
                   ? `/quizes/${dashboardData.activities.continueLearning.link.split('id=')[1]?.split('&')[0]}/start`
                   : (/^\/quizes\/[A-Za-z0-9_-]+$/.test(dashboardData.activities.continueLearning.link)
-                      ? `${dashboardData.activities.continueLearning.link}/start`
-                      : dashboardData.activities.continueLearning.link))
-        : (dashboardData.activities.continueLearning.quizId
-          ? `/quizes/${dashboardData.activities.continueLearning.quizId}/start`
-          : '/quizes'),
-          },
-          {
-            title: 'View Progress:',
-            description: dashboardData.activities.progress.subjects
-              .slice(0, 2)
-              .map(
-                (subject) =>
-                  `${(subject.name || 'Unknown Subject').substring(0, 20)} ${subject.percentage}%`
-              )
-              .join(' • '),
-            buttonText: 'Track Progress',
-            link: '/personalisedLearning',
-          },
-          {
-            title: 'Projects:',
-            description: `${dashboardData.activities.projects.pending} Project${
-              dashboardData.activities.projects.pending !== 1 ? 's' : ''
-            } Pending – '${dashboardData.activities.projects.nextProject}'`,
-            buttonText: 'Open Projects',
-            link: '/projects/teacherproject',
-          },
-        ].map((card, idx) => (
-          <div
-            key={idx}
-            className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 transform'
-            style={{
-              ...getAnimationDelay(2 + idx * 0.1, 150),
-              animation: 'fadeInUp 0.6s ease-out forwards'
-            }}
-          >
-            <h3 className='font-semibold text-gray-800 mb-2'>{card.title}</h3>
-            <p className='text-gray-600 text-sm mb-3 break-words line-clamp-2'>
-              {card.description}
-            </p>
-            <button
-              onClick={() => router.push(card.link)}
-              className='bg-gradient-primary text-primary-foreground text-base px-4 py-1.5 rounded-lg transition-all duration-200 w-full sm:w-auto hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+                    ? `${dashboardData.activities.continueLearning.link}/start`
+                    : dashboardData.activities.continueLearning.link))
+                : (dashboardData.activities.continueLearning.quizId
+                  ? `/quizes/${dashboardData.activities.continueLearning.quizId}/start`
+                  : '/quizes'),
+            },
+            {
+              title: 'View Progress:',
+              description: dashboardData.activities.progress.subjects
+                .slice(0, 2)
+                .map(
+                  (subject) =>
+                    `${(subject.name || 'Unknown Subject').substring(0, 20)} ${subject.percentage}%`
+                )
+                .join(' • '),
+              buttonText: 'Track Progress',
+              link: '/personalisedLearning',
+            },
+            {
+              title: 'Projects:',
+              description: `${dashboardData.activities.projects.pending} Project${dashboardData.activities.projects.pending !== 1 ? 's' : ''
+                } Pending – '${dashboardData.activities.projects.nextProject}'`,
+              buttonText: 'Open Projects',
+              link: '/projects/teacherproject',
+            },
+          ].map((card, idx) => (
+            <div
+              key={idx}
+              className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 transform'
+              style={{
+                ...getAnimationDelay(2 + idx * 0.1, 150),
+                animation: 'fadeInUp 0.6s ease-out forwards'
+              }}
             >
-              {card.buttonText}
-            </button>
-          </div>
-        ))}
+              <h3 className='font-semibold text-gray-800 mb-2'>{card.title}</h3>
+              <p className='text-gray-600 text-sm mb-3 break-words line-clamp-2'>
+                {card.description}
+              </p>
+              <button
+                onClick={() => router.push(card.link)}
+                className='bg-gradient-primary text-primary-foreground text-base px-4 py-1.5 rounded-lg transition-all duration-200 w-full sm:w-auto hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+              >
+                {card.buttonText}
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Main Grid */}
-      <div 
+      <div
         className='grid grid-cols-1 lg:grid-cols-2 gap-4'
         style={{
           ...getAnimationDelay(3, 150),
@@ -716,11 +730,10 @@ export default function Home() {
                   </div>
                   <button
                     onClick={() => handleMissionClick(mission)}
-                    className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-white w-[150px] h-[40px]  ${
-                      mission.completed
-                        ? 'bg-gradient-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105 cursor-default'
-                        : 'bg-gradient-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105'
-                    }`}
+                    className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-white w-[150px] h-[40px]  ${mission.completed
+                      ? 'bg-gradient-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105 cursor-default'
+                      : 'bg-gradient-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+                      }`}
                   >
                     {mission.completed
                       ? 'Completed'
@@ -791,16 +804,15 @@ export default function Home() {
                   </div>
                   <button
                     onClick={() => handleQuickLinkClick(link)}
-                    className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-primary-foreground w-[150px] h-[40px] ${
-                      link.status === 'Completed'
-                        ? 'bg-gradient-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
-                        : 'bg-gradient-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
-                    }`}
+                    className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-primary-foreground w-[150px] h-[40px] ${link.status === 'Completed'
+                      ? 'bg-gradient-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+                      : 'bg-gradient-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
+                      }`}
                   >
-                    {link.status === 'Completed' 
-                      ? 'Completed' 
-                      : link.link && link.link.startsWith('http') 
-                        ? 'View project' 
+                    {link.status === 'Completed'
+                      ? 'Completed'
+                      : link.link && link.link.startsWith('http')
+                        ? 'View project'
                         : (link.title.toLowerCase().includes('project') ? 'View project' : (link.status || 'Open'))
                     }
                   </button>
@@ -879,58 +891,58 @@ export default function Home() {
                   <p className="text-gray-600 mb-4">
                     {challenges[selectedChallengeIndex]?.description}
                   </p>
-                
-                {/* Progress Tracking Section */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Progress Tracking</h4>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-gray-600">Target:</span>
-                    <span className="font-semibold text-gray-800">{challenges[selectedChallengeIndex]?.target} tasks</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-gray-600">Completed:</span>
-                    <span className="font-semibold text-gradient-primary">{challenges[selectedChallengeIndex]?.current} tasks</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-gray-600">Remaining:</span>
-                    <span className="font-semibold text-red-500">
-                      {Math.max(0, (challenges[selectedChallengeIndex]?.target || 0) - (challenges[selectedChallengeIndex]?.current || 0))} tasks
-                    </span>
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="mb-3">
-                    <div className="flex justify-between text-sm text-gray-600 mb-1">
-                      <span>Progress</span>
-                      <span>{Math.round(((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100)}%</span>
+
+                  {/* Progress Tracking Section */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-3">Progress Tracking</h4>
+
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-gray-600">Target:</span>
+                      <span className="font-semibold text-gray-800">{challenges[selectedChallengeIndex]?.target} tasks</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div 
-                        className="h-3 rounded-full transition-all duration-500"
-                        style={{ 
-                          width: `${Math.min(100, (((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100))}%`,
-                          background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)'
-                        }}
-                      ></div>
+
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-gray-600">Completed:</span>
+                      <span className="font-semibold text-gradient-primary">{challenges[selectedChallengeIndex]?.current} tasks</span>
                     </div>
+
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-gray-600">Remaining:</span>
+                      <span className="font-semibold text-red-500">
+                        {Math.max(0, (challenges[selectedChallengeIndex]?.target || 0) - (challenges[selectedChallengeIndex]?.current || 0))} tasks
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="mb-3">
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span>{Math.round(((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div
+                          className="h-3 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(100, (((challenges[selectedChallengeIndex]?.current || 0) / Math.max(1, (challenges[selectedChallengeIndex]?.target || 0))) * 100))}%`,
+                            background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    {(challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0) ? (
+                      <div className="flex items-center gap-2 text-gradient-primary font-semibold">
+                        🎉 Badge Completed!
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">Deadline:</span>
+                        <span className="font-semibold text-red-500">{challenges[selectedChallengeIndex]?.deadline}</span>
+                      </div>
+                    )}
                   </div>
-                  
-                  {/* Status */}
-                  {(challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0) ? (
-                    <div className="flex items-center gap-2 text-gradient-primary font-semibold">
-                      🎉 Badge Completed!
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Deadline:</span>
-                      <span className="font-semibold text-red-500">{challenges[selectedChallengeIndex]?.deadline}</span>
-                    </div>
-                  )}
-                </div>
-              </div>)}
+                </div>)}
 
               {challenges.length > 0 && (
                 <div className="mb-6">
@@ -973,9 +985,8 @@ export default function Home() {
                 )}
                 <button
                   onClick={() => setShowBadgeModal(false)}
-                  className={`px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200 ${
-                    ((challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0)) ? 'flex-1' : ''
-                  }`}
+                  className={`px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 hover:shadow-md hover:scale-105 transition-all duration-200 ${((challenges[selectedChallengeIndex]?.current || 0) >= (challenges[selectedChallengeIndex]?.target || 0)) ? 'flex-1' : ''
+                    }`}
                 >
                   Close
                 </button>

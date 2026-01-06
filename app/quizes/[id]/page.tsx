@@ -1,7 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
+import { useQuizViolationDetection } from '@/hooks/useQuizViolationDetection';
 
 interface Option {
   id: string;
@@ -30,46 +32,6 @@ interface Quiz {
   questions: Question[];
 }
 
-async function submitQuiz(quiz: Quiz, selected: { [questionId: string]: string }, quizStartedAt: string) {
-  try {
-  // Calculate time taken in minutes
-  const started = new Date(quizStartedAt);
-  const completed = new Date();
-  const timeTaken = Math.max(1, Math.round((completed.getTime() - started.getTime()) / 60000));
-  const answers = quiz.questions.map((q) => ({
-    questionId: q.id,
-    selectedOptionId: selected[q.id] || "",
-  }));
-
-  const body = {
-    quizId: quiz.id,
-    answers,
-    timeTaken,
-  };
-
-  const response = await axios.post('/users/quiz/submit', body);
-
-  if (response.data.success) {
-    const data = response.data;
-    const submissionId = data.data?.submission?.id;
-    if (submissionId) {
-      window.location.href = `/quizes/reports/${submissionId}`;
-    } else {
-      alert("Quiz submitted, but no submissionId returned.");
-    }
-  } else {
-    alert("Failed to submit quiz.");
-  }
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      redirectToLogin();
-    } else {
-      console.error('Error submitting quiz:', error);
-      alert("Failed to submit quiz.");
-    }
-  }
-}
-
 export default function QuizStartPage() {
   const params = useParams();
   const quizId = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -78,10 +40,77 @@ export default function QuizStartPage() {
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<{ [questionId: string]: string }>({});
   const [quizStartedAt, setQuizStartedAt] = useState(new Date().toISOString());
+  const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
 
+  // Submit quiz function
+  const handleSubmitQuiz = useCallback(async (isAutoSubmit = false) => {
+    if (!quiz || submitting) return;
 
+    setSubmitting(true);
+    try {
+      const started = new Date(quizStartedAt);
+      const completed = new Date();
+      const timeTaken = Math.max(1, Math.round((completed.getTime() - started.getTime()) / 60000));
+      const answers = quiz.questions.map((q) => ({
+        questionId: q.id,
+        selectedOptionId: selected[q.id] || "",
+      }));
 
-  
+      const body = {
+        quizId: quiz.id,
+        answers,
+        timeTaken,
+      };
+
+      const response = await axios.post('/users/quiz/submit', body);
+
+      if (response.data.success) {
+        const data = response.data;
+        const submissionId = data.data?.submission?.id;
+        if (submissionId && !isAutoSubmit) {
+          router.push(`/quizes/reports/${submissionId}`);
+        }
+      } else if (!isAutoSubmit) {
+        alert("Failed to submit quiz.");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        redirectToLogin();
+      } else {
+        console.error('Error submitting quiz:', error);
+        if (!isAutoSubmit) {
+          alert("Failed to submit quiz.");
+        }
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }, [quiz, selected, quizStartedAt, router, submitting]);
+
+  // Violation detection hook
+  const {
+    warningCount,
+    showWarning,
+    showFinalViolationModal,
+    dismissWarning,
+  } = useQuizViolationDetection({
+    maxWarnings: 3,
+    onAutoSubmit: () => handleSubmitQuiz(true),
+    enabled: !loading && !!quiz && !submitting,
+  });
+
+  // Make screen fullscreen - hide body scrollbar
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.height = '100%';
+    document.body.style.height = '100%';
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.height = '';
+      document.body.style.height = '';
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchQuiz() {
@@ -110,7 +139,7 @@ export default function QuizStartPage() {
     if (quizId) fetchQuiz();
   }, [quizId]);
 
-  // Timer logic (optional, for demo)
+  // Timer logic
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   useEffect(() => {
     if (quiz?.timeLimitMinutes) {
@@ -121,6 +150,14 @@ export default function QuizStartPage() {
       return () => clearInterval(interval);
     }
   }, [quiz?.timeLimitMinutes]);
+
+  // Auto-submit on timer expiry
+  useEffect(() => {
+    if (secondsLeft === 0 && quiz && !submitting) {
+      handleSubmitQuiz(true);
+    }
+  }, [secondsLeft, quiz, submitting, handleSubmitQuiz]);
+
   function formatTime(secs: number) {
     const m = Math.floor(secs / 60).toString().padStart(2, "0");
     const s = (secs % 60).toString().padStart(2, "0");
@@ -132,8 +169,192 @@ export default function QuizStartPage() {
   const progress = total ? Math.min(answered / total, 1) : 0;
 
   return (
-    <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-white">
-      <div className="max-w-3xl mx-auto">
+    <div className="fixed inset-0 min-h-screen w-full bg-white z-50 overflow-y-auto">
+      {/* Warning Modal */}
+      {showWarning && warningCount > 0 && warningCount < 3 && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div
+            className="bg-white flex flex-col items-center justify-center border border-gray-200"
+            style={{
+              width: '700px',
+              maxWidth: '90vw',
+              borderRadius: '32px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              padding: '40px 60px',
+            }}
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-5">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-red-500"
+              >
+                <path
+                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h2
+              className="text-gray-900 mb-3"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 700,
+                fontSize: '20px',
+                lineHeight: '32px',
+                textAlign: 'center',
+                maxWidth: '350px',
+              }}
+            >
+              🚨 You&apos;ve Left the Quiz Screen
+            </h2>
+            <p
+              className="text-gray-600 mb-3"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 400,
+                fontSize: '15px',
+                lineHeight: '24px',
+                textAlign: 'center',
+                maxWidth: '400px',
+              }}
+            >
+              To maintain quiz integrity, please stay on this page.
+            </p>
+            <p
+              className="text-red-600 mb-1"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 700,
+                fontSize: '17px',
+                lineHeight: '26px',
+                textAlign: 'center',
+                maxWidth: '300px',
+              }}
+            >
+              This is Warning {warningCount} of 3.
+            </p>
+            <p
+              className="text-gray-500 mb-6"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 400,
+                fontSize: '15px',
+                lineHeight: '24px',
+                textAlign: 'center',
+                maxWidth: '400px',
+              }}
+            >
+              If you switch again, the quiz may be auto-submitted.
+            </p>
+            <button
+              className="text-white font-semibold transition-all duration-200 flex items-center justify-center bg-gradient-primary hover:opacity-90"
+              style={{
+                width: '336px',
+                maxWidth: '100%',
+                height: '48px',
+                borderRadius: '10px',
+                padding: '12px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 600,
+                fontSize: '16px',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onClick={dismissWarning}
+            >
+              Back to quiz
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Final Violation Modal */}
+      {showFinalViolationModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div
+            className="bg-white flex flex-col items-center justify-center border border-gray-200"
+            style={{
+              width: '700px',
+              maxWidth: '90vw',
+              borderRadius: '32px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              padding: '50px 60px',
+            }}
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-6">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-red-500"
+              >
+                <path
+                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h2
+              className="text-gray-900 mb-4"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 700,
+                fontSize: '20px',
+                lineHeight: '32px',
+                textAlign: 'center',
+                maxWidth: '400px',
+              }}
+            >
+              🚨 You&apos;ve exceeded the allowed number of screen violations.
+            </h2>
+            <p
+              className="text-gray-600 mb-8"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 400,
+                fontSize: '15px',
+                lineHeight: '24px',
+                textAlign: 'center',
+                maxWidth: '450px',
+              }}
+            >
+              Your quiz has been submitted automatically due to repeated tab switches or screen exits.
+            </p>
+            <button
+              className="text-white font-semibold transition-all duration-200 flex items-center justify-center bg-gradient-primary hover:opacity-90"
+              style={{
+                width: '336px',
+                maxWidth: '100%',
+                height: '48px',
+                borderRadius: '10px',
+                padding: '12px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 600,
+                fontSize: '16px',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onClick={() => router.push('/')}
+            >
+              Back to dashboard
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-3xl mx-auto px-4 md:px-12 py-8">
         {loading ? (
           <div className="text-black text-center py-20 text-lg">Loading quiz...</div>
         ) : error ? (
@@ -147,7 +368,7 @@ export default function QuizStartPage() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="bg-gradient-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
-                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/><path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2"/></svg>
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" /><path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" /></svg>
                   Time left {secondsLeft !== null ? formatTime(secondsLeft) : `00:${quiz.timeLimitMinutes?.toString().padStart(2, "0")}:00`}
                 </div>
               </div>
@@ -178,10 +399,16 @@ export default function QuizStartPage() {
                 </div>
               </div>
             ))}
-            <button className="bg-gradient-primary text-primary-foreground p-4" onClick={() => submitQuiz(quiz, selected, quizStartedAt)}>Submit Quiz</button>
+            <button
+              className="bg-gradient-primary text-primary-foreground p-4 rounded-lg disabled:opacity-50"
+              onClick={() => handleSubmitQuiz(false)}
+              disabled={submitting}
+            >
+              {submitting ? 'Submitting...' : 'Submit Quiz'}
+            </button>
           </>
         ) : null}
       </div>
     </div>
   );
-} 
+}

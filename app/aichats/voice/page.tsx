@@ -7,6 +7,7 @@ import { fetchHistory, HistoryItem, saveHistory } from "@/lib/historyService";
 import type { ChatMessage } from "@/lib/historyService";
 import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 import Cookies from "js-cookie";
+import { getUserGradeFromProfile } from "@/lib/gradeUtils";
 
 // --- Constants & Types ---
 
@@ -150,6 +151,14 @@ export default function VoicebaseRealtimePage() {
         console.error("Failed to parse auth cookie:", e);
         setIsLoggedIn(false);
       }
+    }
+  }, []);
+
+  // --- Auto-select grade from user profile ---
+  useEffect(() => {
+    const userGrade = getUserGradeFromProfile();
+    if (userGrade && !selectedGrade) {
+      setSelectedGrade(userGrade);
     }
   }, []);
 
@@ -358,8 +367,7 @@ export default function VoicebaseRealtimePage() {
         const errorDetails = await sessionRes.json();
         console.error("Backend error details:", errorDetails);
         throw new Error(
-          `Failed to create session with the backend: ${
-            errorDetails.details || sessionRes.statusText
+          `Failed to create session with the backend: ${errorDetails.details || sessionRes.statusText
           }`
         );
       }
@@ -848,24 +856,21 @@ export default function VoicebaseRealtimePage() {
               {transcript.map((message, index) => (
                 <div
                   key={index}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"
+                    }`}
                 >
                   <div
-                    className={`max-w-[85%] px-4 py-3 rounded-lg shadow-sm border ${
-                      message.role === "user"
-                        ? "bg-blue-50 text-blue-900 border-blue-200"
-                        : "bg-primary/10 text-primary border-primary/20"
-                    }`}
+                    className={`max-w-[85%] px-4 py-3 rounded-lg shadow-sm border ${message.role === "user"
+                      ? "bg-blue-50 text-blue-900 border-blue-200"
+                      : "bg-primary/10 text-primary border-primary/20"
+                      }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span
-                        className={`text-xs font-semibold uppercase tracking-wide ${
-                          message.role === "user"
-                            ? "text-blue-600"
-                            : "text-primary"
-                        }`}
+                        className={`text-xs font-semibold uppercase tracking-wide ${message.role === "user"
+                          ? "text-blue-600"
+                          : "text-primary"
+                          }`}
                       >
                         {message.role === "user"
                           ? "You"
@@ -916,18 +921,16 @@ export default function VoicebaseRealtimePage() {
               <div className="mb-6 flex items-center gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      currentSpeaker === "user"
-                        ? "bg-primary animate-pulse"
-                        : "bg-gray-300"
-                    }`}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSpeaker === "user"
+                      ? "bg-primary animate-pulse"
+                      : "bg-gray-300"
+                      }`}
                   ></div>
                   <span
-                    className={`text-sm font-medium transition-colors duration-300 ${
-                      currentSpeaker === "ai"
-                        ? "text-primary animate-pulse"
-                        : "text-gray-500"
-                    }`}
+                    className={`text-sm font-medium transition-colors duration-300 ${currentSpeaker === "ai"
+                      ? "text-primary animate-pulse"
+                      : "text-gray-500"
+                      }`}
                   >
                     You
                   </span>
@@ -937,16 +940,14 @@ export default function VoicebaseRealtimePage() {
 
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      currentSpeaker === "ai"
-                        ? "bg-primary animate-pulse"
-                        : "bg-gray-300"
-                    }`}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSpeaker === "ai"
+                      ? "bg-primary animate-pulse"
+                      : "bg-gray-300"
+                      }`}
                   ></div>
                   <span
-                    className={`text-sm font-medium transition-colors duration-300 ${
-                      currentSpeaker === "ai" ? "text-primary" : "text-gray-500"
-                    }`}
+                    className={`text-sm font-medium transition-colors duration-300 ${currentSpeaker === "ai" ? "text-primary" : "text-gray-500"
+                      }`}
                   >
                     AI {selectedStyle ? `(${selectedStyle})` : ""}
                   </span>

@@ -14,6 +14,7 @@ import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 import SpruceBall from "@/components/SpruceBall";
 import { Mic } from "lucide-react";
 import Cookies from "js-cookie";
+import { getUserGradeFromProfile } from "@/lib/gradeUtils";
 
 type RealtimeStatus =
   | "idle"
@@ -223,6 +224,14 @@ export default function RealtimeAssistant(): React.ReactElement {
     };
   }, []);
 
+  // Auto-select grade from user profile
+  useEffect(() => {
+    const userGrade = getUserGradeFromProfile();
+    if (userGrade && !selectedGrade) {
+      setSelectedGrade(userGrade);
+    }
+  }, []);
+
   useEffect(() => {
     setShowOnboarding(true);
   }, []);
@@ -303,9 +312,8 @@ export default function RealtimeAssistant(): React.ReactElement {
       "Respond only when the user asks a question or provides an explicit request. If you receive images, screenshots, or updates without a question, silently store that context and wait until the user speaks again. Never speculate about the user's surroundings or describe visuals unless they explicitly confirm what you're seeing.";
 
     const agentInstructions = selectedGrade
-      ? `You are a helpful assistant guiding a ${selectedGrade} learner. Speak with the tone of a ${
-          personaLabelForInstructions?.toLowerCase() ?? selectedPersona
-        }. Keep explanations adaptive, clear, and encouraging. ${baseInstructions}`
+      ? `You are a helpful assistant guiding a ${selectedGrade} learner. Speak with the tone of a ${personaLabelForInstructions?.toLowerCase() ?? selectedPersona
+      }. Keep explanations adaptive, clear, and encouraging. ${baseInstructions}`
       : `You are a helpful assistant that can answer questions and help with tasks. ${baseInstructions}`;
 
     const agent = new RealtimeAgent({
@@ -315,13 +323,13 @@ export default function RealtimeAssistant(): React.ReactElement {
 
     const sessionConfig = personaVoice
       ? {
-          voice: personaVoice,
-          audio: {
-            output: {
-              voice: personaVoice,
-            },
+        voice: personaVoice,
+        audio: {
+          output: {
+            voice: personaVoice,
           },
-        }
+        },
+      }
       : undefined;
 
     const newSession = new RealtimeSession(
@@ -749,7 +757,7 @@ export default function RealtimeAssistant(): React.ReactElement {
                 disabled={!canTriggerPrimaryAction}
                 className={primaryButtonClassName}
               >
-               <Mic width={16} height={16}/> {primaryButtonLabel}
+                <Mic width={16} height={16} /> {primaryButtonLabel}
               </button>
             </div>
           </div>
