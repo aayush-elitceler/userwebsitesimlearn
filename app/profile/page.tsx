@@ -12,6 +12,7 @@ interface ProfileData {
   lastName: string;
   dob: string;
   gender: string;
+  className: string | null;
   section: string | null;
   schoolMailId: string | null;
   phone: string | null;
@@ -105,9 +106,11 @@ export default function UserProfilePage() {
           <h1 className='text-2xl font-semibold text-gray-800'>My Profile</h1>
           <div className='flex flex-col sm:flex-row items-end sm:items-center gap-4 sm:gap-6'>
             <div className='text-right sm:text-left'>
-              {profile.section && (
+              {(profile.className || profile.section) && (
                 <div className='text-sm text-gray-600 mb-1'>
-                  Class: Section {profile.section}
+                  {profile.className && `Class: ${profile.className}`}
+                  {profile.className && profile.section && ' - '}
+                  {profile.section && `Section ${profile.section}`}
                 </div>
               )}
               <div className='text-sm text-gray-600'>School: {profile.institution?.name || 'Self Learn AI'}</div>
