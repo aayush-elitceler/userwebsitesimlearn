@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import {
+  markStudentAsCheated,
+  isTeacherCreated,
+  CheatingType,
+} from "@/lib/cheatingUtils";
 
 interface UseQuizViolationDetectionOptions {
   maxWarnings?: number;
   onAutoSubmit?: () => void;
   enabled?: boolean;
+  // Cheating report options
+  enableCheatingReport?: boolean;
+  cheatingReportType?: CheatingType;
+  quizId?: string;
+  examId?: string;
+  createdBy?: string;
+  teacherId?: string | null;
 }
 
 interface ViolationRecord {
@@ -27,6 +39,12 @@ export function useQuizViolationDetection({
   maxWarnings = 3,
   onAutoSubmit,
   enabled = true,
+  enableCheatingReport = false,
+  cheatingReportType = "quiz",
+  quizId,
+  examId,
+  createdBy,
+  teacherId,
 }: UseQuizViolationDetectionOptions = {}): UseQuizViolationDetectionReturn {
   const [violations, setViolations] = useState<ViolationRecord[]>([]);
   const [showWarning, setShowWarning] = useState(false);
@@ -34,6 +52,9 @@ export function useQuizViolationDetection({
   const [autoSubmitted, setAutoSubmitted] = useState(false);
   const [lastViolationTime, setLastViolationTime] = useState<number>(0);
   const [violationArmed, setViolationArmed] = useState(true);
+
+  // Track if cheating report has been sent to avoid duplicate reports
+  const cheatingReportedRef = useRef(false);
 
   const warningCount = violations.length;
 
@@ -46,7 +67,40 @@ export function useQuizViolationDetection({
     setShowWarning(false);
     setShowFinalViolationModal(false);
     setAutoSubmitted(false);
+    cheatingReportedRef.current = false;
   }, []);
+
+  // Report cheating to the API (skip only for USER-created quizzes/exams)
+  const reportCheating = useCallback(async () => {
+    // Only report if enabled and not already reported
+    if (!enableCheatingReport || cheatingReportedRef.current) {
+      return;
+    }
+
+    // Skip cheating report only for USER-created quizzes/exams
+    if (!isTeacherCreated(createdBy, teacherId)) {
+      console.log("Skipping cheating report - user-created quiz/exam");
+      return;
+    }
+
+    // Mark as reported to prevent duplicate reports
+    cheatingReportedRef.current = true;
+
+    // Call the API
+    await markStudentAsCheated({
+      type: cheatingReportType,
+      quizId: cheatingReportType === "quiz" ? quizId : undefined,
+      examId: cheatingReportType === "exam" ? examId : undefined,
+      is_studentCheated: true,
+    });
+  }, [
+    enableCheatingReport,
+    cheatingReportType,
+    quizId,
+    examId,
+    createdBy,
+    teacherId,
+  ]);
 
   // Handle violation detection
   useEffect(() => {
@@ -73,6 +127,8 @@ export function useQuizViolationDetection({
             setAutoSubmitted(true);
             onAutoSubmit();
           }
+          // Report cheating to the API (async, fire-and-forget)
+          reportCheating();
         } else {
           setShowWarning(true);
         }
@@ -105,6 +161,7 @@ export function useQuizViolationDetection({
     maxWarnings,
     autoSubmitted,
     onAutoSubmit,
+    reportCheating,
   ]);
 
   // Re-arm violation detection when window gains focus

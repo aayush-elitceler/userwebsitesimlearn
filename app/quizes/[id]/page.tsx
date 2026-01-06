@@ -29,6 +29,7 @@ interface Quiz {
   createdAt: string;
   userId: string;
   completed: boolean;
+  createdBy?: string;
   questions: Question[];
 }
 
@@ -98,6 +99,11 @@ export default function QuizStartPage() {
     maxWarnings: 3,
     onAutoSubmit: () => handleSubmitQuiz(true),
     enabled: !loading && !!quiz && !submitting,
+    // Enable cheating report for teacher-created quizzes
+    enableCheatingReport: true,
+    cheatingReportType: "quiz",
+    quizId: quiz?.id,
+    createdBy: quiz?.createdBy,
   });
 
   // Make screen fullscreen - hide body scrollbar

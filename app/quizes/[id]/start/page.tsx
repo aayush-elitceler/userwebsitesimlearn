@@ -109,6 +109,11 @@ export default function QuizStartPage() {
     maxWarnings: 3,
     onAutoSubmit: () => handleSubmitQuiz(true),
     enabled: !loading && !!quiz && !submitting,
+    // Enable cheating report for teacher-created quizzes
+    enableCheatingReport: true,
+    cheatingReportType: "quiz",
+    quizId: quiz?.id,
+    createdBy: quiz?.createdBy,
   });
 
   useEffect(() => {
@@ -505,8 +510,8 @@ export default function QuizStartPage() {
                     <label
                       key={opt.id}
                       className={`block rounded-md px-4 py-3 cursor-pointer transition-all border border-transparent ${selected[q.id] === opt.id
-                          ? 'bg-gradient-primary text-primary-foreground border-amber-400'
-                          : 'bg-gradient-to-r from-orange-100 to-red-200 text-[#646464] hover:bg-primary/40'
+                        ? 'bg-gradient-primary text-primary-foreground border-amber-400'
+                        : 'bg-gradient-to-r from-orange-100 to-red-200 text-[#646464] hover:bg-primary/40'
                         }`}
                     >
                       <input

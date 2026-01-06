@@ -1,8 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
+import { markStudentAsCheated, isTeacherCreated } from "@/lib/cheatingUtils";
 
 interface Option {
   id: string;
@@ -55,8 +56,9 @@ export default function TakeExamPage() {
   const [lastViolationTime, setLastViolationTime] = useState<number>(0);
   const [violationArmed, setViolationArmed] = useState(true);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
-  console.log(warningCount , 'warningCount');
-  
+  const cheatingReportedRef = useRef(false);
+  console.log(warningCount, 'warningCount');
+
 
   useEffect(() => {
     async function fetchExam() {
@@ -74,7 +76,7 @@ export default function TakeExamPage() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        
+
         if (response.data.success && response.data.data && response.data.data.exam) {
           setExam(response.data.data.exam);
           setAnswers(Array(response.data.data.exam.questions.length).fill(""));
@@ -178,6 +180,16 @@ export default function TakeExamPage() {
       handleSubmit(true, true); // pass a flag to indicate auto-submit
       setAutoSubmitted(true);
       setShowFinalViolationModal(true);
+
+      // Report cheating for teacher-created exams
+      if (!cheatingReportedRef.current && exam && isTeacherCreated(exam.createdBy, exam.teacherId)) {
+        cheatingReportedRef.current = true;
+        markStudentAsCheated({
+          type: "exam",
+          examId: exam.id,
+          is_studentCheated: true,
+        });
+      }
     }
     // eslint-disable-next-line
   }, [warningCount]);
@@ -185,8 +197,8 @@ export default function TakeExamPage() {
   const scrollToQuestion = (questionIndex: number) => {
     const questionElement = document.getElementById(`question-${questionIndex}`);
     if (questionElement) {
-      questionElement.scrollIntoView({ 
-        behavior: 'smooth', 
+      questionElement.scrollIntoView({
+        behavior: 'smooth',
         block: 'center',
         inline: 'nearest'
       });
@@ -318,11 +330,11 @@ export default function TakeExamPage() {
                 xmlns="http://www.w3.org/2000/svg"
                 className="text-destructive"
               >
-                <path 
-                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path
+                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -365,7 +377,7 @@ export default function TakeExamPage() {
                 maxWidth: '300px',
               }}
             >
-              This is Warning {Math.ceil(warningCount/2)} of 3.
+              This is Warning {Math.ceil(warningCount / 2)} of 3.
             </p>
             <p
               className="text-muted-foreground mb-6"
@@ -421,11 +433,11 @@ export default function TakeExamPage() {
                 xmlns="http://www.w3.org/2000/svg"
                 className="text-destructive"
               >
-                <path 
-                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path
+                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -483,7 +495,7 @@ export default function TakeExamPage() {
           <div className="text-card-foreground font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
           <div className="text-muted-foreground text-sm">(Exam will auto-submit when time runs out)</div>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-1">
@@ -503,10 +515,10 @@ export default function TakeExamPage() {
             </div>
           </div>
         </div>
-        
+
       </div>
-      
-      <div 
+
+      <div
         className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-32px)]"
         style={{
           scrollBehavior: 'smooth',
@@ -526,7 +538,7 @@ export default function TakeExamPage() {
             </div>
           )}
         </div>
-       
+
         {exam.questions.map((q, idx) => (
           <div
             key={q.id}
@@ -556,11 +568,10 @@ export default function TakeExamPage() {
                 {q.options?.map((option, optionIndex) => (
                   <label
                     key={option.id}
-                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                      answers[idx] === option.id
+                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${answers[idx] === option.id
                         ? "border-primary bg-primary/10"
                         : "border-border bg-background hover:bg-muted/50"
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
