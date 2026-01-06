@@ -1,9 +1,11 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
-import { markStudentAsCheated, isTeacherCreated } from "@/lib/cheatingUtils";
+import { markStudentAsCheated, isTeacherCreated, uploadRecordingVideo } from "@/lib/cheatingUtils";
+import { useScreenRecording } from "@/hooks/useScreenRecording";
+import { RecordingIndicator, ScreenPermissionRequiredModal } from "@/components/RecordingIndicator";
 
 interface Option {
   id: string;
@@ -57,7 +59,25 @@ export default function TakeExamPage() {
   const [violationArmed, setViolationArmed] = useState(true);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const cheatingReportedRef = useRef(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [examReady, setExamReady] = useState(false);
+  const examReadyRef = useRef(false); // Ref for use in event handlers
   console.log(warningCount, 'warningCount');
+
+  // Screen recording hook with chunked uploads every 1 minute
+  const {
+    isRecording,
+    isSupported,
+    recordingDuration,
+    chunksUploaded,
+    startRecording,
+    stopRecording,
+  } = useScreenRecording({
+    enabled: true,
+    onPermissionDenied: () => setShowPermissionModal(true),
+    chunkIntervalMs: 60000, // Upload every 1 minute
+    examId: typeof examId === 'string' ? examId : examId?.[0],
+  });
 
 
   useEffect(() => {
@@ -97,6 +117,32 @@ export default function TakeExamPage() {
     if (examId) fetchExam();
   }, [examId]);
 
+  // Start screen recording when exam is loaded
+  const initiateScreenRecording = useCallback(async () => {
+    if (!isSupported) {
+      console.warn("Screen recording not supported in this browser");
+      examReadyRef.current = true;
+      setExamReady(true);
+      return;
+    }
+
+    const success = await startRecording();
+    if (success) {
+      examReadyRef.current = true;
+      setExamReady(true);
+      setShowPermissionModal(false);
+    } else {
+      setShowPermissionModal(true);
+    }
+  }, [isSupported, startRecording]);
+
+  // Trigger recording start when exam is loaded
+  useEffect(() => {
+    if (exam && !loading && !examReady && !isRecording) {
+      initiateScreenRecording();
+    }
+  }, [exam, loading, examReady, isRecording, initiateScreenRecording]);
+
   // Timer countdown effect
   useEffect(() => {
     if (remainingTime === null || loading || submitting || showFinalViolationModal) return;
@@ -125,6 +171,8 @@ export default function TakeExamPage() {
 
   useEffect(() => {
     function handleViolation(reason: string) {
+      // Don't detect violations until screen recording is ready (use ref for current value)
+      if (!examReadyRef.current) return;
       if (!violationArmed) return;
       setViolationArmed(false);
       const now = Date.now();
@@ -156,6 +204,7 @@ export default function TakeExamPage() {
       window.removeEventListener("blur", onBlur);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
+    // Using examReadyRef instead of examReady state, so no deps needed
   }, []);
 
   useEffect(() => {
@@ -216,6 +265,16 @@ export default function TakeExamPage() {
   const handleSubmit = async (autoSubmit = false, isFinalViolation = false) => {
     setSubmitting(true);
     const completedAt = new Date().toISOString();
+
+    // Stop screen recording (remaining chunks uploaded automatically)
+    if (isRecording) {
+      try {
+        await stopRecording();
+      } catch (err) {
+        console.error("Error stopping recording:", err);
+      }
+    }
+
     // Process answers to send optionText for MCQ questions instead of option IDs
     const processedAnswers = exam?.questions.map((q, i) => {
       const userAnswer = answers[i];
@@ -295,14 +354,25 @@ export default function TakeExamPage() {
 
   return (
     <div className="fixed inset-0 min-h-screen min-w-screen bg-background py-8 px-2 md:px-0 flex flex-col items-center z-10">
+      {/* Screen Recording Indicator */}
+      <RecordingIndicator isRecording={isRecording} duration={recordingDuration} />
+
+      {/* Screen Permission Required Modal */}
+      {showPermissionModal && (
+        <ScreenPermissionRequiredModal
+          onRetry={initiateScreenRecording}
+          type="exam"
+        />
+      )}
+
       {/* Submission overlay */}
       <MultiStepLoader
         loading={submitting}
         loadingStates={[
+          { text: "Stopping screen recording" },
           { text: "Packaging your answers" },
-          { text: "Securing submission" },
+          { text: "Uploading recording" },
           { text: "Evaluating responses" },
-          { text: "Generating your report" },
           { text: "Redirecting to results" },
         ]}
         duration={Math.floor(45000 / 5)}
@@ -569,8 +639,8 @@ export default function TakeExamPage() {
                   <label
                     key={option.id}
                     className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${answers[idx] === option.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-background hover:bg-muted/50"
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-background hover:bg-muted/50"
                       }`}
                   >
                     <input

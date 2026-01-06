@@ -55,6 +55,8 @@ export function useQuizViolationDetection({
 
   // Track if cheating report has been sent to avoid duplicate reports
   const cheatingReportedRef = useRef(false);
+  // Use ref to track enabled state for event handlers (avoids stale closure issues)
+  const enabledRef = useRef(enabled);
 
   const warningCount = violations.length;
 
@@ -102,11 +104,16 @@ export function useQuizViolationDetection({
     teacherId,
   ]);
 
+  // Keep enabledRef in sync with enabled prop
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
   // Handle violation detection
   useEffect(() => {
-    if (!enabled) return;
-
     function handleViolation(reason: string) {
+      // Check ref for current enabled value (avoids stale closure)
+      if (!enabledRef.current) return;
       if (!violationArmed) return;
       setViolationArmed(false);
 
@@ -154,8 +161,8 @@ export function useQuizViolationDetection({
       window.removeEventListener("blur", onBlur);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
+    // Using enabledRef instead of enabled, so we can keep event listeners stable
   }, [
-    enabled,
     violationArmed,
     lastViolationTime,
     maxWarnings,
@@ -166,15 +173,15 @@ export function useQuizViolationDetection({
 
   // Re-arm violation detection when window gains focus
   useEffect(() => {
-    if (!enabled) return;
-
     function onFocusOrVisible() {
+      if (!enabledRef.current) return;
       setViolationArmed(true);
     }
 
     window.addEventListener("focus", onFocusOrVisible);
 
     const handleVisibility = () => {
+      if (!enabledRef.current) return;
       if (document.visibilityState === "visible") {
         setViolationArmed(true);
       }
@@ -185,7 +192,7 @@ export function useQuizViolationDetection({
       window.removeEventListener("focus", onFocusOrVisible);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [enabled]);
+  }, []);
 
   return {
     warningCount,

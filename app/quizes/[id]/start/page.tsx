@@ -1,9 +1,12 @@
 'use client';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
 import { useQuizViolationDetection } from '@/hooks/useQuizViolationDetection';
+import { useScreenRecording } from '@/hooks/useScreenRecording';
+import { uploadRecordingVideo } from '@/lib/cheatingUtils';
+import { RecordingIndicator, ScreenPermissionRequiredModal } from '@/components/RecordingIndicator';
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -49,13 +52,40 @@ export default function QuizStartPage() {
   const [hasError, setHasError] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [quizReady, setQuizReady] = useState(false);
   const router = useRouter();
+
+  // Screen recording hook with chunked uploads every 1 minute
+  const {
+    isRecording,
+    isSupported,
+    recordingDuration,
+    chunksUploaded,
+    startRecording,
+    stopRecording,
+  } = useScreenRecording({
+    enabled: true,
+    onPermissionDenied: () => setShowPermissionModal(true),
+    chunkIntervalMs: 60000,
+    quizId: quiz?.id,
+  });
 
   // Submit quiz function
   const handleSubmitQuiz = useCallback(async (isAutoSubmit = false) => {
     if (!quiz || submitting) return;
 
     setSubmitting(true);
+
+    // Stop screen recording (remaining chunks uploaded automatically)
+    if (isRecording) {
+      try {
+        await stopRecording();
+      } catch (err) {
+        console.error("Error stopping recording:", err);
+      }
+    }
+
     try {
       const started = new Date(quizStartedAt);
       const completed = new Date();
@@ -97,7 +127,7 @@ export default function QuizStartPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [quiz, selected, quizStartedAt, router, submitting]);
+  }, [quiz, selected, quizStartedAt, router, submitting, isRecording, stopRecording]);
 
   // Violation detection hook
   const {
@@ -108,7 +138,7 @@ export default function QuizStartPage() {
   } = useQuizViolationDetection({
     maxWarnings: 3,
     onAutoSubmit: () => handleSubmitQuiz(true),
-    enabled: !loading && !!quiz && !submitting,
+    enabled: !loading && !!quiz && !submitting && quizReady,
     // Enable cheating report for teacher-created quizzes
     enableCheatingReport: true,
     cheatingReportType: "quiz",
@@ -169,6 +199,30 @@ export default function QuizStartPage() {
     }
     if (quizId) fetchQuiz();
   }, [quizId]);
+
+  // Start screen recording when quiz is loaded
+  const initiateScreenRecording = useCallback(async () => {
+    if (!isSupported) {
+      console.warn("Screen recording not supported in this browser");
+      setQuizReady(true);
+      return;
+    }
+
+    const success = await startRecording();
+    if (success) {
+      setQuizReady(true);
+      setShowPermissionModal(false);
+    } else {
+      setShowPermissionModal(true);
+    }
+  }, [isSupported, startRecording]);
+
+  // Trigger recording start when quiz is loaded
+  useEffect(() => {
+    if (quiz && !loading && !quizReady && !isRecording && mounted) {
+      initiateScreenRecording();
+    }
+  }, [quiz, loading, quizReady, isRecording, mounted, initiateScreenRecording]);
 
   // Timer logic
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
@@ -236,6 +290,17 @@ export default function QuizStartPage() {
 
   return (
     <div className='fixed inset-0 min-h-screen w-full bg-gray-100 z-50 overflow-y-auto'>
+      {/* Screen Recording Indicator */}
+      <RecordingIndicator isRecording={isRecording} duration={recordingDuration} />
+
+      {/* Screen Permission Required Modal */}
+      {showPermissionModal && (
+        <ScreenPermissionRequiredModal
+          onRetry={initiateScreenRecording}
+          type="quiz"
+        />
+      )}
+
       {/* Warning Modal */}
       {showWarning && warningCount > 0 && warningCount < 3 && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">

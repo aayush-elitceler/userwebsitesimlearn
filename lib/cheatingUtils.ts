@@ -78,3 +78,78 @@ export function shouldReportCheating(
 
 // Keep the old function name for backwards compatibility
 export const isTeacherCreated = shouldReportCheating;
+
+// ============================================================
+// Screen Recording Video Upload
+// ============================================================
+
+export interface UploadRecordingParams {
+  video: Blob;
+  videoType: "SCREEN";
+  duration: number; // in seconds
+  examId?: string;
+  quizId?: string;
+}
+
+/**
+ * Uploads a screen recording video to the server.
+ *
+ * @param params - The upload parameters including video blob and metadata
+ * @returns Promise<boolean> - Returns true if upload was successful
+ */
+export async function uploadRecordingVideo(
+  params: UploadRecordingParams
+): Promise<boolean> {
+  try {
+    // Validate we have either examId or quizId
+    if (!params.examId && !params.quizId) {
+      console.error("uploadRecordingVideo: Missing examId or quizId");
+      return false;
+    }
+
+    // Create FormData for multipart upload
+    const formData = new FormData();
+
+    // Add video file with proper filename
+    const filename = params.examId
+      ? `exam_${params.examId}_recording.webm`
+      : `quiz_${params.quizId}_recording.webm`;
+    formData.append("video", params.video, filename);
+
+    // Add metadata
+    formData.append("videoType", params.videoType);
+    formData.append("duration", params.duration.toString());
+
+    if (params.examId) {
+      formData.append("examId", params.examId);
+    }
+    if (params.quizId) {
+      formData.append("quizId", params.quizId);
+    }
+
+    console.log(
+      `Uploading recording video (${(params.video.size / 1024 / 1024).toFixed(
+        2
+      )} MB)...`
+    );
+
+    const response = await axios.post("/users/videos/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      // Increase timeout for large files
+      timeout: 300000, // 5 minutes
+    });
+
+    if (response.data?.success) {
+      console.log("Recording video uploaded successfully");
+      return true;
+    }
+
+    console.error("Recording video upload failed:", response.data);
+    return false;
+  } catch (error) {
+    console.error("Error uploading recording video:", error);
+    return false;
+  }
+}
