@@ -2,13 +2,14 @@
 
 import { useCallback, useRef, useState, useEffect } from "react";
 import { uploadRecordingVideo } from "@/lib/cheatingUtils";
+import { useScreenRecordingContext } from "@/lib/ScreenRecordingContext";
 
 export interface UseScreenRecordingOptions {
   enabled?: boolean;
   onError?: (error: Error) => void;
   onPermissionDenied?: () => void;
   // Chunked upload options
-  chunkIntervalMs?: number; // How often to upload chunks (default: 60000ms = 1 minute)
+  chunkIntervalMs?: number; // How often to upload chunks (default: 300000ms = 5 minutes)
   examId?: string;
   quizId?: string;
 }
@@ -27,10 +28,12 @@ export function useScreenRecording({
   enabled = true,
   onError,
   onPermissionDenied,
-  chunkIntervalMs = 60000, // 1 minute default
+  chunkIntervalMs = 300000, // 5 minutes default
   examId,
   quizId,
 }: UseScreenRecordingOptions = {}): UseScreenRecordingReturn {
+  const { stream: contextStream, setStream: setContextStream } =
+    useScreenRecordingContext();
   const [isRecording, setIsRecording] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -135,14 +138,27 @@ export function useScreenRecording({
       setRecordingDuration(0);
       setChunksUploaded(0);
 
-      // Request screen capture permission
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          displaySurface: "monitor",
-          frameRate: { ideal: 15, max: 30 },
-        },
-        audio: false,
-      });
+      let stream = contextStream;
+
+      if (!stream) {
+        // Request screen capture permission if not already in context
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            displaySurface: "monitor",
+            frameRate: { ideal: 15, max: 30 },
+          },
+          audio: false,
+        });
+
+        const videoTrack = stream.getVideoTracks()[0];
+        const settings = videoTrack.getSettings();
+        if (settings.displaySurface && settings.displaySurface !== "monitor") {
+          stream.getTracks().forEach((track) => track.stop());
+          throw new Error("ENTIRE_SCREEN_REQUIRED");
+        }
+
+        setContextStream(stream);
+      }
 
       streamRef.current = stream;
 
@@ -254,6 +270,8 @@ export function useScreenRecording({
     examId,
     quizId,
     uploadCurrentChunks,
+    contextStream,
+    setContextStream,
   ]);
 
   // Stop recording

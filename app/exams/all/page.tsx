@@ -149,7 +149,6 @@ export default function AllExamsPage() {
                   date={exam.assignmentDetails?.endTime || exam.createdAt}
                   description={exam.description || exam.instructions}
                   difficulty={exam.difficulty}
-                  onStartExam={type === 'upcoming' ? () => router.push(`/exams/take/${exam.id}`) : undefined}
                   onViewReport={type === 'previous' ? () => router.push(`/exams/reports/${exam.id}`) : undefined}
                 />
               );

@@ -1,6 +1,9 @@
 "use client";
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
+import { Monitor, AlertCircle, X, Loader2 } from "lucide-react";
+import { useScreenRecordingContext } from "@/lib/ScreenRecordingContext";
 
 // Get CSS class for subject background
 const getSubjectClass = (subject: string | undefined) => {
@@ -59,6 +62,12 @@ export default function ExamCard({
   difficulty,
 }: ExamCardProps) {
   const router = useRouter();
+  const { setStream } = useScreenRecordingContext();
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+
+
   const examDescription =
     description ||
     exam.description ||
@@ -68,11 +77,59 @@ export default function ExamCard({
     ? examDescription
     : null;
 
+  // Navigate to exam page (Request screen share first and persist it)
+  const handleProceedToExam = useCallback(async () => {
+    setIsRequestingPermission(true);
+    setPermissionError(null);
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        console.warn("Screen storage not supported");
+        router.push(`/exams/take/${exam.id}`);
+        return;
+      }
+
+      // 1. Request Stream
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "monitor" },
+        audio: false,
+      });
+
+      // Verify user shared the entire screen
+      const videoTrack = stream.getVideoTracks()[0];
+      const settings = videoTrack.getSettings();
+
+      if (settings.displaySurface && settings.displaySurface !== 'monitor') {
+        stream.getTracks().forEach(track => track.stop());
+        throw new Error("ENTIRE_SCREEN_REQUIRED");
+      }
+
+      // 2. Save stream to global context (DO NOT STOP TRACKS)
+      setStream(stream);
+
+      // 3. Navigate
+      setShowPermissionModal(false);
+      router.push(`/exams/take/${exam.id}`);
+
+    } catch (error) {
+      console.error("Permission denied", error);
+      if (error instanceof Error && error.message === "ENTIRE_SCREEN_REQUIRED") {
+        setPermissionError("You must share your ENTIRE SCREEN to proceed. Please try again.");
+      } else {
+        setPermissionError("Screen sharing is required to start the exam.");
+      }
+    } finally {
+      setIsRequestingPermission(false);
+    }
+  }, [exam.id, router, setStream]);
+
   const handleStartExam = () => {
     if (onStartExam) {
       onStartExam(exam.id);
     } else {
-      router.push(`/exams/take/${exam.id}`);
+      // Show permission modal instead of directly navigating
+      setShowPermissionModal(true);
+
     }
   };
 
@@ -82,6 +139,108 @@ export default function ExamCard({
     } else {
       router.push(`/exams/reports/${exam.id}`);
     }
+  };
+
+
+
+  // Screen Permission Modal Component
+  const ScreenPermissionModal = () => {
+    // Use portal to render outside the card's transform context
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div
+          className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 relative animate-in fade-in zoom-in duration-200"
+          style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setShowPermissionModal(false)}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Icon */}
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center">
+              <Monitor className="w-8 h-8 text-orange-500" />
+            </div>
+          </div>
+
+          {/* Title */}
+          <h2 className="text-xl font-bold text-gray-900 text-center mb-3">
+            Screen Sharing Required
+          </h2>
+
+          {/* Description */}
+          <p className="text-gray-600 text-center mb-6 leading-relaxed">
+            To ensure exam integrity, we need to record your screen during the exam.
+            Please select your <strong>entire screen</strong> when prompted.
+          </p>
+
+          {/* Error message */}
+          {permissionError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{permissionError}</p>
+            </div>
+          )}
+
+
+          {/* Instructions */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-2 text-sm">What happens next:</h3>
+            <ul className="text-sm text-gray-600 space-y-1.5">
+              <li className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold">1.</span>
+                <span>Click "Proceed to Exam" below</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold">2.</span>
+                <span>Select your entire screen in the browser prompt</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-orange-500 font-bold">3.</span>
+                <span>Exam will start in fullscreen mode</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleProceedToExam}
+              disabled={isRequestingPermission}
+              className="w-full py-3 px-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-lg 
+                       hover:from-orange-600 hover:to-red-600 transition-all duration-200 
+                       disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isRequestingPermission ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Requesting Permission...
+                </>
+              ) : (
+                <>
+                  <Monitor className="w-5 h-5" />
+                  Proceed to Exam
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setShowPermissionModal(false)}
+              className="w-full py-3 px-4 text-gray-600 font-medium rounded-lg border border-gray-300 
+                       hover:bg-gray-50 transition-all duration-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
   };
 
   return (
@@ -265,6 +424,8 @@ export default function ExamCard({
           </div>
         </div>
       </div>
+      {/* Screen Permission Modal */}
+      {showPermissionModal && <ScreenPermissionModal />}
     </div>
   );
 }

@@ -64,7 +64,7 @@ export default function TakeExamPage() {
   const examReadyRef = useRef(false); // Ref for use in event handlers
   console.log(warningCount, 'warningCount');
 
-  // Screen recording hook with chunked uploads every 1 minute
+
   const {
     isRecording,
     isSupported,
@@ -75,7 +75,7 @@ export default function TakeExamPage() {
   } = useScreenRecording({
     enabled: true,
     onPermissionDenied: () => setShowPermissionModal(true),
-    chunkIntervalMs: 60000, // Upload every 1 minute
+    chunkIntervalMs: 300000,
     examId: typeof examId === 'string' ? examId : examId?.[0],
   });
 
@@ -347,6 +347,25 @@ export default function TakeExamPage() {
       document.body.style.height = "";
     };
   }, []);
+
+  // Force browser fullscreen when exam is ready
+  useEffect(() => {
+    if (examReady && !document.fullscreenElement) {
+      // Request fullscreen after screen recording is ready
+      const requestFullscreen = async () => {
+        try {
+          if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          }
+        } catch (err) {
+          console.error("Fullscreen request failed:", err);
+        }
+      };
+      // Small delay to ensure recording is fully initialized
+      const timer = setTimeout(requestFullscreen, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [examReady]);
 
   if (loading || !exam) {
     return <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground w-screen h-screen">Loading exam...</div>;

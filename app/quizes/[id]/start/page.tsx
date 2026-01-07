@@ -56,7 +56,7 @@ export default function QuizStartPage() {
   const [quizReady, setQuizReady] = useState(false);
   const router = useRouter();
 
-  // Screen recording hook with chunked uploads every 1 minute
+  // Screen recording hook with chunked uploads every 3 minutes (180 seconds)
   const {
     isRecording,
     isSupported,
@@ -67,7 +67,7 @@ export default function QuizStartPage() {
   } = useScreenRecording({
     enabled: true,
     onPermissionDenied: () => setShowPermissionModal(true),
-    chunkIntervalMs: 60000,
+    chunkIntervalMs: 300000, // Upload every 5 minutes (300 seconds)
     quizId: quiz?.id,
   });
 

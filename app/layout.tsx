@@ -4,11 +4,12 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import LayoutWrapper from "@/components/LayoutWrapper"; // Import client wrapper
 import { Toaster } from "@/components/ui/toaster";
 import { LogoProvider } from "@/lib/LogoContext";
+import { ScreenRecordingProvider } from "@/lib/ScreenRecordingContext";
 import { Nunito_Sans } from "next/font/google";
 import Script from "next/script"; // ✅ Added
 
-const nunitoSans = Nunito_Sans({ 
-  weight: ["300", "400", "500", "600", "700", "800"], 
+const nunitoSans = Nunito_Sans({
+  weight: ["300", "400", "500", "600", "700", "800"],
   subsets: ["latin"],
   display: "swap",
   variable: "--font-nunito-sans"
@@ -40,7 +41,7 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/logo.svg" />
         <link rel="shortcut icon" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/logo.svg" />
-        
+
         {/* ✅ Google Identity Services Script */}
         <Script
           src="https://accounts.google.com/gsi/client"
@@ -78,10 +79,12 @@ export default function RootLayout({
       </head>
       <body className={nunitoSans.className}>
         <LogoProvider>
-          <SidebarProvider>
-            <LayoutWrapper>{children}</LayoutWrapper>
-            <Toaster />
-          </SidebarProvider>
+          <ScreenRecordingProvider>
+            <SidebarProvider>
+              <LayoutWrapper>{children}</LayoutWrapper>
+              <Toaster />
+            </SidebarProvider>
+          </ScreenRecordingProvider>
         </LogoProvider>
       </body>
     </html>
