@@ -163,7 +163,7 @@ export default function QuizesPage() {
             animation: 'slideInRight 0.6s ease-out forwards'
           }}
         >
-        
+
         </div>
         <div
           className="text-base md:text-lg text-black mb-8"
@@ -172,7 +172,7 @@ export default function QuizesPage() {
             animation: 'fadeInUp 0.6s ease-out forwards'
           }}
         >
-        AI-powered preparation to help you perform your best.{' '}
+          AI-powered preparation to help you perform your best.{' '}
           <span className="align-middle">🏅✨</span>
         </div>
         <div className="flex items-center justify-between mb-4 gap-4"
@@ -189,11 +189,11 @@ export default function QuizesPage() {
               router.push('/exams/all?type=upcoming');
             }}
           >
-            View all 
+            View all
             <ArrowRight className="w-4 h-4 text-primary" />
           </a>
         </div>
-        <div 
+        <div
           className="mb-10 py-4"
           style={{
             ...getAnimationDelay(4, 200),
@@ -222,7 +222,6 @@ export default function QuizesPage() {
                     previous={false}
                     description={exam.description || exam.instructions}
                     difficulty={exam.difficulty}
-                    onStartExam={() => router.push(`/exams/take/${exam.id}`)}
                   />
                 </div>
               ))
@@ -239,11 +238,11 @@ export default function QuizesPage() {
               router.push('/exams/all?type=previous');
             }}
           >
-            View all 
+            View all
             <ArrowRight className="w-4 h-4 text-primary" />
           </a>
         </div>
-        <div 
+        <div
           className="mb-10 py-4"
           style={{
             ...getAnimationDelay(6, 200),

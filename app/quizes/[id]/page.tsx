@@ -1,9 +1,12 @@
 "use client";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
 import { useQuizViolationDetection } from '@/hooks/useQuizViolationDetection';
+import { useScreenRecording } from '@/hooks/useScreenRecording';
+import { uploadRecordingVideo } from '@/lib/cheatingUtils';
+import { RecordingIndicator, ScreenPermissionRequiredModal } from '@/components/RecordingIndicator';
 
 interface Option {
   id: string;
@@ -29,6 +32,7 @@ interface Quiz {
   createdAt: string;
   userId: string;
   completed: boolean;
+  createdBy?: string;
   questions: Question[];
 }
 
@@ -41,13 +45,40 @@ export default function QuizStartPage() {
   const [selected, setSelected] = useState<{ [questionId: string]: string }>({});
   const [quizStartedAt, setQuizStartedAt] = useState(new Date().toISOString());
   const [submitting, setSubmitting] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [quizReady, setQuizReady] = useState(false);
   const router = useRouter();
+
+  // Screen recording hook with chunked uploads every 3 minutes (180 seconds)
+  const {
+    isRecording,
+    isSupported,
+    recordingDuration,
+    chunksUploaded,
+    startRecording,
+    stopRecording,
+  } = useScreenRecording({
+    enabled: true,
+    onPermissionDenied: () => setShowPermissionModal(true),
+    chunkIntervalMs: 300000, // Upload every 5 minutes (300 seconds)
+    quizId: quiz?.id,
+  });
 
   // Submit quiz function
   const handleSubmitQuiz = useCallback(async (isAutoSubmit = false) => {
     if (!quiz || submitting) return;
 
     setSubmitting(true);
+
+    // Stop screen recording (remaining chunks uploaded automatically)
+    if (isRecording) {
+      try {
+        await stopRecording();
+      } catch (err) {
+        console.error("Error stopping recording:", err);
+      }
+    }
+
     try {
       const started = new Date(quizStartedAt);
       const completed = new Date();
@@ -86,9 +117,9 @@ export default function QuizStartPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [quiz, selected, quizStartedAt, router, submitting]);
+  }, [quiz, selected, quizStartedAt, router, submitting, isRecording, stopRecording]);
 
-  // Violation detection hook
+  // Violation detection hook - only enabled after screen recording is ready
   const {
     warningCount,
     showWarning,
@@ -97,7 +128,12 @@ export default function QuizStartPage() {
   } = useQuizViolationDetection({
     maxWarnings: 3,
     onAutoSubmit: () => handleSubmitQuiz(true),
-    enabled: !loading && !!quiz && !submitting,
+    enabled: !loading && !!quiz && !submitting && quizReady,
+    // Enable cheating report for teacher-created quizzes
+    enableCheatingReport: true,
+    cheatingReportType: "quiz",
+    quizId: quiz?.id,
+    createdBy: quiz?.createdBy,
   });
 
   // Make screen fullscreen - hide body scrollbar
@@ -139,6 +175,30 @@ export default function QuizStartPage() {
     if (quizId) fetchQuiz();
   }, [quizId]);
 
+  // Start screen recording when quiz is loaded
+  const initiateScreenRecording = useCallback(async () => {
+    if (!isSupported) {
+      console.warn("Screen recording not supported in this browser");
+      setQuizReady(true);
+      return;
+    }
+
+    const success = await startRecording();
+    if (success) {
+      setQuizReady(true);
+      setShowPermissionModal(false);
+    } else {
+      setShowPermissionModal(true);
+    }
+  }, [isSupported, startRecording]);
+
+  // Trigger recording start when quiz is loaded
+  useEffect(() => {
+    if (quiz && !loading && !quizReady && !isRecording) {
+      initiateScreenRecording();
+    }
+  }, [quiz, loading, quizReady, isRecording, initiateScreenRecording]);
+
   // Timer logic
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   useEffect(() => {
@@ -170,6 +230,17 @@ export default function QuizStartPage() {
 
   return (
     <div className="fixed inset-0 min-h-screen w-full bg-white z-50 overflow-y-auto">
+      {/* Screen Recording Indicator */}
+      <RecordingIndicator isRecording={isRecording} duration={recordingDuration} />
+
+      {/* Screen Permission Required Modal */}
+      {showPermissionModal && (
+        <ScreenPermissionRequiredModal
+          onRetry={initiateScreenRecording}
+          type="quiz"
+        />
+      )}
+
       {/* Warning Modal */}
       {showWarning && warningCount > 0 && warningCount < 3 && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">

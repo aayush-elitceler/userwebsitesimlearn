@@ -139,7 +139,6 @@ export default function AllGenerateExamsPage() {
                 date={exam.assignmentDetails?.endTime || exam.createdAt}
                 description={exam.instructions}
                 difficulty={exam.difficulty}
-                onStartExam={() => router.push(`/exams/take/${exam.id}`)}
                 onViewReport={exam.completed ? () => router.push(`/exams/reports/${exam.id}`) : undefined}
               />
             ))}

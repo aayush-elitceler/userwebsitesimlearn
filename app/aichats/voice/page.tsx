@@ -7,7 +7,8 @@ import { fetchHistory, HistoryItem, saveHistory } from "@/lib/historyService";
 import type { ChatMessage } from "@/lib/historyService";
 import TwoSelectPill, { OptionWithLabel } from "@/components/TwoSelectPill";
 import Cookies from "js-cookie";
-import { getUserGradeFromProfile } from "@/lib/gradeUtils";
+import { getUserGradeFromProfile, mapClassNameToGradeOption } from "@/lib/gradeUtils";
+import { redirectToLogin } from '@/lib/axiosInstance';
 
 // --- Constants & Types ---
 
@@ -73,7 +74,15 @@ const styles = [
 
 type StyleOption = "professor" | "friend";
 
+interface UserProfile {
+  id: string;
+  email?: string;
+  className?: string;
+  [key: string]: unknown;
+}
+
 export default function VoicebaseRealtimePage() {
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   // --- State Management ---
   const [isActive, setIsActive] = useState(false);
   const [status, setStatus] = useState<string>("idle");
@@ -154,13 +163,65 @@ export default function VoicebaseRealtimePage() {
     }
   }, []);
 
-  // --- Auto-select grade from user profile ---
+  // Fetch user profile
   useEffect(() => {
-    const userGrade = getUserGradeFromProfile();
-    if (userGrade && !selectedGrade) {
-      setSelectedGrade(userGrade);
-    }
+    const fetchUserProfile = async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      if (!baseUrl) return;
+
+      const authCookie = Cookies.get("auth");
+      if (!authCookie) return;
+
+      let token: string | undefined;
+      try {
+        token = JSON.parse(authCookie).token;
+      } catch (error) {
+        console.error("Error parsing auth cookie:", error);
+      }
+
+      if (!token) return;
+
+      try {
+        const sanitizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+        const response = await fetch(`${sanitizedBaseUrl}/users/auth/get-profile`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        const result = await response.json();
+        if (result.success && result.data) {
+          setUserProfile(result.data as UserProfile);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+
+    fetchUserProfile();
   }, []);
+
+  // Auto-select grade
+  useEffect(() => {
+    const localGrade = getUserGradeFromProfile();
+    if (localGrade && !selectedGrade) {
+      setSelectedGrade(localGrade);
+      return;
+    }
+
+    if (userProfile?.className && !selectedGrade) {
+      const mapped = mapClassNameToGradeOption(userProfile.className);
+      if (mapped) {
+        setSelectedGrade(mapped);
+      }
+    }
+  }, [userProfile, selectedGrade]);
 
   // --- Onboarding Effect ---
   useEffect(() => {

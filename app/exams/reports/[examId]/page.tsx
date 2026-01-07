@@ -13,6 +13,13 @@ type GradingResult = {
   keyPoints?: string[];
 };
 
+type UploadedFile = {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  summary?: string;
+};
+
 type ExamReport = {
   exam: {
     id: string;
@@ -45,6 +52,7 @@ type ExamReport = {
   startTime?: string | null;
   endTime?: string | null;
   overallFeedback?: string;
+  uploadedFiles?: UploadedFile[];
 };
 
 // Cache storage key
@@ -60,7 +68,7 @@ const getCachedReport = (examId: string): ExamReport | null => {
       const cacheTime = parsed.cacheTime;
       const now = Date.now();
       const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-      
+
       if (now - cacheTime < oneDay) {
         return parsed.data;
       } else {
@@ -95,6 +103,20 @@ const clearCachedReport = (examId: string): void => {
   }
 };
 
+// Get uploaded files from sessionStorage (stored during exam submission)
+const getUploadedFilesFromSession = (examId: string): UploadedFile[] | null => {
+  try {
+    const stored = sessionStorage.getItem(`exam_uploaded_files_${examId}`);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error reading uploaded files from session:', error);
+    return null;
+  }
+};
+
 // Function to calculate pointer position based on score percentage
 function calculatePointerPosition(scorePercentage: number): number {
   // Map score percentage to pointer position (0-100)
@@ -124,27 +146,42 @@ export default function ExamReportPage() {
     async function fetchResult() {
       setLoading(true);
       setError('');
-      
+
       // First, try to get from cache
       if (examId) {
         const cachedReport = getCachedReport(examId as string);
         if (cachedReport) {
+          // Also check for uploadedFiles from sessionStorage
+          const uploadedFilesFromSession = getUploadedFilesFromSession(examId as string);
+          if (uploadedFilesFromSession && !cachedReport.uploadedFiles) {
+            cachedReport.uploadedFiles = uploadedFilesFromSession;
+          }
           setResult(cachedReport);
           setIsFromCache(true);
           setLoading(false);
           return;
         }
       }
-      
+
       try {
         const response = await axios.get(`/users/exams/report?examId=${examId}`);
         const data = response.data;
         if (data.success && data.data && data.data.exam) {
+          let reportData = data.data;
+
+          // Check for uploadedFiles from sessionStorage if not in API response
+          if (examId && !reportData.uploadedFiles) {
+            const uploadedFilesFromSession = getUploadedFilesFromSession(examId as string);
+            if (uploadedFilesFromSession) {
+              reportData = { ...reportData, uploadedFiles: uploadedFilesFromSession };
+            }
+          }
+
           // Cache the report data
           if (examId) {
-            setCachedReport(examId as string, data.data);
+            setCachedReport(examId as string, reportData);
           }
-          setResult(data.data);
+          setResult(reportData);
           setIsFromCache(false);
         } else {
           setError(data.message || 'Failed to load exam report');
@@ -159,19 +196,19 @@ export default function ExamReportPage() {
         setLoading(false);
       }
     }
-    
+
     if (examId) fetchResult();
   }, [examId]);
 
   const handleRefreshReport = async () => {
     if (!examId) return;
-    
+
     // Clear cache and reload
     clearCachedReport(examId as string);
     setIsFromCache(false);
     setLoading(true);
     setError('');
-    
+
     try {
       const response = await axios.get(`/users/exams/report?examId=${examId}`);
       const data = response.data;
@@ -208,7 +245,7 @@ export default function ExamReportPage() {
       <MultiStepLoader loading loadingStates={reportLoadingStates} duration={perStepMs} loop={false} />
     );
   }
-  
+
   if (error) {
     return (
       <div className="min-h-screen w-full px-4 md:px-12 py-8 bg-gray-100 flex flex-col items-center">
@@ -224,7 +261,7 @@ export default function ExamReportPage() {
       </div>
     );
   }
-  
+
   if (!result) return <div className="text-black p-8">Result not found.</div>;
 
   // Calculate score percentage with sensible fallbacks
@@ -454,6 +491,107 @@ export default function ExamReportPage() {
             ))}
           </div>
         </div>
+
+        {/* Uploaded Answer Files Section */}
+        {result.uploadedFiles && result.uploadedFiles.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-lg font-semibold text-black mb-4">Uploaded Answer Files</h3>
+            <div className="space-y-6">
+              {result.uploadedFiles.map((file, idx) => (
+                <div key={file.id || idx} className="bg-white border border-gray-200 rounded-xl p-6">
+                  {/* File Header */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        {file.fileName.toLowerCase().endsWith('.pdf') ? (
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        ) : (
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                            <path d="M21 15L16 10L5 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{file.fileName}</div>
+                        <a
+                          href={file.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          View Original File
+                        </a>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                      Analyzed
+                    </span>
+                  </div>
+
+                  {/* AI Summary */}
+                  {file.summary && (
+                    <div className="prose prose-sm max-w-none">
+                      <div className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-primary">
+                          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        AI Analysis Summary
+                      </div>
+                      <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        {/* Parse and render the markdown-like summary */}
+                        <div className="text-gray-700 leading-relaxed space-y-4">
+                          {file.summary.split('\n').map((line, lineIdx) => {
+                            // Handle headers
+                            if (line.startsWith('# ')) {
+                              return <h2 key={lineIdx} className="text-xl font-bold text-gray-900 mt-4 first:mt-0">{line.replace('# ', '')}</h2>;
+                            }
+                            if (line.startsWith('## ')) {
+                              return <h3 key={lineIdx} className="text-lg font-semibold text-gray-800 mt-4">{line.replace('## ', '')}</h3>;
+                            }
+                            // Handle bold text with **
+                            if (line.includes('**')) {
+                              const parts = line.split(/\*\*(.*?)\*\*/);
+                              return (
+                                <p key={lineIdx} className="text-sm">
+                                  {parts.map((part, partIdx) =>
+                                    partIdx % 2 === 1
+                                      ? <strong key={partIdx} className="font-semibold text-gray-900">{part}</strong>
+                                      : part
+                                  )}
+                                </p>
+                              );
+                            }
+                            // Handle list items
+                            if (line.trim().startsWith('- ')) {
+                              return (
+                                <div key={lineIdx} className="flex items-start gap-2 text-sm ml-2">
+                                  <span className="text-primary mt-1.5">•</span>
+                                  <span>{line.replace(/^\s*-\s*/, '')}</span>
+                                </div>
+                              );
+                            }
+                            // Regular paragraph (skip empty lines)
+                            if (line.trim()) {
+                              return <p key={lineIdx} className="text-sm">{line}</p>;
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

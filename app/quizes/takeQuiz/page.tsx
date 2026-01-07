@@ -103,10 +103,10 @@ function ExamCard({
           Due date:{" "}
           {exam.dueDate
             ? new Date(exam.dueDate).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
             : "-"}
         </div>
         <button
@@ -227,7 +227,7 @@ export default function QuizesPage() {
           className="flex items-center justify-between mb-2"
         >
           <h2 className="text-2xl md:text-2xl font-bold text-black">
-          My Quizzes
+            My Quizzes
           </h2>
         </div>
         <div
@@ -378,6 +378,6 @@ export default function QuizesPage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

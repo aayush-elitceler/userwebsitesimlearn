@@ -1,8 +1,11 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
+import { markStudentAsCheated, isTeacherCreated, uploadRecordingVideo } from "@/lib/cheatingUtils";
+import { useScreenRecording } from "@/hooks/useScreenRecording";
+import { RecordingIndicator, ScreenPermissionRequiredModal } from "@/components/RecordingIndicator";
 
 interface Option {
   id: string;
@@ -55,8 +58,32 @@ export default function TakeExamPage() {
   const [lastViolationTime, setLastViolationTime] = useState<number>(0);
   const [violationArmed, setViolationArmed] = useState(true);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
-  console.log(warningCount , 'warningCount');
-  
+  const cheatingReportedRef = useRef(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [examReady, setExamReady] = useState(false);
+
+  // Answer mode: 'write' for typing answers, 'upload' for uploading image/file
+  const [answerMode, setAnswerMode] = useState<'write' | 'upload'>('write');
+  const [answerFiles, setAnswerFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const examReadyRef = useRef(false); // Ref for use in event handlers
+  console.log(warningCount, 'warningCount');
+
+
+  const {
+    isRecording,
+    isSupported,
+    recordingDuration,
+    chunksUploaded,
+    startRecording,
+    stopRecording,
+  } = useScreenRecording({
+    enabled: true,
+    onPermissionDenied: () => setShowPermissionModal(true),
+    chunkIntervalMs: 300000,
+    examId: typeof examId === 'string' ? examId : examId?.[0],
+  });
+
 
   useEffect(() => {
     async function fetchExam() {
@@ -74,7 +101,7 @@ export default function TakeExamPage() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        
+
         if (response.data.success && response.data.data && response.data.data.exam) {
           setExam(response.data.data.exam);
           setAnswers(Array(response.data.data.exam.questions.length).fill(""));
@@ -94,6 +121,32 @@ export default function TakeExamPage() {
     }
     if (examId) fetchExam();
   }, [examId]);
+
+  // Start screen recording when exam is loaded
+  const initiateScreenRecording = useCallback(async () => {
+    if (!isSupported) {
+      console.warn("Screen recording not supported in this browser");
+      examReadyRef.current = true;
+      setExamReady(true);
+      return;
+    }
+
+    const success = await startRecording();
+    if (success) {
+      examReadyRef.current = true;
+      setExamReady(true);
+      setShowPermissionModal(false);
+    } else {
+      setShowPermissionModal(true);
+    }
+  }, [isSupported, startRecording]);
+
+  // Trigger recording start when exam is loaded
+  useEffect(() => {
+    if (exam && !loading && !examReady && !isRecording) {
+      initiateScreenRecording();
+    }
+  }, [exam, loading, examReady, isRecording, initiateScreenRecording]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -123,6 +176,8 @@ export default function TakeExamPage() {
 
   useEffect(() => {
     function handleViolation(reason: string) {
+      // Don't detect violations until screen recording is ready (use ref for current value)
+      if (!examReadyRef.current) return;
       if (!violationArmed) return;
       setViolationArmed(false);
       const now = Date.now();
@@ -154,6 +209,7 @@ export default function TakeExamPage() {
       window.removeEventListener("blur", onBlur);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
+    // Using examReadyRef instead of examReady state, so no deps needed
   }, []);
 
   useEffect(() => {
@@ -178,6 +234,16 @@ export default function TakeExamPage() {
       handleSubmit(true, true); // pass a flag to indicate auto-submit
       setAutoSubmitted(true);
       setShowFinalViolationModal(true);
+
+      // Report cheating for teacher-created exams
+      if (!cheatingReportedRef.current && exam && isTeacherCreated(exam.createdBy, exam.teacherId)) {
+        cheatingReportedRef.current = true;
+        markStudentAsCheated({
+          type: "exam",
+          examId: exam.id,
+          is_studentCheated: true,
+        });
+      }
     }
     // eslint-disable-next-line
   }, [warningCount]);
@@ -185,8 +251,8 @@ export default function TakeExamPage() {
   const scrollToQuestion = (questionIndex: number) => {
     const questionElement = document.getElementById(`question-${questionIndex}`);
     if (questionElement) {
-      questionElement.scrollIntoView({ 
-        behavior: 'smooth', 
+      questionElement.scrollIntoView({
+        behavior: 'smooth',
         block: 'center',
         inline: 'nearest'
       });
@@ -204,33 +270,16 @@ export default function TakeExamPage() {
   const handleSubmit = async (autoSubmit = false, isFinalViolation = false) => {
     setSubmitting(true);
     const completedAt = new Date().toISOString();
-    // Process answers to send optionText for MCQ questions instead of option IDs
-    const processedAnswers = exam?.questions.map((q, i) => {
-      const userAnswer = answers[i];
 
-      if (q.questionType === "MCQ" && userAnswer) {
-        // For MCQ questions, find the selected option and send its text
-        const selectedOption = q.options.find(opt => opt.id === userAnswer);
-        return {
-          question: q.id,
-          answer: selectedOption ? selectedOption.optionText : userAnswer,
-        };
-      } else {
-        // For text questions (SHORT/LONG), send the answer as is
-        return {
-          question: q.id,
-          answer: userAnswer,
-        };
+    // Stop screen recording (remaining chunks uploaded automatically)
+    if (isRecording) {
+      try {
+        await stopRecording();
+      } catch (err) {
+        console.error("Error stopping recording:", err);
       }
-    });
+    }
 
-    const body = {
-      examId,
-      startedAt,
-      completedAt,
-      violations,
-      answers: processedAnswers,
-    };
     try {
       const token = getTokenFromCookie();
       if (!token) {
@@ -238,16 +287,85 @@ export default function TakeExamPage() {
         return;
       }
 
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`,
-        body,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+      if (answerMode === 'upload' && answerFiles.length > 0) {
+        // Upload mode: Use FormData with files
+        const formData = new FormData();
+
+        const dataPayload = {
+          examId,
+          startedAt,
+          completedAt,
+          violations: [],
+        };
+
+        formData.append('data', JSON.stringify(dataPayload));
+        formData.append('uploadAnswersAsFile', 'true');
+
+        // Append all answer files
+        answerFiles.forEach((file) => {
+          formData.append('answerFiles', file);
+        });
+
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              // Don't set Content-Type - axios will set it automatically with boundary for FormData
+            },
+          }
+        );
+
+        // Store uploadedFiles in sessionStorage for the reports page
+        if (response.data?.data?.uploadedFiles) {
+          sessionStorage.setItem(
+            `exam_uploaded_files_${examId}`,
+            JSON.stringify(response.data.data.uploadedFiles)
+          );
         }
-      );
+      } else {
+        // Write mode: Send JSON as before
+        // Process answers to send optionText for MCQ questions instead of option IDs
+        const processedAnswers = exam?.questions.map((q, i) => {
+          const userAnswer = answers[i];
+
+          if (q.questionType === "MCQ" && userAnswer) {
+            // For MCQ questions, find the selected option and send its text
+            const selectedOption = q.options.find(opt => opt.id === userAnswer);
+            return {
+              question: q.id,
+              answer: selectedOption ? selectedOption.optionText : userAnswer,
+            };
+          } else {
+            // For text questions (SHORT/LONG), send the answer as is
+            return {
+              question: q.id,
+              answer: userAnswer,
+            };
+          }
+        });
+
+        const body = {
+          examId,
+          startedAt,
+          completedAt,
+          violations,
+          answers: processedAnswers,
+        };
+
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`,
+          body,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
+
       if (!isFinalViolation) {
         router.push(`/exams/reports/${examId}`);
       }
@@ -277,20 +395,50 @@ export default function TakeExamPage() {
     };
   }, []);
 
+  // Force browser fullscreen when exam is ready
+  useEffect(() => {
+    if (examReady && !document.fullscreenElement) {
+      // Request fullscreen after screen recording is ready
+      const requestFullscreen = async () => {
+        try {
+          if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          }
+        } catch (err) {
+          console.error("Fullscreen request failed:", err);
+        }
+      };
+      // Small delay to ensure recording is fully initialized
+      const timer = setTimeout(requestFullscreen, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [examReady]);
+
   if (loading || !exam) {
     return <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground w-screen h-screen">Loading exam...</div>;
   }
 
   return (
     <div className="fixed inset-0 min-h-screen min-w-screen bg-background py-8 px-2 md:px-0 flex flex-col items-center z-10">
+      {/* Screen Recording Indicator */}
+      <RecordingIndicator isRecording={isRecording} duration={recordingDuration} />
+
+      {/* Screen Permission Required Modal */}
+      {showPermissionModal && (
+        <ScreenPermissionRequiredModal
+          onRetry={initiateScreenRecording}
+          type="exam"
+        />
+      )}
+
       {/* Submission overlay */}
       <MultiStepLoader
         loading={submitting}
         loadingStates={[
+          { text: "Stopping screen recording" },
           { text: "Packaging your answers" },
-          { text: "Securing submission" },
+          { text: "Uploading recording" },
           { text: "Evaluating responses" },
-          { text: "Generating your report" },
           { text: "Redirecting to results" },
         ]}
         duration={Math.floor(45000 / 5)}
@@ -318,11 +466,11 @@ export default function TakeExamPage() {
                 xmlns="http://www.w3.org/2000/svg"
                 className="text-destructive"
               >
-                <path 
-                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path
+                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -365,7 +513,7 @@ export default function TakeExamPage() {
                 maxWidth: '300px',
               }}
             >
-              This is Warning {Math.ceil(warningCount/2)} of 3.
+              This is Warning {Math.ceil(warningCount / 2)} of 3.
             </p>
             <p
               className="text-muted-foreground mb-6"
@@ -421,11 +569,11 @@ export default function TakeExamPage() {
                 xmlns="http://www.w3.org/2000/svg"
                 className="text-destructive"
               >
-                <path 
-                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path
+                  d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -483,7 +631,7 @@ export default function TakeExamPage() {
           <div className="text-card-foreground font-semibold text-lg">Time Left: {formatTime(remainingTime)}</div>
           <div className="text-muted-foreground text-sm">(Exam will auto-submit when time runs out)</div>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-1">
@@ -503,10 +651,10 @@ export default function TakeExamPage() {
             </div>
           </div>
         </div>
-        
+
       </div>
-      
-      <div 
+
+      <div
         className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-32px)]"
         style={{
           scrollBehavior: 'smooth',
@@ -526,8 +674,220 @@ export default function TakeExamPage() {
             </div>
           )}
         </div>
-       
-        {exam.questions.map((q, idx) => (
+
+        {/* Answer Mode Toggle */}
+        <div className="mb-6 bg-card rounded-2xl p-6 border border-border">
+          <div className="text-lg font-semibold text-card-foreground mb-4">How would you like to submit your answers?</div>
+          <div className="flex gap-4 mb-4">
+            <button
+              type="button"
+              onClick={() => setAnswerMode('write')}
+              className={`flex-1 py-4 px-6 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${answerMode === 'write'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
+                }`}
+            >
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="mb-1"
+              >
+                <path
+                  d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="font-semibold">Write Answers</span>
+              <span className="text-sm opacity-75">Type your answers online</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAnswerMode('upload')}
+              className={`flex-1 py-4 px-6 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${answerMode === 'upload'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
+                }`}
+            >
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="mb-1"
+              >
+                <path
+                  d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M17 8L12 3L7 8"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 3V15"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="font-semibold">Upload Image/PDF</span>
+              <span className="text-sm opacity-75">Upload photos of your answers</span>
+            </button>
+          </div>
+        </div>
+
+        {/* File Upload Section - Only shown when upload mode is selected */}
+        {answerMode === 'upload' && (
+          <div className="mb-6 bg-card rounded-2xl p-6 border border-border">
+            <div className="text-lg font-semibold text-card-foreground mb-4">Upload Your Answer Files</div>
+
+            {/* Hidden file input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={(e) => {
+                if (e.target.files) {
+                  setAnswerFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                }
+              }}
+              multiple
+              accept="image/*,.pdf"
+              className="hidden"
+            />
+
+            {/* Drag and Drop Area */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer.files) {
+                  setAnswerFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)]);
+                }
+              }}
+              className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all duration-200"
+            >
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="mx-auto mb-4 text-muted-foreground"
+              >
+                <path
+                  d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M17 8L12 3L7 8"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 3V15"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <p className="text-card-foreground font-semibold mb-2">
+                Drag & drop your files here, or click to browse
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Supports images (JPG, PNG, WEBP) and PDF files
+              </p>
+            </div>
+
+            {/* Selected Files List */}
+            {answerFiles.length > 0 && (
+              <div className="mt-4">
+                <div className="text-sm font-medium text-card-foreground mb-2">
+                  Selected Files ({answerFiles.length})
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {answerFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          {file.type.startsWith('image/') ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-primary">
+                              <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                              <path d="M21 15L16 10L5 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-primary">
+                              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-card-foreground truncate max-w-[200px]">
+                            {file.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAnswerFiles(prev => prev.filter((_, i) => i !== index));
+                        }}
+                        className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Questions Section - Only shown when write mode is selected */}
+        {answerMode === 'write' && exam.questions.map((q, idx) => (
           <div
             key={q.id}
             id={`question-${idx}`}
@@ -556,11 +916,10 @@ export default function TakeExamPage() {
                 {q.options?.map((option, optionIndex) => (
                   <label
                     key={option.id}
-                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                      answers[idx] === option.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-background hover:bg-muted/50"
-                    }`}
+                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${answers[idx] === option.id
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-background hover:bg-muted/50"
+                      }`}
                   >
                     <input
                       type="radio"
@@ -595,10 +954,19 @@ export default function TakeExamPage() {
             )}
           </div>
         ))}
+        {/* Validation message for upload mode */}
+        {answerMode === 'upload' && answerFiles.length === 0 && (
+          <div className="mb-4 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center">
+            <p className="text-amber-600 dark:text-amber-400 font-medium">
+              Please upload at least one file with your answers before submitting.
+            </p>
+          </div>
+        )}
+
         <button
           className="bg-gradient-primary text-primary-foreground hover:opacity-90 p-4 rounded-lg w-full max-w-xs mx-auto block disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => handleSubmit(false)}
-          disabled={submitting}
+          disabled={submitting || (answerMode === 'upload' && answerFiles.length === 0)}
         >
           {submitting ? "Submitting..." : "End exam"}
         </button>
