@@ -12,6 +12,7 @@ import { ArrowRight, X } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import { fetchHistory, getFilteredHistory, HistoryItem } from "@/lib/historyService";
+import { mapClassNameToGradeOption, grades } from "@/lib/gradeUtils";
 import HistorySlider from "@/components/HistorySlider";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 import { redirectToLogin } from '@/lib/axiosInstance';
@@ -104,16 +105,16 @@ const renderFormattedText = (text: string) => {
 
   // Video URL regex pattern - supports multiple video platforms
   const videoRegex = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|vimeo\.com\/|dailymotion\.com\/video\/|twitch\.tv\/videos\/|facebook\.com\/watch\/|instagram\.com\/p\/|tiktok\.com\/@[\w.-]+\/video\/|rumble\.com\/v[\w-]+|bitchute\.com\/video\/|odysee\.com\/@[\w.-]+\/[\w-]+)([a-zA-Z0-9_-]+)/g;
-  
+
   // Check if text contains video URLs
   if (videoRegex.test(text)) {
     // Reset regex lastIndex
     videoRegex.lastIndex = 0;
-    
+
     // Find all video URLs and their positions
     const matches: Array<{ url: string; start: number; end: number }> = [];
     let match;
-    
+
     while ((match = videoRegex.exec(text)) !== null) {
       matches.push({
         url: match[0],
@@ -121,16 +122,16 @@ const renderFormattedText = (text: string) => {
         end: match.index + match[0].length
       });
     }
-    
+
     // If no matches found, return original text
     if (matches.length === 0) {
       return text;
     }
-    
+
     // Build the result by processing text segments
     const result: React.ReactNode[] = [];
     let lastIndex = 0;
-    
+
     matches.forEach((match, index) => {
       // Add text before the URL
       if (match.start > lastIndex) {
@@ -141,11 +142,11 @@ const renderFormattedText = (text: string) => {
           result.push(beforeText);
         }
       }
-      
+
       // Add the clickable URL with "View the Video" text
       const fullUrl = match.url.startsWith('http') ? match.url : `https://${match.url}`;
       const displayText = "View the Video";
-      
+
       result.push(
         <a
           key={`url-${index}`}
@@ -157,10 +158,10 @@ const renderFormattedText = (text: string) => {
           {displayText}
         </a>
       );
-      
+
       lastIndex = match.end;
     });
-    
+
     // Add remaining text after the last URL
     if (lastIndex < text.length) {
       const afterText = text.slice(lastIndex);
@@ -170,7 +171,7 @@ const renderFormattedText = (text: string) => {
         result.push(afterText);
       }
     }
-    
+
     return <>{result}</>;
   }
 
@@ -244,82 +245,7 @@ interface RawHistoryItem {
 }
 // === END: History Types ===
 
-const grades = [
-  "1st grade",
-  "2nd grade",
-  "3rd grade",
-  "4th grade",
-  "5th grade",
-  "6th grade",
-  "7th grade",
-  "8th grade",
-  "9th grade",
-  "10th grade",
-  "11th grade",
-  "12th grade",
-  "UG",
-  "PG",
-];
-const getOrdinalSuffix = (value: number) => {
-  const remainder = value % 100;
-  if (remainder >= 11 && remainder <= 13) {
-    return "th";
-  }
 
-  switch (value % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
-  }
-};
-
-const mapClassNameToGradeOption = (className?: string | null): string | null => {
-  if (!className) return null;
-
-  const trimmed = className.trim();
-  if (!trimmed) return null;
-
-  const normalized = trimmed.toLowerCase();
-
-  if (normalized === "ug" || normalized === "pg") {
-    return normalized.toUpperCase();
-  }
-
-  if (/^\d+$/.test(normalized)) {
-    const numeric = parseInt(normalized, 10);
-    if (!Number.isNaN(numeric)) {
-      const candidate = `${numeric}${getOrdinalSuffix(numeric)} grade`;
-      const match = grades.find(
-        (grade) => grade.toLowerCase() === candidate.toLowerCase()
-      );
-      if (match) return match;
-    }
-  }
-
-  if (/^\d+(st|nd|rd|th)$/.test(normalized)) {
-    const numeric = parseInt(normalized, 10);
-    if (!Number.isNaN(numeric)) {
-      const candidate = `${numeric}${getOrdinalSuffix(numeric)} grade`;
-      const match = grades.find(
-        (grade) => grade.toLowerCase() === candidate.toLowerCase()
-      );
-      if (match) return match;
-    }
-  }
-
-  const exactMatch = grades.find((grade) => grade.toLowerCase() === normalized);
-  if (exactMatch) return exactMatch;
-
-  const partialMatch = grades.find((grade) =>
-    grade.toLowerCase().startsWith(normalized)
-  );
-  return partialMatch ?? null;
-};
 const styles = [
   {
     label: "Professor",
@@ -687,10 +613,10 @@ export default function AiChatsChatPage() {
       }
       const authCookie = Cookies.get("auth");
       let token: string | undefined;
-      if (authCookie) { 
+      if (authCookie) {
         try {
           token = JSON.parse(authCookie).token;
-        } catch {}
+        } catch { }
       }
 
       // Create request headers and determine curriculum mode
@@ -751,7 +677,7 @@ export default function AiChatsChatPage() {
           const errorText = await gptResponseClone.text();
           throw new Error(
             errorText ||
-              `Failed to parse chat response: ${gptResponse.status}`
+            `Failed to parse chat response: ${gptResponse.status}`
           );
         }
 
@@ -919,18 +845,18 @@ export default function AiChatsChatPage() {
     if (selectedChatId) {
       setSelectedChatId(null);
     }
-    
+
     setInputValue(s);
     if (selectedGrade && selectedStyle) {
       setTimeout(() => handleSend(s), 50);
     }
   };
 
-    // === START: History Functions ===
+  // === START: History Functions ===
   const fetchHistoryData = async () => {
     console.log("🔍 [HISTORY] Starting to fetch history data...");
     setHistoryLoading(true);
-    
+
     try {
       const history = await fetchHistory();
       setHistoryData(history);
@@ -959,27 +885,27 @@ export default function AiChatsChatPage() {
 
   const handleViewChat = async (chatId: string, chatTitle: string) => {
     console.log("🔍 [HISTORY] View chat clicked for:", chatId, chatTitle);
-    
+
     try {
       // Find the chat in history data to get the messages
       const chatItem = historyData.find(item => item.id === chatId);
       console.log("🔍 [HISTORY] Found chat item:", chatItem);
-      
+
       if (chatItem && chatItem.messages && Array.isArray(chatItem.messages) && chatItem.messages.length > 0) {
         console.log("🔍 [HISTORY] Messages found:", chatItem.messages.length);
-        
+
         // Convert the messages to the chat format
         const formattedMessages = chatItem.messages.map((msg: unknown, index: number) => {
           // Type guard to ensure msg has the expected structure
           if (typeof msg === 'object' && msg !== null && 'role' in msg && 'content' in msg) {
             const typedMsg = msg as { role: string; content: string };
             console.log(`🔍 [HISTORY] Processing message ${index}:`, typedMsg);
-            
+
             const role = typedMsg.role === 'USER' ? 'user' : 'ai';
             const text = typedMsg.content || '';
-            
+
             console.log(`🔍 [HISTORY] Message ${index} - Role: ${role}, Text: ${text}`);
-            
+
             return {
               role: role as 'user' | 'ai',
               text: text
@@ -992,16 +918,16 @@ export default function AiChatsChatPage() {
             };
           }
         });
-        
+
         console.log("🔍 [HISTORY] Final formatted messages:", formattedMessages);
-        
+
         // Set the chat history and close the slider
         setChatHistory(formattedMessages);
         setInputValue(chatTitle);
         setSelectedChatId(chatId);
         setGptSessionId(null);
         handleCloseHistory();
-        
+
         // Scroll to the chat area
         setTimeout(() => {
           chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1011,7 +937,7 @@ export default function AiChatsChatPage() {
         console.log("🔍 [HISTORY] Messages property:", chatItem?.messages);
         console.log("🔍 [HISTORY] Is messages array:", Array.isArray(chatItem?.messages));
         console.log("🔍 [HISTORY] Messages length:", chatItem?.messages?.length);
-        
+
         // If no messages found, show an alert
         alert(`No messages found for this chat: ${chatTitle}. Please check the console for details.`);
       }
@@ -1082,8 +1008,8 @@ export default function AiChatsChatPage() {
       </div>
     </div>
   );
-  
-  
+
+
 
   return (
     <div
@@ -1250,9 +1176,8 @@ export default function AiChatsChatPage() {
               {chatHistory.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-end gap-3 ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  } mb-2`}
+                  className={`flex items-end gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"
+                    } mb-2`}
                 >
                   {/* AI Avatar - only show for AI messages */}
                   {msg.role === "ai" && (
@@ -1260,14 +1185,13 @@ export default function AiChatsChatPage() {
                       AI
                     </div>
                   )}
-                  
+
                   {/* Message Bubble */}
                   <div
-                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
-                      msg.role === "user"
-                        ? "bg-[#DDDDDD] text-[#000000]"
-                        : "bg-primary/10 text-primary"
-                    }`}
+                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${msg.role === "user"
+                      ? "bg-[#DDDDDD] text-[#000000]"
+                      : "bg-primary/10 text-primary"
+                      }`}
                   >
                     {msg.role === "ai" && idx === streamingMessageIndex && isStreaming ? (
                       <div className="text-sm md:text-base leading-relaxed">
@@ -1280,7 +1204,7 @@ export default function AiChatsChatPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* User Avatar - only show for user messages */}
                   {msg.role === "user" && (
                     <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
@@ -1357,9 +1281,8 @@ const ChatInputBar = forwardRef(
       pathname === "/login/otp" ||
       pathname === "/register";
     const sidebarCollapsed = state === "collapsed";
-    const inputBarClass = `fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-1 flex items-center gap-2 sm:gap-3 py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${
-      hideSidebar ? "" : sidebarCollapsed ? "sidebar-collapsed" : ""
-    }`;
+    const inputBarClass = `fixed bottom-6 sm:bottom-8 z-50 px-2 sm:px-1 flex items-center gap-2 sm:gap-3 py-2 sm:py-3 max-w-5xl mx-auto input-bar-responsive ${hideSidebar ? "" : sidebarCollapsed ? "sidebar-collapsed" : ""
+      }`;
 
     return (
       <div
@@ -1382,11 +1305,10 @@ const ChatInputBar = forwardRef(
           onKeyDown={(e) => e.key === "Enter" && onSend()}
           disabled={disabled}
           autoFocus={autoFocus}
-          className={`flex-1 bg-transparent  p-3 text-black placeholder-gray-500 focus:outline-none text-sm sm:text-base font-medium transition-all duration-300 ${
-            showOnboarding 
-              ? "border-2 border-primary shadow-lg rounded-full" 
-              : ""
-          }`}
+          className={`flex-1 bg-transparent  p-3 text-black placeholder-gray-500 focus:outline-none text-sm sm:text-base font-medium transition-all duration-300 ${showOnboarding
+            ? "border-2 border-primary shadow-lg rounded-full"
+            : ""
+            }`}
         />
         <button
           onClick={onSend}

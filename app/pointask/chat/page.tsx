@@ -3,10 +3,11 @@ import React, { useState, useRef, useEffect } from "react";
 import Cookies from "js-cookie";
 import { ArrowRight, ChevronDownIcon } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { fetchHistory, HistoryItem } from "@/lib/historyService";
 import HistorySlider from "@/components/HistorySlider";
-import { getUserGradeFromProfile } from "@/lib/gradeUtils";
+import { getUserGradeFromProfile, mapClassNameToGradeOption } from "@/lib/gradeUtils";
+import { redirectToLogin } from '@/lib/axiosInstance';
 
 
 type StyleOption = {
@@ -113,9 +114,21 @@ const styles = [
 
 
 
+interface UserProfile {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  className?: string;
+  curriculumMode?: string;
+  [key: string]: unknown;
+}
+
 export default function PointAskChatPage() {
   const { state } = useSidebar();
   const pathname = usePathname();
+  const router = useRouter();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
@@ -155,13 +168,67 @@ export default function PointAskChatPage() {
   const [isSearching, setIsSearching] = useState(false);
   // === END: History Slider State ===
 
-  // Auto-select grade from user profile
+  // Fetch user profile
   useEffect(() => {
-    const userGrade = getUserGradeFromProfile();
-    if (userGrade && !selectedGrade) {
-      setSelectedGrade(userGrade);
-    }
+    const fetchUserProfile = async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      if (!baseUrl) return;
+
+      const authCookie = Cookies.get("auth");
+      if (!authCookie) return;
+
+      let token: string | undefined;
+      try {
+        token = JSON.parse(authCookie).token;
+      } catch (error) {
+        console.error("Error parsing auth cookie:", error);
+      }
+
+      if (!token) return;
+
+      try {
+        const sanitizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+        const response = await fetch(`${sanitizedBaseUrl}/users/auth/get-profile`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        const result = await response.json();
+        if (result.success && result.data) {
+          setUserProfile(result.data as UserProfile);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+
+    fetchUserProfile();
   }, []);
+
+  // Auto-select grade
+  useEffect(() => {
+    // 1. Try local storage first (fastest)
+    const localGrade = getUserGradeFromProfile();
+    if (localGrade && !selectedGrade) {
+      setSelectedGrade(localGrade);
+      return;
+    }
+
+    // 2. Try fetched profile
+    if (userProfile?.className && !selectedGrade) {
+      const mapped = mapClassNameToGradeOption(userProfile.className);
+      if (mapped) {
+        setSelectedGrade(mapped);
+      }
+    }
+  }, [userProfile, selectedGrade]);
 
   useEffect(() => {
     // Always show onboarding on page refresh, regardless of cookie
