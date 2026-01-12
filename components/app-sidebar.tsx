@@ -47,7 +47,7 @@ const ChevronUpDownIcon = ({ open }: { open: boolean }) => (
 
 // Helper function to get icon style for active sub-routes
 const getSubRouteIconStyle = (isActive: boolean) => ({
-  filter: isActive 
+  filter: isActive
     ? 'brightness(0) saturate(100%) invert(44%) sepia(93%) saturate(1352%) hue-rotate(346deg) brightness(119%) contrast(119%)'
     : 'brightness(0)'
 });
@@ -140,9 +140,11 @@ const projectSubRoutes = [
   },
 ];
 
+import { useLogo } from '@/lib/LogoContext';
+
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const pathname = usePathname();
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const { logoUrl, setLogoUrl } = useLogo();
 
   useEffect(() => {
     try {
@@ -152,7 +154,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
         const fromProfile = parsed?.photoUrl || parsed?.profilePictureUrl || null;
         if (fromProfile) setLogoUrl(fromProfile);
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const [aiOpen, setAiOpen] = useState(false);
@@ -220,9 +222,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             className={`bg-white h-screen fixed left-0 top-0 z-[9999] transition-transform duration-300 flex flex-col justify-between w-64 overflow-hidden
             ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden
             ${nunitoSans.className} overflow-y-auto scrollbar-hide`}
-            style={{ 
-              width: '16rem', 
-              minWidth: '16rem', 
+            style={{
+              width: '16rem',
+              minWidth: '16rem',
               maxWidth: '16rem',
               boxShadow: '0px 4px 16px 0px #00000040'
             }}
@@ -272,11 +274,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                   <Link
                     href='/'
-                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 relative ${
-                      pathname === '/'
+                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 relative ${pathname === '/'
                         ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
-                    }`}
+                      }`}
                   >
                     <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />
                     <span className='text-sm'>Dashboard</span>
@@ -290,17 +291,15 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     )}
                     <button
                       onClick={() => setAiOpen(!aiOpen)}
-                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                        isAiTutorActive
+                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${isAiTutorActive
                           ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
-                      }`}
+                        }`}
                     >
                       <span className='flex items-center gap-3'>
                         <div className={`w-7 h-7 rounded flex items-center justify-center`}>
-                          <span className={`text-xs font-bold ${
-                            isAiTutorActive ? 'text-white' : 'text-[#222]'
-                          }`}>AI</span>
+                          <span className={`text-xs font-bold ${isAiTutorActive ? 'text-white' : 'text-[#222]'
+                            }`}>AI</span>
                         </div>
                         <span className='text-sm'>AI Tutor</span>
                       </span>
@@ -315,11 +314,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           <Link
                             key={sub.href}
                             href={sub.href}
-                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                              isSubActive
+                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                                 ? 'bg-primary/20 text-primary'
                                 : 'text-[#222] hover:bg-primary/20'
-                            }`}
+                              }`}
                           >
                             <div className='flex-shrink-0'>{sub.icon}</div>
                             <span>{sub.label}</span>
@@ -337,11 +335,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     )}
                     <button
                       onClick={() => setPointOpen(!pointOpen)}
-                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                        isPointAskActive
+                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${isPointAskActive
                           ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
-                      }`}
+                        }`}
                     >
                       <span className='flex items-center gap-3'>
                         <Image
@@ -364,11 +361,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           <Link
                             key={sub.href}
                             href={sub.href}
-                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                              isSubActive
+                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                                 ? 'bg-primary/20 text-primary'
                                 : 'text-[#222] hover:bg-primary/20'
-                            }`}
+                              }`}
                           >
                             <div className='flex-shrink-0'>{sub.icon}</div>
                             <span>{sub.label}</span>
@@ -386,11 +382,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     )}
                     <button
                       onClick={() => setQuizOpen(!quizOpen)}
-                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                        isQuizActive
+                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${isQuizActive
                           ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
-                      }`}
+                        }`}
                     >
                       <span className='flex items-center gap-3'>
                         <Image
@@ -400,7 +395,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           height={24}
                           className={`h-6 w-6 flex-shrink-0`}
                           style={{
-                            filter: isQuizActive 
+                            filter: isQuizActive
                               ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
                               : 'brightness(0)'
                           }}
@@ -418,11 +413,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           <Link
                             key={sub.href}
                             href={sub.href}
-                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                              isSubActive
+                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                                 ? 'bg-primary/20 text-primary'
                                 : 'text-[#222] hover:bg-primary/20'
-                            }`}
+                              }`}
                           >
                             <Image
                               src={sub.icon}
@@ -447,11 +441,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     )}
                     <button
                       onClick={() => setExamOpen(!examOpen)}
-                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                        isExamActive
+                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${isExamActive
                           ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
-                      }`}
+                        }`}
                     >
                       <span className='flex items-center gap-3'>
                         <Image
@@ -461,7 +454,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           height={20}
                           className={`h-5 w-5 flex-shrink-0`}
                           style={{
-                            filter: isExamActive 
+                            filter: isExamActive
                               ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
                               : 'brightness(0)'
                           }}
@@ -479,11 +472,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           <Link
                             key={sub.href}
                             href={sub.href}
-                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                              isSubActive
+                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                                 ? 'bg-primary/20 text-primary'
                                 : 'text-[#222] hover:bg-primary/20'
-                            }`}
+                              }`}
                           >
                             <Image
                               src={sub.icon}
@@ -508,11 +500,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     )}
                     <button
                       onClick={() => setProjectOpen(!projectsOpen)}
-                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                        isProjectsActive
+                      className={`w-full flex items-center justify-between py-3 px-4 rounded-md font-medium transition-all duration-200 ${isProjectsActive
                           ? 'bg-gradient-primary text-primary-foreground shadow-md'
                           : 'text-[#222] hover:bg-primary/20'
-                      }`}
+                        }`}
                     >
                       <span className='flex items-center gap-3'>
                         <Image
@@ -522,7 +513,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           height={20}
                           className={`h-5 w-5 flex-shrink-0`}
                           style={{
-                            filter: isProjectsActive 
+                            filter: isProjectsActive
                               ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
                               : 'brightness(0)'
                           }}
@@ -540,11 +531,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                           <Link
                             key={sub.href}
                             href={sub.href}
-                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                              isSubActive
+                            className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                                 ? 'bg-primary/20 text-primary'
                                 : 'text-[#222] hover:bg-primary/20'
-                            }`}
+                              }`}
                           >
                             <Image
                               src={sub.icon}
@@ -568,11 +558,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                   <Link
                     href='/personalisedLearning'
-                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
-                      pathname === '/personalisedLearning'
+                    className={`flex items-center gap-3 py-3 px-4 rounded-md font-medium transition-all duration-200 ${pathname === '/personalisedLearning'
                         ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
-                    }`}
+                      }`}
                   >
                     <Image
                       src='/images/emoji_objects.svg'
@@ -593,11 +582,9 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       {/* Sidebar for desktop (always visible) */}
       <Sidebar>
         <SidebarContent
-          className={`bg-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col justify-between overflow-hidden ${
-            collapsed ? 'w-16' : 'w-64'
-          } ${
-            nunitoSans.className
-          } hidden lg:flex overflow-y-auto scrollbar-hide`}
+          className={`bg-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col justify-between overflow-hidden ${collapsed ? 'w-16' : 'w-64'
+            } ${nunitoSans.className
+            } hidden lg:flex overflow-y-auto scrollbar-hide`}
           style={{
             boxShadow: '0px 4px 16px 0px #00000040',
             zIndex: 1000
@@ -611,13 +598,13 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 {/* Simple Logo Display */}
                 <div className="">
                   <Link href="/">
-                  <Image
-                    src={logoUrl ?? '/logo.png'}
-                    alt="Logo"
-                    width={180}
-                    height={70}
-                    className="scale-100"
-                  />
+                    <Image
+                      src={logoUrl ?? '/logo.png'}
+                      alt="Logo"
+                      width={180}
+                      height={70}
+                      className="scale-100"
+                    />
                   </Link>
                 </div>
               </div>
@@ -625,9 +612,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
             {/* Desktop collapse button */}
             <button
               onClick={() => setCollapsed((prev) => !prev)}
-              className={`absolute z-20 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 ${
-                collapsed ? 'top-4 left-1/2 transform -translate-x-1/2' : 'top-8 right-4'
-              }`}
+              className={`absolute z-20 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 ${collapsed ? 'top-4 left-1/2 transform -translate-x-1/2' : 'top-8 right-4'
+                }`}
               aria-label='Toggle sidebar'
             >
               <svg
@@ -641,9 +627,8 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               </svg>
             </button>
             <nav
-              className={`flex flex-col flex-1 space-y-1 overflow-y-auto scrollbar-hide pb-4 transition-all duration-300 ${
-                collapsed ? 'px-2 mt-12' : 'px-4 mt-2'
-              }`}
+              className={`flex flex-col flex-1 space-y-1 overflow-y-auto scrollbar-hide pb-4 transition-all duration-300 ${collapsed ? 'px-2 mt-12' : 'px-4 mt-2'
+                }`}
             >
               {/* Section Heading */}
               {!collapsed && (
@@ -662,13 +647,11 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 )}
                 <Link
                   href='/'
-                  className={`flex items-center ${
-                    collapsed ? 'justify-center px-2' : 'gap-3 px-4'
-                  } py-3 rounded-md font-medium transition-all duration-200 relative ${
-                    pathname === '/'
+                  className={`flex items-center ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'
+                    } py-3 rounded-md font-medium transition-all duration-200 relative ${pathname === '/'
                       ? 'bg-gradient-primary text-primary-foreground shadow-md'
                       : 'text-[#222] hover:bg-primary/20'
-                  }`}
+                    }`}
                 >
                   <DashboardIcon color={pathname === '/' ? '#fff' : '#222'} />
                   {!collapsed && <span className='text-sm'>Dashboard</span>}
@@ -682,24 +665,20 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                   <button
                     onClick={() => !collapsed && setAiOpen(!aiOpen)}
-                    className={`w-full flex items-center ${
-                      collapsed ? 'justify-center px-2' : 'justify-between px-4'
-                    } py-3 rounded-md font-medium transition-all duration-200 ${
-                      isAiTutorActive
+                    className={`w-full flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-4'
+                      } py-3 rounded-md font-medium transition-all duration-200 ${isAiTutorActive
                         ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
-                    } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
+                      } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
                     <span
-                      className={`flex items-center ${
-                        collapsed ? '' : 'gap-3'
-                      }`}
+                      className={`flex items-center ${collapsed ? '' : 'gap-3'
+                        }`}
                     >
                       <div className={`w-7 h-7 rounded flex items-center justify-center`}>
-                        <span className={`text-xs font-bold ${
-                          isAiTutorActive ? 'text-white' : 'text-[#222]'
-                        }`}>AI</span>
+                        <span className={`text-xs font-bold ${isAiTutorActive ? 'text-white' : 'text-[#222]'
+                          }`}>AI</span>
                       </div>
                       {!collapsed && <span className='text-sm'>AI Tutor</span>}
                     </span>
@@ -716,11 +695,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         <Link
                           key={sub.href}
                           href={sub.href}
-                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
-                            isSubActive
+                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                               ? 'bg-primary/20 text-primary'
                               : 'text-[#222] hover:bg-primary/20'
-                          }`}
+                            }`}
                         >
                           <div className='flex-shrink-0'>{sub.icon}</div>
                           <span>{sub.label}</span>
@@ -738,27 +716,24 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                   <button
                     onClick={() => !collapsed && setPointOpen(!pointOpen)}
-                    className={`w-full flex items-center ${
-                      collapsed ? 'justify-center px-2' : 'justify-between px-4'
-                    } py-3 rounded-md font-medium transition-all duration-200 ${
-                      isPointAskActive
+                    className={`w-full flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-4'
+                      } py-3 rounded-md font-medium transition-all duration-200 ${isPointAskActive
                         ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
-                    } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
+                      } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
                     <span
-                      className={`flex items-center ${
-                        collapsed ? '' : 'gap-3'
-                      }`}
+                      className={`flex items-center ${collapsed ? '' : 'gap-3'
+                        }`}
                     >
-                       <Image
-                          src={PointerBlack}
-                          alt='pointer'
-                          width={20}
-                          height={20}
-                          className={`h-5 w-5 flex-shrink-0 ${isPointAskActive ? 'brightness-200 invert' : 'brightness-0'}`}
-                        />
+                      <Image
+                        src={PointerBlack}
+                        alt='pointer'
+                        width={20}
+                        height={20}
+                        className={`h-5 w-5 flex-shrink-0 ${isPointAskActive ? 'brightness-200 invert' : 'brightness-0'}`}
+                      />
                       {!collapsed && (
                         <span className='text-sm'>Point & Ask</span>
                       )}
@@ -776,11 +751,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         <Link
                           key={sub.href}
                           href={sub.href}
-                          className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                            isSubActive
+                          className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                               ? 'bg-primary/20 text-primary'
                               : 'text-[#222] hover:bg-primary/20'
-                          }`}
+                            }`}
                         >
                           <div className='flex-shrink-0'>{sub.icon}</div>
                           <span>{sub.label}</span>
@@ -798,19 +772,16 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                   <button
                     onClick={() => !collapsed && setQuizOpen(!quizOpen)}
-                    className={`w-full flex items-center ${
-                      collapsed ? 'justify-center px-2' : 'justify-between px-4'
-                    } py-3 rounded-md font-medium transition-all duration-200 ${
-                      isQuizActive
+                    className={`w-full flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-4'
+                      } py-3 rounded-md font-medium transition-all duration-200 ${isQuizActive
                         ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
-                    } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
+                      } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
                     <span
-                      className={`flex items-center ${
-                        collapsed ? '' : 'gap-3'
-                      }`}
+                      className={`flex items-center ${collapsed ? '' : 'gap-3'
+                        }`}
                     >
                       <Image
                         src={quizWhite}
@@ -819,7 +790,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         height={20}
                         className={`h-5 w-5 flex-shrink-0`}
                         style={{
-                          filter: isQuizActive 
+                          filter: isQuizActive
                             ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
                             : 'brightness(0)'
                         }}
@@ -839,11 +810,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         <Link
                           key={sub.href}
                           href={sub.href}
-                          className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                            isSubActive
+                          className={`flex items-center gap-3 px-4 mb-1 py-3 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                               ? 'bg-primary/20 text-primary'
                               : 'text-[#222] hover:bg-primary/20'
-                          }`}
+                            }`}
                         >
                           <Image
                             src={sub.icon}
@@ -868,19 +838,16 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                   <button
                     onClick={() => !collapsed && setExamOpen(!examOpen)}
-                    className={`w-full flex items-center ${
-                      collapsed ? 'justify-center px-2' : 'justify-between px-4'
-                    } py-3 rounded-md font-medium transition-all duration-200 ${
-                      isExamActive
+                    className={`w-full flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-4'
+                      } py-3 rounded-md font-medium transition-all duration-200 ${isExamActive
                         ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
-                    } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
+                      } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
                     <span
-                      className={`flex items-center ${
-                        collapsed ? '' : 'gap-3'
-                      }`}
+                      className={`flex items-center ${collapsed ? '' : 'gap-3'
+                        }`}
                     >
                       <Image
                         src={examsWhite}
@@ -889,7 +856,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         height={20}
                         className={`h-5 w-5 flex-shrink-0`}
                         style={{
-                          filter: isExamActive 
+                          filter: isExamActive
                             ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
                             : 'brightness(0)'
                         }}
@@ -909,11 +876,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         <Link
                           key={sub.href}
                           href={sub.href}
-                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
-                            isSubActive
+                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                               ? 'bg-primary/20 text-primary'
                               : 'text-[#222] hover:bg-primary/20'
-                          }`}
+                            }`}
                         >
                           <Image
                             src={sub.icon}
@@ -938,19 +904,16 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                   <button
                     onClick={() => !collapsed && setProjectOpen(!projectsOpen)}
-                    className={`w-full flex items-center ${
-                      collapsed ? 'justify-center px-2' : 'justify-between px-4'
-                    } py-3 rounded-md font-medium transition-all duration-200 ${
-                      isProjectsActive
+                    className={`w-full flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-4'
+                      } py-3 rounded-md font-medium transition-all duration-200 ${isProjectsActive
                         ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
-                    } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
+                      } ${collapsed ? 'cursor-default' : 'cursor-pointer'}`}
                     disabled={collapsed}
                   >
                     <span
-                      className={`flex items-center ${
-                        collapsed ? '' : 'gap-3'
-                      }`}
+                      className={`flex items-center ${collapsed ? '' : 'gap-3'
+                        }`}
                     >
                       <Image
                         src={projectsWhite}
@@ -959,7 +922,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         height={20}
                         className={`h-5 w-5 flex-shrink-0`}
                         style={{
-                          filter: isProjectsActive 
+                          filter: isProjectsActive
                             ? 'brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7500%) hue-rotate(340deg) brightness(104%) contrast(101%)'
                             : 'brightness(0)'
                         }}
@@ -979,11 +942,10 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                         <Link
                           key={sub.href}
                           href={sub.href}
-                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${
-                            isSubActive
+                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-md text-sm font-medium transition-all duration-200 ${isSubActive
                               ? 'bg-primary/20 text-primary'
                               : 'text-[#222] hover:bg-primary/20'
-                          }`}
+                            }`}
                         >
                           <Image
                             src={sub.icon}
@@ -1008,13 +970,11 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                   )}
                   <Link
                     href='/personalisedLearning'
-                    className={`flex items-center ${
-                      collapsed ? 'justify-center px-2' : 'gap-3 px-4'
-                    } py-3 rounded-md font-medium transition-all duration-200 ${
-                      pathname === '/personalisedLearning'
+                    className={`flex items-center ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'
+                      } py-3 rounded-md font-medium transition-all duration-200 ${pathname === '/personalisedLearning'
                         ? 'bg-gradient-primary text-primary-foreground shadow-md'
                         : 'text-[#222] hover:bg-primary/20'
-                    }`}
+                      }`}
                   >
                     <Image
                       src='/images/emoji_objects.svg'
