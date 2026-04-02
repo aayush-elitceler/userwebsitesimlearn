@@ -138,7 +138,7 @@ export default function CreateExamPage() {
         console.log('🎯 Sending Quiz API request:', JSON.stringify(quizBody, null, 2));
 
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/ai/quiz`,
+          `/ai/quiz`,
           quizBody,
           {
             headers: {
@@ -164,7 +164,7 @@ export default function CreateExamPage() {
       } else {
         // Use existing exam API for long/short questions
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/generate`,
+          `/users/exams/generate`,
           body,
           {
             headers: {

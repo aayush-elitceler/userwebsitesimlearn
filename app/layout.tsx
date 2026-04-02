@@ -45,7 +45,7 @@ export default function RootLayout({
         {/* ✅ Google Identity Services Script */}
         <Script
           src="https://accounts.google.com/gsi/client"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
         />
         {/* Restore institution theme before hydration */}
         <Script id="restore-institution-theme" strategy="beforeInteractive">{`

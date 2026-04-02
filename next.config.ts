@@ -3,10 +3,11 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
-    domains: [
-      'reportal-media.s3.ap-south-1.amazonaws.com',
-      'simplelearntechbucket.s3.ap-south-1.amazonaws.com',
+    remotePatterns: [
+      { protocol: 'https', hostname: 'reportal-media.s3.ap-south-1.amazonaws.com' },
+      { protocol: 'https', hostname: 'simplelearntechbucket.s3.ap-south-1.amazonaws.com' },
     ],
+    formats: ['image/avif', 'image/webp'],
   },
   eslint: {
     ignoreDuringBuilds: true,

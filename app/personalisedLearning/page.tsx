@@ -81,7 +81,7 @@ function PersonalisedLearningPage() {
         }
 
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/personalized-learning`,
+          `/users/personalized-learning`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,

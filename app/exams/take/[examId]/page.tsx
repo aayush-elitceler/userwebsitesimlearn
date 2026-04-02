@@ -96,7 +96,7 @@ export default function TakeExamPage() {
         }
 
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/get-by-id?examId=${examId}`,
+          `/users/exams/get-by-id?examId=${examId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -307,7 +307,7 @@ export default function TakeExamPage() {
         });
 
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`,
+          `/users/exams/submit`,
           formData,
           {
             headers: {
@@ -355,7 +355,7 @@ export default function TakeExamPage() {
         };
 
         await axios.post(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/submit`,
+          `/users/exams/submit`,
           body,
           {
             headers: {
