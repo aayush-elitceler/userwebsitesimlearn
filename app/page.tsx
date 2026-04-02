@@ -1,15 +1,5 @@
 'use client';
 import { useEffect, useState, lazy, Suspense } from 'react';
-import {
-  Chart as ChartJS,
-  Tooltip,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
 import { ArrowRight, X } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
@@ -17,14 +7,7 @@ import { useLogo } from '@/lib/LogoContext';
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
-ChartJS.register(
-  Tooltip,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Filler
-);
+const LazyLineChart = lazy(() => import('@/components/LazyLineChart'));
 
 // Interfaces (same as your original)
 interface User {
@@ -837,7 +820,8 @@ export default function Home() {
             <p className='text-xs text-gray-400 mb-3'>Your monthly performance score</p>
             {learningGrowthData ? (
               <div style={{ height: '160px' }}>
-                <Line data={learningGrowthData} options={{
+                <Suspense fallback={<div className='h-40 bg-gray-100 rounded-xl animate-pulse' />}>
+                  <LazyLineChart data={learningGrowthData} options={{
                   responsive: true,
                   maintainAspectRatio: false,
                   interaction: { mode: 'index', intersect: false },
@@ -858,6 +842,7 @@ export default function Home() {
                     y: { min: 0, max: 100, grid: { color: '#f8fafc' }, border: { display: false } as never, ticks: { font: { size: 10 }, color: '#94a3b8', callback: (v: string | number) => `${v}%`, stepSize: 25 } },
                   },
                 }} />
+                </Suspense>
               </div>
             ) : (
               <div className='flex flex-col items-center justify-center h-40 text-gray-300'>
