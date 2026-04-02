@@ -9,17 +9,11 @@ import { LayoutDashboard } from 'lucide-react';
 import PointerBlack from '@/public/images/pointerBlack.svg'
 import projectsWhite from '@/public/images/project.svg';
 import examsWhite from '@/public/images/exams.svg';
-import { Nunito_Sans } from 'next/font/google';
 import { MicIcon } from 'lucide-react';
 
 const DashboardIcon = ({ color = '#222' }) => (
   <LayoutDashboard style={{ color }} />
 );
-
-const nunitoSans = Nunito_Sans({
-  weight: ['400', '600', '700'],
-  subsets: ['latin'],
-});
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -221,7 +215,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
           <SidebarContent
             className={`bg-white h-screen fixed left-0 top-0 z-[9999] transition-transform duration-300 flex flex-col justify-between w-64 overflow-hidden
             ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden
-            ${nunitoSans.className} overflow-y-auto scrollbar-hide`}
+            font-sans overflow-y-auto scrollbar-hide`}
             style={{
               width: '16rem',
               minWidth: '16rem',
@@ -583,8 +577,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       <Sidebar>
         <SidebarContent
           className={`bg-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col justify-between overflow-hidden ${collapsed ? 'w-16' : 'w-64'
-            } ${nunitoSans.className
-            } hidden lg:flex overflow-y-auto scrollbar-hide`}
+            } font-sans hidden lg:flex overflow-y-auto scrollbar-hide`}
           style={{
             boxShadow: '0px 4px 16px 0px #00000040',
             zIndex: 1000

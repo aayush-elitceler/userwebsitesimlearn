@@ -1,18 +1,15 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import {
   Chart as ChartJS,
-  ArcElement,
   Tooltip,
-  Legend,
   CategoryScale,
   LinearScale,
-  BarElement,
   PointElement,
   LineElement,
+  Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { Poppins } from 'next/font/google';
 import { ArrowRight, X } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
@@ -20,17 +17,13 @@ import { useLogo } from '@/lib/LogoContext';
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
 
-const poppins = Poppins({ weight: ['400', '600', '700'], subsets: ['latin'] });
-
 ChartJS.register(
-  ArcElement,
   Tooltip,
-  Legend,
   CategoryScale,
   LinearScale,
-  BarElement,
   PointElement,
-  LineElement
+  LineElement,
+  Filler
 );
 
 // Interfaces (same as your original)
@@ -140,16 +133,22 @@ export default function Home() {
   const [error, setError] = useState('');
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [selectedChallengeIndex, setSelectedChallengeIndex] = useState(0);
+  const [showPlansModal, setShowPlansModal] = useState(false);
+  const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
+  const [plans, setPlans] = useState<{ id: string; key: string; name: string; amount: number; amountPaise: number; metadata: { tokenLimits: Record<string, string | number> } }[]>([]);
+  const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
   const router = useRouter();
   const { setLogoUrl } = useLogo();
-  const [primaryColor, setPrimaryColor] = useState<string>("#000");
+  const [primaryColor, setPrimaryColor] = useState<string>('#000');
+  const [secondaryColor, setSecondaryColor] = useState<string>('#000');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const c = getComputedStyle(document.documentElement)
-        .getPropertyValue('--primary')
-        .trim();
-      if (c) setPrimaryColor(c);
+      const root = document.documentElement;
+      const p = getComputedStyle(root).getPropertyValue('--primary').trim();
+      const s = getComputedStyle(root).getPropertyValue('--secondary').trim();
+      if (p) setPrimaryColor(p);
+      if (s) setSecondaryColor(s);
     }
   }, []);
 
@@ -248,6 +247,25 @@ export default function Home() {
     }
   };
 
+  const applyThemeFromProfile = (profile: any) => {
+    const primary = profile?.institution?.primaryColor;
+    const secondary = profile?.institution?.secondaryColor;
+    if (!primary && !secondary) return;
+    localStorage.setItem('institution-theme', JSON.stringify({ primary, secondary }));
+    const root = document.documentElement;
+    const applyColor = (color: string, prop: string, accentProp?: string) => {
+      root.style.setProperty(prop, color);
+      const hex = color.replace('#', '');
+      const h = hex.length === 3 ? hex.split('').map((c: string) => c + c).join('') : hex;
+      const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+      const fg = (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? '#000000' : '#ffffff';
+      root.style.setProperty(`${prop}-foreground`, fg);
+      if (accentProp) { root.style.setProperty(accentProp, color); root.style.setProperty(`${accentProp}-foreground`, fg); }
+    };
+    if (primary) applyColor(primary, '--primary', '--accent');
+    if (secondary) applyColor(secondary, '--secondary');
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -260,132 +278,58 @@ export default function Home() {
             const parsedAuth = JSON.parse(authCookie);
             token = parsedAuth.token;
             userFromCookie = parsedAuth.user;
-          } catch (e) {
-            console.error('Error parsing auth cookie:', e);
+          } catch (e) { /* invalid cookie */ }
+        }
+
+        if (!authCookie || !token) { redirectToLogin(); return; }
+
+        if (userFromCookie) setProfileData(userFromCookie);
+
+        // Restore cached dashboard instantly
+        try {
+          const cached = localStorage.getItem('dashboard-cache');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setDashboardData(parsed);
+            setLoading(false); // show cached data immediately
           }
-        }
+        } catch { }
 
-        if (!authCookie || !token) {
-          redirectToLogin();
-          return;
-        }
+        // Fire plans fetch separately — don't block dashboard
+        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/payments/plans`)
+          .then(r => r.json())
+          .then(d => { if (d?.data?.length) setPlans(d.data); })
+          .catch(() => {});
 
-        // Set user data from cookie if available
-        if (userFromCookie) {
-          setProfileData(userFromCookie);
-          console.log('User Data from Cookie:', userFromCookie);
-        }
-
-        // Fetch dashboard data
-        const dashboardResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/dashboard`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        // Fetch fresh dashboard
+        const dashboardResponse = await axios.get(`/users/dashboard`, { headers: { Authorization: `Bearer ${token}` } });
 
         const dashboardResult: ApiResponse = dashboardResponse.data;
         setDashboardData(dashboardResult.data);
+        try { localStorage.setItem('dashboard-cache', JSON.stringify(dashboardResult.data)); } catch { }
+        if (dashboardResult.data.logo) setLogoUrl(dashboardResult.data.logo);
 
-        // Set logo URL if available
-        if (dashboardResult.data.logo) {
-          console.log('Setting logo URL:', dashboardResult.data.logo);
-          setLogoUrl(dashboardResult.data.logo);
-        } else {
-          console.log('No logo found in data');
-        }
-
-        // Only fetch profile data if not available in cookie
+        // Profile fetch only if not in cookie — non-blocking
         if (!userFromCookie) {
-          try {
-            const profileResponse = await axios.get(
-              `${process.env.NEXT_PUBLIC_BASE_URL}/users/auth/get-profile`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  'Content-Type': 'application/json',
-                },
+          axios.get(`/users/auth/get-profile`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(profileResponse => {
+              if (profileResponse.data.success) {
+                const profile = profileResponse.data.data;
+                setProfileData(profile);
+                try {
+                  localStorage.setItem('user-profile', JSON.stringify(profile));
+                  applyThemeFromProfile(profile);
+                } catch { }
               }
-            );
-
-            if (profileResponse.data.success) {
-              setProfileData(profileResponse.data.data);
-              console.log('Profile Data from API:', profileResponse.data.data);
-              try {
-                // Persist profile + theme
-                localStorage.setItem('user-profile', JSON.stringify(profileResponse.data.data));
-                const primary = profileResponse.data.data?.institution?.primaryColor;
-                const secondary = profileResponse.data.data?.institution?.secondaryColor;
-                if (primary || secondary) {
-                  localStorage.setItem('institution-theme', JSON.stringify({ primary, secondary }));
-                  const root = document.documentElement;
-                  if (primary) {
-                    root.style.setProperty('--primary', primary);
-                    const hex = String(primary).replace('#', '');
-                    const h = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
-                    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
-                    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-                    root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
-                    root.style.setProperty('--accent', primary);
-                    root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
-                  }
-                  if (secondary) {
-                    root.style.setProperty('--secondary', secondary);
-                    const hex2 = String(secondary).replace('#', '');
-                    const h2 = hex2.length === 3 ? hex2.split('').map(c => c + c).join('') : hex2;
-                    const r2 = parseInt(h2.slice(0, 2), 16), g2 = parseInt(h2.slice(2, 4), 16), b2 = parseInt(h2.slice(4, 6), 16);
-                    const yiq2 = (r2 * 299 + g2 * 587 + b2 * 114) / 1000;
-                    root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
-                  }
-                }
-              } catch { }
-            }
-          } catch (profileErr) {
-            if (axios.isAxiosError(profileErr) && profileErr.response?.status === 401) {
-              redirectToLogin();
-              return;
-            }
-
-            console.error('Error fetching profile:', profileErr);
-          }
+            })
+            .catch(profileErr => {
+              if (axios.isAxiosError(profileErr) && profileErr.response?.status === 401) redirectToLogin();
+            });
         } else {
-          try {
-            const primary = userFromCookie?.institution?.primaryColor;
-            const secondary = userFromCookie?.institution?.secondaryColor;
-            if (primary || secondary) {
-              localStorage.setItem('institution-theme', JSON.stringify({ primary, secondary }));
-              const root = document.documentElement;
-              if (primary) {
-                root.style.setProperty('--primary', primary);
-                const hex = String(primary).replace('#', '');
-                const h = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
-                const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
-                const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-                root.style.setProperty('--primary-foreground', yiq >= 128 ? '#000000' : '#ffffff');
-                root.style.setProperty('--accent', primary);
-                root.style.setProperty('--accent-foreground', yiq >= 128 ? '#000000' : '#ffffff');
-              }
-              if (secondary) {
-                root.style.setProperty('--secondary', secondary);
-                const hex2 = String(secondary).replace('#', '');
-                const h2 = hex2.length === 3 ? hex2.split('').map(c => c + c).join('') : hex2;
-                const r2 = parseInt(h2.slice(0, 2), 16), g2 = parseInt(h2.slice(2, 4), 16), b2 = parseInt(h2.slice(4, 6), 16);
-                const yiq2 = (r2 * 299 + g2 * 587 + b2 * 114) / 1000;
-                root.style.setProperty('--secondary-foreground', yiq2 >= 128 ? '#000000' : '#ffffff');
-              }
-            }
-          } catch { }
+          try { applyThemeFromProfile(userFromCookie); } catch { }
         }
       } catch (err) {
-        if (axios.isAxiosError(err) && err.response?.status === 401) {
-          redirectToLogin();
-          return;
-        }
-
-        console.error('Error fetching data:', err);
+        if (axios.isAxiosError(err) && err.response?.status === 401) { redirectToLogin(); return; }
         setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
@@ -395,60 +339,104 @@ export default function Home() {
     fetchData();
   }, []);
 
-  console.log('Dashboard Data:', dashboardData);
-  console.log('User Data:', dashboardData?.user);
-  console.log('Section:', dashboardData?.user?.section);
+  const fetchPlans = async (openModal = true) => {
+    if (plans.length) { if (openModal) setShowPlansModal(true); return; }
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/payments/plans`);
+      const data = await res.json();
+      setPlans(data.data || []);
+    } catch { }
+    if (openModal) setShowPlansModal(true);
+  };
+
+  const handleSelectPlan = async (planKey: string, amount: number) => {
+    if (amount === 0) { setShowPlansModal(false); return; }
+    setPaymentLoading(planKey);
+    try {
+      const authCookie = Cookies.get('auth');
+      const token = authCookie ? JSON.parse(authCookie).token : '';
+      const res = await fetch('/api/cashfree-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planKey, token }),
+      });
+      const data = await res.json();
+      const sessionId = data?.data?.payment_session_id;
+      if (!sessionId) throw new Error('No session ID');
+      const { load } = await import('@cashfreepayments/cashfree-js');
+      const cashfree = await load({ mode: 'sandbox' });
+      cashfree.checkout({ paymentSessionId: sessionId, redirectTarget: '_self' });
+    } catch {
+      alert('Failed to initiate payment. Please try again.');
+    } finally {
+      setPaymentLoading(null);
+    }
+  };
+
 
   const createLearningGrowthData = () => {
     if (!dashboardData?.learningGrowth) return null;
-
-    const allMonths = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    const dataMap = new Map(
-      dashboardData.learningGrowth.data.map((item) => [
-        item.month,
-        item.percentage,
-      ])
-    );
-
+    const allMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const dataMap = new Map(dashboardData.learningGrowth.data.map((item) => [item.month, item.percentage]));
+    // Only show months that have data or up to current month
+    const currentMonth = new Date().getMonth(); // 0-indexed
+    const labels = allMonths.slice(0, currentMonth + 1);
+    const data = labels.map((month) => dataMap.get(month) || 0);
+    const color = primaryColor.startsWith('#') ? primaryColor : 'var(--primary)';
     return {
-      labels: allMonths,
-      datasets: [
-        {
-          label: 'Learning Growth',
-          data: allMonths.map((month) => dataMap.get(month) || 0),
-          borderColor: primaryColor,
-          backgroundColor: withAlpha(primaryColor, 0.12),
-          tension: 0.4,
-          fill: true,
-          pointBackgroundColor: primaryColor,
-          pointRadius: 4,
+      labels,
+      datasets: [{
+        label: 'Score',
+        data,
+        borderColor: color,
+        backgroundColor: (ctx: { chart: { ctx: CanvasRenderingContext2D; chartArea?: { top: number; bottom: number } } }) => {
+          const chart = ctx.chart;
+          const { ctx: c, chartArea } = chart;
+          if (!chartArea) return 'transparent';
+          const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, primaryColor.startsWith('#') ? `${primaryColor}33` : 'rgba(0,0,0,0.1)');
+          gradient.addColorStop(1, 'rgba(255,255,255,0)');
+          return gradient;
         },
-      ],
+        tension: 0.45,
+        fill: true,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: color,
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: color,
+        borderWidth: 2.5,
+      }],
     };
   };
 
   if (loading) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center bg-gray-50 ${poppins.className}`}
-      >
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-20 w-20 border-b-2 border-white bg-gradient-primary mx-auto mb-4'></div>
-          <p className='text-gray-600'>Loading dashboard...</p>
+      <div className={`min-h-screen bg-gray-50 px-4 sm:px-6 md:px-8 py-4 font-[var(--font-nunito-sans)]`}>
+        {/* Skeleton header */}
+        <div className='flex justify-between items-center mb-6'>
+          <div className='h-8 w-56 bg-gray-200 rounded-xl animate-pulse' />
+          <div className='h-10 w-10 bg-gray-200 rounded-full animate-pulse' />
+        </div>
+        {/* Skeleton streak */}
+        <div className='h-16 w-full bg-gray-200 rounded-2xl animate-pulse mb-4' />
+        {/* Skeleton plan card */}
+        <div className='h-36 w-full bg-gray-200 rounded-2xl animate-pulse mb-6' />
+        {/* Skeleton activity cards */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
+          {[1,2,3].map(i => <div key={i} className='h-28 bg-gray-200 rounded-2xl animate-pulse' />)}
+        </div>
+        {/* Skeleton grid */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+          <div className='space-y-4'>
+            <div className='h-48 bg-gray-200 rounded-2xl animate-pulse' />
+            <div className='h-48 bg-gray-200 rounded-2xl animate-pulse' />
+          </div>
+          <div className='space-y-4'>
+            <div className='h-48 bg-gray-200 rounded-2xl animate-pulse' />
+            <div className='h-48 bg-gray-200 rounded-2xl animate-pulse' />
+          </div>
         </div>
       </div>
     );
@@ -457,7 +445,7 @@ export default function Home() {
   if (error) {
     return (
       <div
-        className={`min-h-screen flex items-center justify-center bg-gray-50 ${poppins.className}`}
+        className={`min-h-screen flex items-center justify-center bg-gray-50 font-[var(--font-nunito-sans)]`}
       >
         <div className='text-center'>
           <p className='text-red-600 text-lg mb-4'>{error}</p>
@@ -486,7 +474,7 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen bg-gray-50 px-4 sm:px-6 md:px-8 py-4 ${poppins.className}`}
+      className={`min-h-screen bg-gray-50 px-4 sm:px-6 md:px-8 py-4 font-[var(--font-nunito-sans)]`}
     >
       <style jsx>{pageAnimationStyles}</style>
 
@@ -637,216 +625,510 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Plan Card */}
+      {plans.length > 0 && (() => {
+        const currentPlanKey = ((dashboardData as unknown as Record<string, unknown>)?.currentPlan as string || 'FREE').toUpperCase();
+        const activePlan = plans.find(p => p.key === currentPlanKey) || plans[0];
+        const dailyLimit = activePlan?.metadata?.tokenLimits?.daily_tokens as number || 2000;
+        const perReqLimit = activePlan?.metadata?.tokenLimits?.max_tokens_per_request as number || 1500;
+        const rateLimit = activePlan?.metadata?.tokenLimits?.rate_limit as string | undefined;
+        const tokensUsed = ((dashboardData as unknown as Record<string, unknown>)?.tokensUsedToday as number) || 0;
+        const usedPct = Math.min(100, Math.round((tokensUsed / dailyLimit) * 100));
+        const isPaid = activePlan?.amount > 0;
+        const barColor = usedPct >= 90 ? '#ef4444' : usedPct >= 60 ? '#f59e0b' : undefined;
+        const statusLabel = usedPct >= 90 ? 'Critical' : usedPct >= 60 ? 'Moderate' : tokensUsed === 0 ? 'No usage yet' : 'Healthy';
+        const statusClass = usedPct >= 90 ? 'text-red-400 bg-red-500/10 border-red-400/30' : usedPct >= 60 ? 'text-amber-300 bg-amber-500/10 border-amber-400/30' : tokensUsed === 0 ? 'text-white/40 bg-white/5 border-white/10' : 'text-emerald-300 bg-emerald-500/10 border-emerald-400/30';
+        return (
+          <div className='mb-6 relative rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300'
+            style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+            {/* Decorative circles */}
+            <div className='absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/5 pointer-events-none' />
+            <div className='absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/5 pointer-events-none' />
+            <div className='absolute top-0 right-0 w-full h-full pointer-events-none' style={{ background: 'linear-gradient(135deg, transparent 60%, rgba(0,0,0,0.15) 100%)' }} />
+
+            <div className='relative p-6'>
+              {/* Top row */}
+              <div className='flex items-start justify-between mb-5'>
+                <div>
+                  <p className='text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 mb-1'>Current Plan</p>
+                  <div className='flex items-center gap-2.5'>
+                    <h3 className='text-2xl font-black text-white capitalize'>{activePlan?.name}</h3>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${isPaid ? 'bg-emerald-400/15 text-emerald-300 border-emerald-400/25' : 'bg-white/10 text-white/50 border-white/15'}`}>
+                      {isPaid ? '● Active' : 'Free Tier'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => fetchPlans(true)}
+                  className='px-4 py-2 rounded-xl text-xs font-bold text-white hover:scale-105 transition-all duration-200 whitespace-nowrap'
+                  style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(12px)' }}
+                >
+                  Change Plan
+                </button>
+              </div>
+
+              {/* Usage bar */}
+              <div className='mb-5'>
+                <div className='flex items-center justify-between mb-2'>
+                  <span className='text-xs font-semibold text-white/60'>Today&apos;s Usage</span>
+                  <div className='flex items-center gap-2'>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusClass}`}>{statusLabel}</span>
+                    <span className='text-xs text-white/40'>{usedPct}% used</span>
+                  </div>
+                </div>
+                <div className='w-full rounded-full h-2 overflow-hidden' style={{ background: 'rgba(0,0,0,0.2)' }}>
+                  <div className='h-2 rounded-full transition-all duration-700'
+                    style={{ width: `${Math.max(usedPct, 1)}%`, background: barColor || 'rgba(255,255,255,0.7)' }} />
+                </div>
+                <div className='flex justify-between mt-1.5'>
+                  <span className='text-[10px] text-white/35'>{100 - usedPct}% remaining today</span>
+                  <span className='text-[10px] text-white/35'>Resets daily</span>
+                </div>
+              </div>
+
+              {/* Included features — inline pills */}
+              <div className='flex flex-wrap gap-2'>
+                {[
+                  { label: 'Chat', value: currentPlanKey === 'PREMIUM' ? 'Unlimited' : currentPlanKey === 'STANDARD' ? '5/day' : '1/day' },
+                  { label: 'Voice', value: currentPlanKey === 'PREMIUM' ? 'Unlimited' : currentPlanKey === 'STANDARD' ? '5/day' : '1/day' },
+                  { label: 'Point & Ask', value: currentPlanKey === 'PREMIUM' ? 'Unlimited' : currentPlanKey === 'STANDARD' ? '3/day' : '1/day' },
+                  { label: 'Quiz', value: currentPlanKey === 'PREMIUM' ? 'Unlimited' : currentPlanKey === 'STANDARD' ? '5/day' : '1/day' },
+                  { label: 'Projects', value: currentPlanKey === 'PREMIUM' ? 'Unlimited' : currentPlanKey === 'STANDARD' ? '5' : '1' },
+                ].map(f => (
+                  <span key={f.label} className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-white'
+                    style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    {f.label} <span className='text-white/50'>·</span> {f.value}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {/* Activities */}
-      <div className='mb-10 mt-6'>
-        <h2 className='text-xl font-semibold text-gray-800 mb-10 mt-10'>Your Activities</h2>
+      <div className='mb-8'>
+        <p className='text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400 mb-3'>Your Activities</p>
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
           {[
             {
-              title: 'Continue where you left off:',
-              description: dashboardData.activities.continueLearning.title,
-              buttonText: 'Resume Quiz',
+              label: 'Learning',
+              title: dashboardData.activities.continueLearning.title,
+              cta: 'Resume Quiz',
               link: dashboardData.activities.continueLearning.link
                 ? (dashboardData.activities.continueLearning.link.includes('/users/quiz-by-id?id=')
                   ? `/quizes/${dashboardData.activities.continueLearning.link.split('id=')[1]?.split('&')[0]}/start`
                   : (/^\/quizes\/[A-Za-z0-9_-]+$/.test(dashboardData.activities.continueLearning.link)
                     ? `${dashboardData.activities.continueLearning.link}/start`
                     : dashboardData.activities.continueLearning.link))
-                : (dashboardData.activities.continueLearning.quizId
-                  ? `/quizes/${dashboardData.activities.continueLearning.quizId}/start`
-                  : '/quizes'),
+                : (dashboardData.activities.continueLearning.quizId ? `/quizes/${dashboardData.activities.continueLearning.quizId}/start` : '/quizes'),
+              iconBg: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+              icon: '▶',
             },
             {
-              title: 'View Progress:',
-              description: dashboardData.activities.progress.subjects
-                .slice(0, 2)
-                .map(
-                  (subject) =>
-                    `${(subject.name || 'Unknown Subject').substring(0, 20)} ${subject.percentage}%`
-                )
-                .join(' • '),
-              buttonText: 'Track Progress',
+              label: 'Progress',
+              title: dashboardData.activities.progress.subjects.slice(0, 2).map(s => `${(s.name || 'Subject').substring(0, 16)} ${s.percentage}%`).join(' · '),
+              cta: 'Track Progress',
               link: '/personalisedLearning',
+              iconBg: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              icon: '◎',
             },
             {
-              title: 'Projects:',
-              description: `${dashboardData.activities.projects.pending} Project${dashboardData.activities.projects.pending !== 1 ? 's' : ''
-                } Pending – '${dashboardData.activities.projects.nextProject}'`,
-              buttonText: 'Open Projects',
+              label: 'Projects',
+              title: `${dashboardData.activities.projects.pending} pending — ${dashboardData.activities.projects.nextProject}`,
+              cta: 'Open Projects',
               link: '/projects/teacherproject',
+              iconBg: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
+              icon: '◈',
             },
           ].map((card, idx) => (
             <div
               key={idx}
-              className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 transform'
+              className='group bg-white border border-gray-100 rounded-2xl p-5 cursor-pointer overflow-hidden relative'
               style={{
                 ...getAnimationDelay(2 + idx * 0.1, 150),
-                animation: 'fadeInUp 0.6s ease-out forwards'
+                animation: 'fadeInUp 0.6s ease-out forwards',
+                transition: 'all 0.25s ease',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
               }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 16px 40px rgba(0,0,0,0.1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'; }}
+              onClick={() => router.push(card.link)}
             >
-              <h3 className='font-semibold text-gray-800 mb-2'>{card.title}</h3>
-              <p className='text-gray-600 text-sm mb-3 break-words line-clamp-2'>
-                {card.description}
-              </p>
-              <button
-                onClick={() => router.push(card.link)}
-                className='bg-gradient-primary text-primary-foreground text-base px-4 py-1.5 rounded-lg transition-all duration-200 w-full sm:w-auto hover:bg-primary/90 hover:shadow-lg hover:scale-105'
-              >
-                {card.buttonText}
-              </button>
+              {/* Hover color wash */}
+              <div className='absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl'
+                style={{ background: card.iconBg, opacity: 0 }}
+                ref={el => { if (el) { el.style.opacity = '0'; el.parentElement?.addEventListener('mouseenter', () => { el.style.opacity = '0.04'; }); el.parentElement?.addEventListener('mouseleave', () => { el.style.opacity = '0'; }); } }}
+              />
+              <div className='relative'>
+                <div className='flex items-center gap-3 mb-3'>
+                  <div className='w-10 h-10 rounded-xl flex items-center justify-center text-white text-base font-black shadow-sm shrink-0'
+                    style={{ background: card.iconBg }}>
+                    {card.icon}
+                  </div>
+                  <p className='text-[10px] font-bold uppercase tracking-wide text-gray-400'>{card.label}</p>
+                </div>
+                <p className='text-sm font-semibold text-gray-800 line-clamp-2 leading-snug mb-4 min-h-[40px]'>{card.title}</p>
+                <div className='flex items-center gap-1.5 text-xs font-bold group-hover:gap-2.5 transition-all duration-200'
+                  style={{ color: primaryColor }}>
+                  {card.cta} <ArrowRight size={11} />
+                </div>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div
-        className='grid grid-cols-1 lg:grid-cols-2 gap-4'
-        style={{
-          ...getAnimationDelay(3, 150),
-          animation: 'fadeInUp 0.8s ease-out forwards'
-        }}
-      >
+      {/* Main Grid — equal height columns */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6'
+        style={{ ...getAnimationDelay(3, 150), animation: 'fadeInUp 0.8s ease-out forwards' }}>
+
         {/* Left Column */}
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
+
           {/* Today's Missions */}
-          <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100 '>
-            <h2 className='text-xl font-semibold text-gray-800 mb-3'>
-              Today&apos;s Missions
-            </h2>
-            <div className='space-y-3 '>
+          <div className='bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300'>
+            <div className='px-5 py-4 flex items-center justify-between' style={{ borderBottom: '1px solid #f8fafc' }}>
+              <h2 className='text-sm font-bold text-gray-900'>Today&apos;s Missions</h2>
+              <div className='flex items-center gap-2'>
+                <div className='flex gap-1'>
+                  {dashboardData.todaysMissions.map((m, i) => (
+                    <div key={i} className={`w-1.5 h-1.5 rounded-full ${m.completed ? 'bg-green-400' : 'bg-gray-200'}`} />
+                  ))}
+                </div>
+                <span className='text-[10px] font-bold text-gray-400'>
+                  {dashboardData.todaysMissions.filter(m => m.completed).length}/{dashboardData.todaysMissions.length}
+                </span>
+              </div>
+            </div>
+            <div className='divide-y divide-gray-50/80'>
               {dashboardData.todaysMissions.map((mission, idx) => (
-                <div
-                  key={idx}
-                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b-1 border-gray-200 pb-2 last:border-b-0'
-                >
-                  <div>
-                    <h4 className='font-medium text-gray-800'>
-                      {mission.title}
-                    </h4>
-                    <p className='text-gray-500 text-sm'>
-                      {mission.description}
-                    </p>
-                  </div>
+                <div key={idx} className='flex items-center gap-3 px-5 py-3 hover:bg-gray-50/50 transition-colors duration-150'>
                   <button
                     onClick={() => handleMissionClick(mission)}
-                    className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-white w-[150px] h-[40px]  ${mission.completed
-                      ? 'bg-gradient-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105 cursor-default'
-                      : 'bg-gradient-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105'
-                      }`}
+                    className={`w-5 h-5 rounded-full shrink-0 flex items-center justify-center border-2 transition-all duration-200 ${
+                      mission.completed ? 'border-green-400 bg-green-400' : 'border-gray-200 hover:border-primary'
+                    }`}
                   >
-                    {mission.completed
-                      ? 'Completed'
-                      : (mission.quizId || mission.link) ? 'Start quiz' : 'Complete now'}
+                    {mission.completed && <span className='text-white text-[9px] font-black'>✓</span>}
                   </button>
+                  <div className='min-w-0 flex-1'>
+                    <h4 className={`text-sm font-semibold truncate ${mission.completed ? 'text-gray-300 line-through' : 'text-gray-800'}`}>{mission.title}</h4>
+                    {mission.description && <p className='text-gray-400 text-xs truncate mt-0.5'>{mission.description}</p>}
+                  </div>
+                  {!mission.completed && (
+                    <button
+                      onClick={() => handleMissionClick(mission)}
+                      className='shrink-0 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-primary text-white hover:shadow-md hover:scale-105 transition-all duration-200'
+                    >
+                      {(mission.quizId || mission.link) ? 'Start →' : 'Do it'}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           </div>
 
           {/* Learning Growth */}
-          {/* Learning Growth */}
-          <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100'>
-            <h2 className='text-xl font-semibold text-gray-800 mb-3'>
-              Learning Growth
-            </h2>
-            <div className='relative w-full min-h-[200px]'>
-              {learningGrowthData && (
-                <Line
-                  data={learningGrowthData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                      x: {
-                        title: {
-                          display: false,
-                          text: 'Month',
-                        },
-                        grid: { display: false },
-                      },
-                      y: {
-                        title: {
-                          display: false,
-                          text: 'Percentage',
-                        },
-                        grid: { color: '#f3f4f6' },
-                      },
-                    },
-                  }}
-                />
-              )}
+          <div className='bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 flex-1'>
+            <div className='flex items-center justify-between mb-1'>
+              <h2 className='text-sm font-bold text-gray-900'>Learning Growth</h2>
+              <span className='text-[10px] text-gray-400 font-medium'>{new Date().getFullYear()}</span>
             </div>
+            <p className='text-xs text-gray-400 mb-3'>Your monthly performance score</p>
+            {learningGrowthData ? (
+              <div style={{ height: '160px' }}>
+                <Line data={learningGrowthData} options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  interaction: { mode: 'index', intersect: false },
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      backgroundColor: '#1e293b',
+                      titleColor: '#94a3b8',
+                      bodyColor: '#ffffff',
+                      padding: 10,
+                      cornerRadius: 8,
+                      displayColors: false,
+                      callbacks: { label: (ctx: { parsed: { y: number } }) => `Score: ${ctx.parsed.y}%` },
+                    },
+                  },
+                  scales: {
+                    x: { grid: { display: false }, border: { display: false } as never, ticks: { font: { size: 10 }, color: '#94a3b8' } },
+                    y: { min: 0, max: 100, grid: { color: '#f8fafc' }, border: { display: false } as never, ticks: { font: { size: 10 }, color: '#94a3b8', callback: (v: string | number) => `${v}%`, stepSize: 25 } },
+                  },
+                }} />
+              </div>
+            ) : (
+              <div className='flex flex-col items-center justify-center h-40 text-gray-300'>
+                <div className='text-4xl mb-2'>📈</div>
+                <p className='text-xs text-gray-400'>No data yet — start learning!</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right Column */}
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
+
           {/* Quick Links */}
-          <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100'>
-            <h2 className='text-xl font-semibold text-gray-800 mb-3'>
-              Quick Links
-            </h2>
-            <div className='space-y-3'>
+          <div className='bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300'>
+            <div className='px-5 py-4' style={{ borderBottom: '1px solid #f8fafc' }}>
+              <h2 className='text-sm font-bold text-gray-900'>Quick Links</h2>
+            </div>
+            <div className='divide-y divide-gray-50/80'>
               {dashboardData.quickLinks.slice(0, 3).map((link, idx) => (
                 <div
                   key={idx}
-                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b-1 border-gray-200 pb-2 last:border-b-0 transform transition-all duration-300 hover:bg-gray-50 hover:scale-[1.01] rounded-lg px-2'
-                  style={{
-                    ...getAnimationDelay(4 + idx * 0.1, 150),
-                    animation: 'fadeInUp 0.5s ease-out forwards'
-                  }}
+                  className='group/link flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors duration-150 cursor-pointer'
+                  style={{ ...getAnimationDelay(4 + idx * 0.1, 150), animation: 'fadeInUp 0.5s ease-out forwards' }}
+                  onClick={() => handleQuickLinkClick(link)}
                 >
-                  <div>
-                    <h4 className='font-medium text-gray-800'>{link.title}</h4>
-                    <p className='text-gray-500 text-sm'>{link.description}</p>
+                  <div className='w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-white text-xs font-black shadow-sm'
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}>
+                    {(link.title?.[0] || '?').toUpperCase()}
                   </div>
-                  <button
-                    onClick={() => handleQuickLinkClick(link)}
-                    className={`px-4 py-1.5 rounded-lg transition-all duration-200 text-primary-foreground w-[150px] h-[40px] ${link.status === 'Completed'
-                      ? 'bg-gradient-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
-                      : 'bg-gradient-primary hover:bg-primary/90 hover:shadow-lg hover:scale-105'
-                      }`}
-                  >
-                    {link.status === 'Completed'
-                      ? 'Completed'
-                      : link.link && link.link.startsWith('http')
-                        ? 'View project'
-                        : (link.title.toLowerCase().includes('project') ? 'View project' : (link.status || 'Open'))
-                    }
-                  </button>
+                  <div className='min-w-0 flex-1'>
+                    <h4 className='font-semibold text-gray-800 text-sm truncate'>{link.title}</h4>
+                    <p className='text-gray-400 text-xs mt-0.5 truncate'>{link.description}</p>
+                  </div>
+                  <div className='shrink-0 flex items-center gap-1 group-hover/link:gap-2 transition-all duration-200'
+                    style={{ color: primaryColor }}>
+                    <span className='text-[11px] font-bold'>{link.status === 'Completed' ? 'Done' : 'Open'}</span>
+                    <ArrowRight size={11} />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Weekly Progress */}
-          <div className='bg-white p-4 rounded-2xl shadow-sm border border-gray-100'>
-            <h2 className='text-xl font-semibold text-gray-800 mb-3'>
-              Progress from last week
-            </h2>
-            <div className='space-y-3'>
-              {dashboardData.weeklyProgress.map((item, idx) => (
-                <div key={idx}>
-                  <div className='flex justify-between mb-1 text-sm font-medium text-gray-700'>
-                    <span className=''>{(item.subject || 'Unknown Subject').toUpperCase()}</span>
-                    <span>{item.percentage}%</span>
-                  </div>
-                  <div className='w-full bg-gray-200 rounded-full h-3'>
-                    <div
-                      className='h-3 rounded-full bg-gradient-primary transition-all duration-500'
-                      style={{ width: `${item.percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+          {/* Weekly Progress — flex-1 to match height */}
+          <div className='bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 flex-1'>
+            <div className='flex items-center justify-between mb-4'>
+              <h2 className='text-sm font-bold text-gray-900'>Weekly Progress</h2>
+              <span className='text-[10px] text-gray-400 font-medium'>vs last week</span>
             </div>
+            {dashboardData.weeklyProgress.length > 0 ? (
+              <div className='space-y-4'>
+                {dashboardData.weeklyProgress.map((item, idx) => (
+                  <div key={idx}>
+                    <div className='flex justify-between mb-1.5'>
+                      <span className='text-xs font-semibold text-gray-600'>{(item.subject || 'Unknown').toUpperCase()}</span>
+                      <span className='text-xs font-bold' style={{ color: primaryColor }}>{item.percentage}%</span>
+                    </div>
+                    <div className='w-full bg-gray-100 rounded-full h-1.5 overflow-hidden'>
+                      <div
+                        className='h-1.5 rounded-full transition-all duration-700'
+                        style={{ width: `${item.percentage}%`, background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className='flex flex-col items-center justify-center h-32 text-gray-300'>
+                <div className='text-4xl mb-2'>📊</div>
+                <p className='text-xs text-gray-400'>Complete quizzes to see progress</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Badge Challenge Modal */}
+      {/* Plans Modal */}
+      {showPlansModal && (
+        <div className='fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4'>
+          <div className='bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl' style={{ overflowX: 'hidden' }}>
+
+            {/* Header */}
+            <div className='relative overflow-hidden rounded-t-3xl bg-gradient-primary px-8 py-7 text-white'>
+              <div className='absolute -top-10 -right-10 w-52 h-52 rounded-full bg-white/10 pointer-events-none' />
+              <div className='absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/5 pointer-events-none' />
+              <div className='relative z-10 flex items-start justify-between'>
+                <div>
+                  <p className='text-[10px] font-black uppercase tracking-widest text-white/50 mb-1'>Pricing</p>
+                  <h2 className='text-3xl font-black leading-tight'>Choose Your Plan</h2>
+                  <p className='text-sm text-white/60 mt-1.5'>Upgrade anytime · Cancel anytime</p>
+                </div>
+                <button onClick={() => setShowPlansModal(false)} className='p-2 hover:bg-white/20 rounded-full transition-colors mt-1 shrink-0'>
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Cards */}
+            <div className='px-6 pt-2 pb-6 grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch' style={{ paddingTop: '1.5rem' }}>
+              {plans.map((plan) => {
+                const isPopular = plan.key === 'STANDARD';
+                const isPremium = plan.key === 'PREMIUM';
+                const currentPlanKey = ((dashboardData as unknown as Record<string, unknown>)?.currentPlan as string || 'FREE').toUpperCase();
+                const isCurrent = plan.key === currentPlanKey;
+                const isHovered = hoveredPlan === plan.key;
+                const dailyTok = plan.metadata?.tokenLimits?.daily_tokens as number;
+                const perReqTok = plan.metadata?.tokenLimits?.max_tokens_per_request as number;
+                const rate = plan.metadata?.tokenLimits?.rate_limit as string | undefined;
+                const planMeta: Record<string, { tagline: string; originalPrice?: string; features: { text: string; count: string }[] }> = {
+                  FREE: {
+                    tagline: 'Perfect for individuals just getting started.',
+                    features: [
+                      { count: '1', text: 'Chat with AI' },
+                      { count: '1', text: 'Talk to AI (Voice)' },
+                      { count: '1', text: 'Point & Ask' },
+                      { count: '1', text: 'Quiz' },
+                      { count: '1', text: 'Project workspace' },
+                    ],
+                  },
+                  STANDARD: {
+                    tagline: 'Ideal for students & professionals.',
+                    originalPrice: '₹999',
+                    features: [
+                      { count: '5', text: 'Chat sessions' },
+                      { count: '5', text: 'Talk to AI (Voice)' },
+                      { count: '3', text: 'Point & Ask' },
+                      { count: '5', text: 'Quizzes' },
+                      { count: '5', text: 'Project workspaces' },
+                    ],
+                  },
+                  PREMIUM: {
+                    tagline: 'For organizations & power users.',
+                    originalPrice: '₹3000',
+                    features: [
+                      { count: '∞', text: 'Chat with AI' },
+                      { count: '∞', text: 'Talk to AI (Voice)' },
+                      { count: '∞', text: 'Point & Ask' },
+                      { count: '∞', text: 'Quizzes' },
+                      { count: '∞', text: 'Project workspaces' },
+                    ],
+                  },
+                };
+                const meta = planMeta[plan.key];
+
+                // All cards same resting color — each reveals unique color on hover
+                const hoverBgs: Record<string, string> = {
+                  FREE:     `linear-gradient(145deg, #6366f1 0%, #8b5cf6 100%)`,
+                  STANDARD: `linear-gradient(145deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+                  PREMIUM:  `linear-gradient(145deg, #0f172a 0%, #334155 100%)`,
+                };
+                const hoverShadows: Record<string, string> = {
+                  FREE:     '0 30px 60px -10px rgba(99,102,241,0.45)',
+                  STANDARD: `0 30px 60px -10px ${secondaryColor}55`,
+                  PREMIUM:  '0 30px 60px -10px rgba(15,23,42,0.5)',
+                };
+
+                const bg = isHovered ? hoverBgs[plan.key] : '#ffffff';
+                const border = isHovered ? 'transparent' : '#e2e8f0';
+                const isLight = !isHovered;
+                const textColor = isLight ? '#0f172a' : '#ffffff';
+                const subColor = isLight ? '#64748b' : 'rgba(255,255,255,0.55)';
+                const dividerColor = isLight ? '#f1f5f9' : 'rgba(255,255,255,0.12)';
+                const checkBg = isLight ? '#f1f5f9' : 'rgba(255,255,255,0.18)';
+                const featColor = isLight ? '#475569' : 'rgba(255,255,255,0.82)';
+
+                return (
+                  <div
+                    key={plan.key}
+                    className='relative flex flex-col rounded-3xl overflow-hidden cursor-pointer'
+                    style={{
+                      background: bg,
+                      border: `2px solid ${border}`,
+                      transform: isHovered ? 'translateY(-8px)' : 'translateY(0)',
+                      boxShadow: isHovered ? hoverShadows[plan.key] : '0 2px 8px rgba(0,0,0,0.06)',
+                      transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+                    }}
+                    onMouseEnter={() => setHoveredPlan(plan.key)}
+                    onMouseLeave={() => setHoveredPlan(null)}
+                  >
+                    {/* Glow ring on hover */}
+                    {isHovered && (
+                      <div className='absolute inset-0 rounded-3xl pointer-events-none' style={{ boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.25)` }} />
+                    )}
+
+                    {/* Popular badge */}
+                    {isPopular && (
+                      <div className='absolute top-0 inset-x-0 flex justify-center'>
+                        <span className='text-[9px] font-black px-4 py-1 rounded-b-xl tracking-widest uppercase'
+                          style={{ background: isHovered ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.2)', color: '#ffffff', backdropFilter: 'blur(8px)' }}>
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
+
+                    <div className='p-6 flex flex-col gap-4 flex-1' style={{ paddingTop: isPopular ? '2.5rem' : '1.5rem' }}>
+                      {/* Plan name + badge */}
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <p className='text-[10px] font-bold uppercase tracking-widest mb-0.5' style={{ color: isLight ? '#94a3b8' : 'rgba(255,255,255,0.45)' }}>
+                            {isPremium ? 'Enterprise' : isPopular ? 'Most Popular' : 'Starter'}
+                          </p>
+                          <span className='text-lg font-black' style={{ color: textColor }}>{plan.name}</span>
+                        </div>
+                        {isCurrent && (
+                          <span className='text-[10px] px-2.5 py-1 rounded-full font-black'
+                            style={{ background: isLight ? '#dcfce7' : 'rgba(255,255,255,0.2)', color: isLight ? '#16a34a' : '#ffffff', border: `1px solid ${isLight ? '#bbf7d0' : 'rgba(255,255,255,0.3)'}` }}>
+                            ✓ Active
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Tagline */}
+                      <p className='text-xs leading-snug -mt-2' style={{ color: subColor }}>{meta?.tagline}</p>
+
+                      {/* Price */}
+                      <div>
+                        {meta?.originalPrice && (
+                          <div className='flex items-center gap-1.5 mb-1'>
+                            <span className='text-xs line-through opacity-50' style={{ color: textColor }}>{meta.originalPrice}</span>
+                            <span className='text-[10px] font-black px-1.5 py-0.5 rounded-md' style={{ background: isLight ? '#fef3c7' : 'rgba(255,255,255,0.2)', color: isLight ? '#d97706' : '#ffffff' }}>
+                              {Math.round((1 - plan.amount / parseInt(meta.originalPrice.replace('₹',''))) * 100)}% OFF
+                            </span>
+                          </div>
+                        )}
+                        <div className='flex items-end gap-1.5'>
+                          <span className='text-5xl font-black leading-none' style={{ color: textColor }}>{plan.amount === 0 ? '₹0' : `₹${plan.amount}`}</span>
+                          {plan.amount > 0 && <span className='mb-1 text-sm font-medium' style={{ color: subColor }}>/mo</span>}
+                        </div>
+                        <p className='text-xs mt-1' style={{ color: subColor }}>{plan.amount === 0 ? 'Free forever · No card needed' : 'Billed monthly · Cancel anytime'}</p>
+                      </div>
+
+                      <div className='h-px' style={{ background: dividerColor }} />
+
+                      {/* Features */}
+                      <ul className='space-y-2 flex-1'>
+                        {(meta?.features || []).map((f) => (
+                          <li key={f.text} className='flex items-center gap-2.5 text-sm'>
+                            <span className='w-6 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0'
+                              style={{ background: checkBg, color: textColor }}>{f.count}</span>
+                            <span className='leading-snug' style={{ color: featColor }}>{f.text}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {/* CTA */}
+                      <button
+                        onClick={() => handleSelectPlan(plan.key, plan.amount)}
+                        disabled={paymentLoading === plan.key || isCurrent}
+                        className='w-full py-3.5 rounded-2xl text-sm font-black transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-1'
+                        style={isCurrent
+                          ? { background: 'rgba(255,255,255,0.12)', color: textColor, border: `1px solid ${dividerColor}` }
+                          : isLight
+                            ? { background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`, color: '#ffffff', boxShadow: `0 4px 15px ${primaryColor}44` }
+                            : { background: 'rgba(255,255,255,0.95)', color: primaryColor, fontWeight: 900 }
+                        }
+                      >
+                        {paymentLoading === plan.key ? 'Processing...' : isCurrent ? 'Current Plan' : plan.amount === 0 ? 'Get Started Free' : 'Upgrade Now →'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className='flex items-center justify-center pb-6 text-xs text-gray-400'>
+              Secure payment via Cashfree · No hidden fees · Cancel anytime
+            </div>
+          </div>
+        </div>
+      )}
       {showBadgeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">

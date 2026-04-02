@@ -36,11 +36,16 @@ export default function LayoutWrapper({
     pathname === '/login/otp' ||
     pathname === '/register' ||
     pathname === '/forgot-password' ||
+    pathname === '/payment/return' ||
     (pathname.startsWith('/quizes/') && pathname.includes('/start')) ||
     pathname.startsWith('/exams/take/')
 
   if (!isClient) {
-    return null; // Prevent hydration mismatch
+    return (
+      <div className='flex w-full min-h-screen'>
+        <main className='flex-1'>{children}</main>
+      </div>
+    );
   }
 
   // If there's an error, still render the content without the sidebar

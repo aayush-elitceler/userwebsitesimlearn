@@ -122,7 +122,7 @@ export default function CreateExamPage() {
       }
       
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/users/exams/generate`,
+        `/users/exams/generate`,
         body,
         {
           headers: {

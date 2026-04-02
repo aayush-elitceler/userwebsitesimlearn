@@ -64,7 +64,7 @@ function ImprovementPage() {
         }
 
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/users/personalized-learning/topic/${topicId}`,
+          `/users/personalized-learning/topic/${topicId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
