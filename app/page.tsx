@@ -285,17 +285,28 @@ export default function Home() {
 
         if (userFromCookie) setProfileData(userFromCookie);
 
+        // Restore cached dashboard instantly
+        try {
+          const cached = localStorage.getItem('dashboard-cache');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setDashboardData(parsed);
+            setLoading(false); // show cached data immediately
+          }
+        } catch { }
+
         // Fire plans fetch separately — don't block dashboard
         fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/payments/plans`)
           .then(r => r.json())
           .then(d => { if (d?.data?.length) setPlans(d.data); })
           .catch(() => {});
 
-        // Fetch dashboard
+        // Fetch fresh dashboard
         const dashboardResponse = await axios.get(`/users/dashboard`, { headers: { Authorization: `Bearer ${token}` } });
 
         const dashboardResult: ApiResponse = dashboardResponse.data;
         setDashboardData(dashboardResult.data);
+        try { localStorage.setItem('dashboard-cache', JSON.stringify(dashboardResult.data)); } catch { }
         if (dashboardResult.data.logo) setLogoUrl(dashboardResult.data.logo);
 
         // Profile fetch only if not in cookie — non-blocking
