@@ -285,14 +285,14 @@ export default function Home() {
 
         if (userFromCookie) setProfileData(userFromCookie);
 
-        // Fire dashboard + plans in parallel
-        const [dashboardResponse] = await Promise.all([
-          axios.get(`/users/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/payments/plans`)
-            .then(r => r.json())
-            .then(d => { if (d?.data?.length) setPlans(d.data); })
-            .catch(() => {}),
-        ]);
+        // Fire plans fetch separately — don't block dashboard
+        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/payments/plans`)
+          .then(r => r.json())
+          .then(d => { if (d?.data?.length) setPlans(d.data); })
+          .catch(() => {});
+
+        // Fetch dashboard
+        const dashboardResponse = await axios.get(`/users/dashboard`, { headers: { Authorization: `Bearer ${token}` } });
 
         const dashboardResult: ApiResponse = dashboardResponse.data;
         setDashboardData(dashboardResult.data);
