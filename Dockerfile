@@ -1,15 +1,10 @@
-# Use the official Node.js 18 image as base
 FROM node:18-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-# Install ALL dependencies (including devDependencies)
 RUN npm install --legacy-peer-deps
 
 # Rebuild the source code only when needed
@@ -18,46 +13,29 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js collects completely anonymous telemetry data about general usage.
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Add build-time arguments
+# Only public env vars needed at build time
 ARG NEXT_PUBLIC_BASE_URL
 ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
 
-ARG OPENAI_API_KEY
-ENV OPENAI_API_KEY=$OPENAI_API_KEY
-
 RUN npm run build
 
-# Production image, copy all the files and run next
+# Production image
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Add runtime environment variables
-ARG NEXT_PUBLIC_BASE_URL
-ARG OPENAI_API_KEY
-ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
-ENV OPENAI_API_KEY=$OPENAI_API_KEY
-
-ARG GEMINI_API_KEY
-ENV GEMINI_API_KEY=$GEMINI_API_KEY
-ARG GOOGLE_AI_API_KEY
-ENV GOOGLE_AI_API_KEY=$GOOGLE_AI_API_KEY
-
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 
-# Set the correct permission for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
@@ -67,5 +45,8 @@ EXPOSE 5000
 
 ENV PORT=5000
 ENV HOSTNAME="0.0.0.0"
+
+# Secret keys are passed at runtime via docker run -e or docker-compose
+# e.g. docker run -e OPENAI_API_KEY=xxx -e GEMINI_API_KEY=xxx -e GOOGLE_AI_API_KEY=xxx
 
 CMD ["node", "server.js"]

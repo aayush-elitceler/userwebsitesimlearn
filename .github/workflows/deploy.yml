@@ -13,26 +13,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check Out Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and Push Docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile # Ensure the path to Dockerfile is correct
+          file: ./Dockerfile
           push: true
           tags: aayushsharma100/simplylearnweb:latest
           build-args: |
             NEXT_PUBLIC_BASE_URL=https://apisimplylearn.selflearnai.in/api/v1
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            GOOGLE_AI_API_KEY=${{ secrets.GOOGLE_AI_API_KEY }}
 
       - name: Verify Pushed Image
         run: docker pull aayushsharma100/simplylearnweb:latest
