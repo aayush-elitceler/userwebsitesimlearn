@@ -1,7 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import axios, { redirectToLogin } from '@/lib/axiosInstance';
+import React, { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";import axios, { redirectToLogin } from '@/lib/axiosInstance';
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 
 interface Option {
@@ -32,6 +31,14 @@ interface Result {
 }
 
 export default function QuizAnswersPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" /></div>}>
+      <QuizAnswersPageContent />
+    </Suspense>
+  );
+}
+
+function QuizAnswersPageContent() {
   const searchParams = useSearchParams();
   const submissionId = searchParams.get("submissionId");
   const [result, setResult] = useState<Result | null>(null);

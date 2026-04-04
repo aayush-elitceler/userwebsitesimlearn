@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import axios, { redirectToLogin } from '@/lib/axiosInstance';
@@ -64,6 +64,14 @@ function guessSubjectFromTopic(topic?: string): string {
 }
 
 export default function AllExamsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" /></div>}>
+      <AllExamsPageContent />
+    </Suspense>
+  );
+}
+
+function AllExamsPageContent() {
   const [upcomingExams, setUpcomingExams] = useState<Quiz[]>([]);
   const [previousExams, setPreviousExams] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
