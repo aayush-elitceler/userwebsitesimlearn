@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { pageAnimationStyles, getAnimationDelay } from '@/lib/animations';
@@ -56,6 +56,14 @@ type Submission = {
 // (Removed stray, corrupted JSX block introduced earlier)
 
 export default function AllQuizzesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" /></div>}>
+      <AllQuizzesPageContent />
+    </Suspense>
+  );
+}
+
+function AllQuizzesPageContent() {
   const [upcomingQuizzes, setUpcomingQuizzes] = useState<Quiz[]>([]);
   const [previousQuizzes, setPreviousQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);

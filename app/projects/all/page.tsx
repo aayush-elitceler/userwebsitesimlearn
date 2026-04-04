@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ContentCard from "@/components/ContentCard";
@@ -20,6 +20,14 @@ interface UserProject {
 
 
 export default function AllProjectsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" /></div>}>
+      <AllProjectsPageContent />
+    </Suspense>
+  );
+}
+
+function AllProjectsPageContent() {
   const [userProjects, setUserProjects] = useState<UserProject[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
