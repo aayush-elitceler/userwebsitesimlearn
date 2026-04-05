@@ -142,11 +142,13 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
 
   useEffect(() => {
     try {
+      const savedLogo = localStorage.getItem('platform-logo');
+      if (savedLogo) { setLogoUrl(savedLogo); return; }
       const raw = localStorage.getItem('user-profile');
       if (raw) {
         const parsed = JSON.parse(raw);
-        const fromProfile = parsed?.photoUrl || parsed?.profilePictureUrl || null;
-        if (fromProfile) setLogoUrl(fromProfile);
+        const fromInstitution = parsed?.institution?.logo || parsed?.institution?.logoUrl || null;
+        if (fromInstitution) setLogoUrl(fromInstitution);
       }
     } catch { }
   }, []);
@@ -228,7 +230,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
               <div className="py-2 px-4">
                 <Link href="/">
                   <Image
-                    src={logoUrl ?? '/logo.png'}
+                    src={logoUrl ?? '/logo2.png'}
                     alt="Logo"
                     width={50}
                     height={40}
@@ -592,7 +594,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                 <div className="">
                   <Link href="/">
                     <Image
-                      src={logoUrl ?? '/logo.png'}
+                      src={logoUrl ?? '/logo2.png'}
                       alt="Logo"
                       width={180}
                       height={70}

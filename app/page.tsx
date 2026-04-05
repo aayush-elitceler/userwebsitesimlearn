@@ -284,13 +284,25 @@ export default function Home() {
           .then(d => { if (d?.data?.length) setPlans(d.data); })
           .catch(() => {});
 
-        // Fetch fresh dashboard
-        const dashboardResponse = await axios.get(`/users/dashboard`, { headers: { Authorization: `Bearer ${token}` } });
+        // Fetch fresh dashboard with retry
+        let dashboardResponse;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            dashboardResponse = await axios.get(`/users/dashboard`, { headers: { Authorization: `Bearer ${token}` } });
+            break;
+          } catch (retryErr) {
+            if (attempt === 2) throw retryErr;
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+          }
+        }
 
         const dashboardResult: ApiResponse = dashboardResponse.data;
         setDashboardData(dashboardResult.data);
         try { localStorage.setItem('dashboard-cache', JSON.stringify(dashboardResult.data)); } catch { }
-        if (dashboardResult.data.logo) setLogoUrl(dashboardResult.data.logo);
+        if (dashboardResult.data.logo) {
+          setLogoUrl(dashboardResult.data.logo);
+          try { localStorage.setItem('platform-logo', dashboardResult.data.logo); } catch { }
+        }
 
         // Profile fetch only if not in cookie — non-blocking
         if (!userFromCookie) {
@@ -313,7 +325,8 @@ export default function Home() {
         }
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 401) { redirectToLogin(); return; }
-        setError('Failed to load dashboard data');
+        // Only show error if we have no cached data to display
+        if (!dashboardData) setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -347,7 +360,7 @@ export default function Home() {
       const sessionId = data?.data?.payment_session_id;
       if (!sessionId) throw new Error('No session ID');
       const { load } = await import('@cashfreepayments/cashfree-js');
-      const cashfree = await load({ mode: 'sandbox' });
+      const cashfree = await load({ mode: 'production' });
       cashfree.checkout({ paymentSessionId: sessionId, redirectTarget: '_self' });
     } catch {
       alert('Failed to initiate payment. Please try again.');
@@ -397,29 +410,77 @@ export default function Home() {
   if (loading) {
     return (
       <div className={`min-h-screen bg-gray-50 px-4 sm:px-6 md:px-8 py-4 font-[var(--font-nunito-sans)]`}>
-        {/* Skeleton header */}
-        <div className='flex justify-between items-center mb-6'>
-          <div className='h-8 w-56 bg-gray-200 rounded-xl animate-pulse' />
-          <div className='h-10 w-10 bg-gray-200 rounded-full animate-pulse' />
+        <style>{`
+          @keyframes shimmer {
+            0% { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
+          }
+          @keyframes fadeSlideUp {
+            0% { opacity: 0; transform: translateY(12px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          .skel {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+            background-size: 800px 100%;
+            animation: shimmer 1.6s ease-in-out infinite;
+          }
+          .fade-in { animation: fadeSlideUp 0.5s ease-out both; }
+        `}</style>
+
+        {/* Header */}
+        <div className='flex justify-between items-center mb-6 fade-in' style={{ animationDelay: '0ms' }}>
+          <div className='flex items-center gap-3'>
+            <div className='skel h-10 w-10 rounded-full' />
+            <div>
+              <div className='skel h-5 w-40 rounded-lg mb-1.5' />
+              <div className='skel h-3 w-24 rounded-lg' />
+            </div>
+          </div>
+          <div className='flex gap-2'>
+            <div className='skel h-10 w-10 rounded-full' />
+            <div className='skel h-10 w-10 rounded-full' />
+          </div>
         </div>
-        {/* Skeleton streak */}
-        <div className='h-16 w-full bg-gray-200 rounded-2xl animate-pulse mb-4' />
-        {/* Skeleton plan card */}
-        <div className='h-36 w-full bg-gray-200 rounded-2xl animate-pulse mb-6' />
-        {/* Skeleton activity cards */}
+
+        {/* Streak bar */}
+        <div className='fade-in' style={{ animationDelay: '80ms' }}>
+          <div className='skel h-16 w-full rounded-2xl mb-4' />
+        </div>
+
+        {/* Plan card */}
+        <div className='fade-in' style={{ animationDelay: '160ms' }}>
+          <div className='skel h-36 w-full rounded-2xl mb-6' />
+        </div>
+
+        {/* Activity cards */}
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
-          {[1,2,3].map(i => <div key={i} className='h-28 bg-gray-200 rounded-2xl animate-pulse' />)}
+          {[0,1,2].map(i => (
+            <div key={i} className='fade-in' style={{ animationDelay: `${240 + i * 80}ms` }}>
+              <div className='bg-white rounded-2xl p-5 shadow-sm'>
+                <div className='flex items-center gap-3 mb-3'>
+                  <div className='skel h-10 w-10 rounded-xl' />
+                  <div className='skel h-4 w-24 rounded-lg' />
+                </div>
+                <div className='skel h-7 w-16 rounded-lg mb-2' />
+                <div className='skel h-2 w-full rounded-full' />
+              </div>
+            </div>
+          ))}
         </div>
-        {/* Skeleton grid */}
+
+        {/* Charts grid */}
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-          <div className='space-y-4'>
-            <div className='h-48 bg-gray-200 rounded-2xl animate-pulse' />
-            <div className='h-48 bg-gray-200 rounded-2xl animate-pulse' />
-          </div>
-          <div className='space-y-4'>
-            <div className='h-48 bg-gray-200 rounded-2xl animate-pulse' />
-            <div className='h-48 bg-gray-200 rounded-2xl animate-pulse' />
-          </div>
+          {[0,1,2,3].map(i => (
+            <div key={i} className='fade-in' style={{ animationDelay: `${480 + i * 80}ms` }}>
+              <div className='bg-white rounded-2xl p-5 shadow-sm'>
+                <div className='flex justify-between items-center mb-4'>
+                  <div className='skel h-5 w-32 rounded-lg' />
+                  <div className='skel h-8 w-20 rounded-lg' />
+                </div>
+                <div className='skel h-36 w-full rounded-xl' />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -427,14 +488,23 @@ export default function Home() {
 
   if (error) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center bg-gray-50 font-[var(--font-nunito-sans)]`}
-      >
-        <div className='text-center'>
-          <p className='text-red-600 text-lg mb-4'>{error}</p>
+      <div className={`min-h-screen flex items-center justify-center bg-gray-50 font-[var(--font-nunito-sans)]`}>
+        <style>{`
+          @keyframes floatUp { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+          @keyframes fadeIn { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        `}</style>
+        <div className='text-center' style={{ animation: 'fadeIn 0.4s ease-out' }}>
+          <div className='mx-auto mb-5 w-20 h-20 rounded-full bg-red-50 flex items-center justify-center' style={{ animation: 'floatUp 2.5s ease-in-out infinite' }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h3 className='text-lg font-semibold text-gray-800 mb-1'>Something went wrong</h3>
+          <p className='text-sm text-gray-400 mb-6'>Don&apos;t worry, just give it another shot</p>
           <button
             onClick={() => window.location.reload()}
-            className='px-4 py-2 bg-gradient-primary text-primary-foreground rounded-lg hover:bg-primary/90'
+            className='px-6 py-2.5 text-white text-sm font-semibold rounded-xl transition-all hover:scale-105 active:scale-95'
+            style={{ background: 'linear-gradient(90deg, var(--primary, #FFB31F), var(--secondary, #FF4949))' }}
           >
             Retry
           </button>
